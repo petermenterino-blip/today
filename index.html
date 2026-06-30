@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mentorino Programs | Premium Guidance</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: "Inter", sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .premium-shadow {
+            box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.05);
+        }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 24px 0 rgba(31, 38, 135, 0.04);
+        }
+        
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        .text-gradient {
+            background: linear-gradient(to bottom right, #000, #475569);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .premium-card {
+            background: white;
+            border: 1px solid rgba(0, 0, 0, 0.02);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .premium-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.08);
+            border-color: rgba(0, 0, 0, 0.08);
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            ring: 2px solid rgba(0, 0, 0, 0.05);
+        }
+
+        @keyframes subtle-float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .animate-subtle-float {
+            animation: subtle-float 6s ease-in-out infinite;
+        }
+    </style>
+    <script>
+        // Ensure localStorage and sessionStorage are safely shimmed if they throw under sandboxed environments
+        (function() {
+            function createStorageMock() {
+                var store = {};
+                return {
+                    getItem: function(key) {
+                        return store.hasOwnProperty(key) ? store[key] : null;
+                    },
+                    setItem: function(key, value) {
+                        store[key] = String(value);
+                    },
+                    removeItem: function(key) {
+                        delete store[key];
+                    },
+                    clear: function() {
+                        store = {};
+                    },
+                    key: function(index) {
+                        var keys = Object.keys(store);
+                        return keys[index] || null;
+                    },
+                    get length() {
+                        return Object.keys(store).length;
+                    }
+                };
+            }
+
+            try {
+                var testKey = '__test_local_storage_accessibility__';
+                window.localStorage.setItem(testKey, '1');
+                window.localStorage.removeItem(testKey);
+            } catch (e) {
+                console.warn('localStorage is blocked or restricted. Applying in-memory mock fallback.', e);
+                try {
+                    Object.defineProperty(window, 'localStorage', {
+                        value: createStorageMock(),
+                        writable: true,
+                        configurable: true
+                    });
+                } catch (err) {
+                    console.error('Failed to redefine localStorage:', err);
+                }
+            }
+
+            try {
+                var testSessionKey = '__test_session_storage_accessibility__';
+                window.sessionStorage.setItem(testSessionKey, '1');
+                window.sessionStorage.removeItem(testSessionKey);
+            } catch (e) {
+                console.warn('sessionStorage is blocked or restricted. Applying in-memory mock fallback.', e);
+                try {
+                    Object.defineProperty(window, 'sessionStorage', {
+                        value: createStorageMock(),
+                        writable: true,
+                        configurable: true
+                    });
+                } catch (err) {
+                    console.error('Failed to redefine sessionStorage:', err);
+                }
+            }
+        })();
+
+        // Comprehensive browser shims
+        window.global = window;
+        window.process = window.process || { env: {} };
+        if (!window.process.env) window.process.env = {};
+        window.process.env.NODE_ENV = 'production';
+
+        // Suppress benign Vite WebSocket errors in this environment
+        (function() {
+            const originalError = console.error;
+            const originalWarn = console.warn;
+            
+            console.error = function(...args) {
+                if (args[0] && typeof args[0] === 'string' && args[0].includes('[vite] failed to connect to websocket')) {
+                    return;
+                }
+                originalError.apply(console, args);
+            };
+
+            console.warn = function(...args) {
+                if (args[0] && typeof args[0] === 'string' && args[0].includes('[vite] failed to connect to websocket')) {
+                    return;
+                }
+                originalWarn.apply(console, args);
+            };
+
+            window.addEventListener('unhandledrejection', function(event) {
+                if (event.reason && (
+                    (typeof event.reason === 'string' && event.reason.includes('WebSocket')) ||
+                    (event.reason.message && event.reason.message.includes('WebSocket'))
+                )) {
+                    event.preventDefault();
+                }
+            });
+        })();
+    </script>
+</head>
+<body class="selection:bg-black selection:text-white">
+    <div id="root"></div>
+    <!-- Entry point script -->
+    <script type="module" src="/src/main.tsx"></script>
+</body>
+</html>

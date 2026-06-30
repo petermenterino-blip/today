@@ -1,0 +1,31 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Booking } from '../types';
+import { bookingService } from '../services/bookingService';
+
+export const useBookings = () => {
+  const queryClient = useQueryClient();
+
+  const { data: bookings = [], isLoading: loading, error } = useQuery({
+    queryKey: ['bookings'],
+    queryFn: async () => {
+      const { data, error } = await bookingService.fetchAll();
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const addBooking = useMutation({
+    mutationFn: (booking: Omit<Booking, 'id'>) => bookingService.insert(booking),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bookings'] }),
+    onError: (err) => console.error('Booking insert failed:', err),
+  });
+
+  return { 
+    bookings, 
+    loading, 
+    error,
+    addBooking: addBooking.mutateAsync,
+    refresh: () => queryClient.invalidateQueries({ queryKey: ['bookings'] })
+  };
+};
