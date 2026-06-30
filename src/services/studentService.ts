@@ -23,8 +23,7 @@ export const studentService = {
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
-      .eq('role', 'student')
-      .is('deleted_at', null);
+      .eq('role', 'student');
 
     if (error) return [];
     return (data || []).map(fromDbProfile);

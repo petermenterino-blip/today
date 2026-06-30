@@ -14,9 +14,10 @@ export const useRealtime = (configs: RealtimeConfig[]) => {
   const channelsRef = useRef<ReturnType<typeof supabase.channel>[]>([]);
 
   useEffect(() => {
+    const uid = crypto.randomUUID();
     const channels = configs.map(({ table, event = '*', filter, callback }) => {
       const channel = supabase
-        .channel(`${table}-changes`)
+        .channel(`${table}-changes-${uid}`)
         .on(
           'postgres_changes' as any,
           { event, schema: 'public', table, filter },

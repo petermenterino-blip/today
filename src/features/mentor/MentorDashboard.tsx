@@ -196,7 +196,7 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
       )}
 
       {d.activeTab === 'messaging' && (
-        <WhatsAppMessaging currentUserId={d.currentUser?.id || ''} currentUserName={d.currentUser?.name || 'Mentor'} userRole="mentor" />
+        <WhatsAppMessaging currentUserId={d.currentUser?.id || ''} currentUserName={d.currentUser?.name || 'Mentor'} role="mentor" />
       )}
 
       {d.activeTab === 'events' && (
