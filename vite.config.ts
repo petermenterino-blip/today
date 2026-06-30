@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, loadEnv } from 'vite';
@@ -47,6 +48,26 @@ export default defineConfig(({ mode }) => {
             }
           }
         }
-      }
+      },
+      test: {
+        globals: true,
+        environment: 'jsdom',
+        setupFiles: ['./src/test/setup.ts'],
+        css: true,
+        include: ['src/**/*.{test,spec}.{ts,tsx}'],
+        exclude: ['e2e/**', 'node_modules/**', 'dist/**'],
+        coverage: {
+          provider: 'v8',
+          reporter: ['text', 'html', 'lcov'],
+          include: ['src/**/*.{ts,tsx}'],
+          exclude: ['src/**/*.d.ts', 'src/test/**', 'src/vite-env.d.ts'],
+          thresholds: {
+            statements: 80,
+            branches: 70,
+            functions: 75,
+            lines: 80,
+          },
+        },
+      },
     };
 });
