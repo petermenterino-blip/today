@@ -149,7 +149,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
   const application = applications.find(
     (a) => a.user_email === currentUser?.email,
   );
-  const isApproved = application?.status === "approved";
+  const isApproved = application?.status === "approved" || currentUser?.application_status === "approved";
   const isOverview =
     location.pathname === "/student" || location.pathname === "/student/";
 
