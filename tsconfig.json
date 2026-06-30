@@ -27,5 +27,5 @@
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "exclude": ["node_modules", "dist", "edge-functions", "supabase/functions", "e2e", "playwright.config.ts"]
+  "exclude": ["node_modules", "dist", "edge-functions", "supabase/functions", "e2e", "playwright.config.ts", "src/**/__tests__", "src/test"]
 }
