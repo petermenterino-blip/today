@@ -49,6 +49,7 @@ export const authService = {
       email: data.user.email || email,
       name: profile?.name || data.user.user_metadata?.full_name || email.split('@')[0],
       role: profile?.role || null,
+      application_status: profile?.application_status || null,
       created_at: data.user.created_at,
       profile: profile || undefined,
     };
@@ -109,6 +110,7 @@ export const authService = {
       email: session.user.email || '',
       name: profile?.name || session.user.user_metadata?.full_name || '',
       role: profile?.role || null,
+      application_status: profile?.application_status || null,
       created_at: session.user.created_at,
       profile: profile || undefined,
     };
@@ -134,6 +136,7 @@ export const authService = {
       email: profile?.email || email,
       name: profile?.name || email.split('@')[0],
       role: profile?.role || null,
+      application_status: profile?.application_status || null,
       created_at: profile?.created_at || new Date().toISOString(),
       profile: profile || undefined,
     };
@@ -178,6 +181,7 @@ export const authService = {
             email: session.user.email || '',
             name: profile?.name || session.user.user_metadata?.full_name || '',
             role: profile?.role || null,
+            application_status: profile?.application_status || null,
             created_at: session.user.created_at,
           };
           callback(userData);
