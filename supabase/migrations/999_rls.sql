@@ -40,6 +40,16 @@ alter table public.surveys enable row level security;
 alter table public.survey_responses enable row level security;
 alter table public.analytics_events enable row level security;
 
+-- Helper: check if current user is mentor (avoids RLS recursion)
+create or replace function public.is_mentor()
+returns boolean
+language sql
+security definer
+stable
+as $$
+  select exists (select 1 from public.profiles where id = auth.uid() and role = 'mentor');
+$$;
+
 -- ============================
 -- PROFILES
 -- ============================
@@ -51,12 +61,7 @@ create policy "Users can read own profile"
 drop policy if exists "Mentors can read assigned students" on public.profiles;
 create policy "Mentors can read assigned students"
   on public.profiles for select
-  using (
-    exists (
-      select 1 from public.profiles p
-      where p.id = auth.uid() and p.role = 'mentor'
-    )
-  );
+  using (public.is_mentor());
 
 drop policy if exists "Users can update own profile" on public.profiles;
 create policy "Users can update own profile"
