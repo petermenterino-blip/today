@@ -723,17 +723,17 @@ create policy "Event creators can delete recordings"
 drop policy if exists "Users can read own application notes" on public.application_notes;
 create policy "Users can read own application notes"
   on public.application_notes for select
-  using (user_id = auth.uid());
+  using (author_id = auth.uid());
 
 drop policy if exists "Users can create application notes" on public.application_notes;
 create policy "Users can create application notes"
   on public.application_notes for insert
-  with check (user_id = auth.uid());
+  with check (author_id = auth.uid());
 
 drop policy if exists "Users can update own application notes" on public.application_notes;
 create policy "Users can update own application notes"
   on public.application_notes for update
-  using (user_id = auth.uid());
+  using (author_id = auth.uid());
 
 -- ============================
 -- PRODUCTS (STORE)
