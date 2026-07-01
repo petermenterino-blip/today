@@ -55,21 +55,41 @@ export const notificationStorage = {
   },
 
   async create(data: Partial<Notification>): Promise<Notification> {
-    const row: Record<string, any> = {};
-    if (data.userId !== undefined) row.user_id = data.userId;
-    if (data.title !== undefined) row.title = data.title;
-    if (data.message !== undefined) row.message = data.message;
-    if (data.read !== undefined) row.read = data.read;
-    if (data.type !== undefined) row.type = data.type;
-    if (data.link !== undefined) row.link = data.link;
-
     const { data: created, error } = await supabase
-      .from('notifications')
-      .insert(row)
-      .select()
-      .single();
-    if (error) throw error;
-    return rowToNotification(created);
+      .rpc('insert_notification', {
+        p_user_id: data.userId,
+        p_title: data.title,
+        p_message: data.message,
+        p_type: data.type || 'system',
+      });
+
+    if (error) {
+      const { data: fallback, error: fallbackError } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: data.userId,
+          title: data.title,
+          message: data.message,
+          type: data.type || 'system',
+          read: data.read ?? false,
+          link: data.link || null,
+        })
+        .select()
+        .single();
+      if (fallbackError) throw fallbackError;
+      return rowToNotification(fallback);
+    }
+
+    return {
+      id: '',
+      userId: data.userId || '',
+      title: data.title || '',
+      message: data.message || '',
+      read: data.read ?? false,
+      type: data.type || 'system',
+      link: data.link,
+      createdAt: new Date().toISOString(),
+    };
   },
 
   async update(id: string, updates: Partial<Notification>): Promise<Notification | null> {

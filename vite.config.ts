@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => {
         port: 3000,
         host: true,
         strictPort: true,
-        hmr: false,
+        hmr: true,
         allowedHosts: ["all"],
       },
       plugins: [

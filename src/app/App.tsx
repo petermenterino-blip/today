@@ -21,6 +21,7 @@ const TermsPage = lazy(() => import('../pages/Terms'));
 const ResetPasswordPage = lazy(() => import('../pages/ResetPassword'));
 const AdminRevenuePage = lazy(() => import('../features/admin/AdminRevenue'));
 const ConsultationOverviewPage = lazy(() => import('../pages/ConsultationOverview'));
+const NotFoundPage = lazy(() => import('../pages/NotFound'));
 
 const AboutPage = lazy(() => import('../pages/About'));
 const ProgramsPage = lazy(() => import('../pages/Programs'));
@@ -93,7 +94,7 @@ const AppContent: React.FC = () => {
               </ProtectedRoute>
             } />
 
-            <Route path="*" element={<Navigate to="/" />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>
       </Layout>
@@ -101,10 +102,6 @@ const AppContent: React.FC = () => {
   );
 };
 
-const App: React.FC = () => (
-  <AuthProvider>
-    <AppContent />
-  </AuthProvider>
-);
+const App: React.FC = () => <AppContent />;
 
 export default App;

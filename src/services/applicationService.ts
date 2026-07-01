@@ -226,14 +226,32 @@ export const applicationService = {
   },
 
   async addNote(applicationId: string, note: string, authorId: string): Promise<ServiceResponse<any>> {
-    return { data: { id: `note_${Math.random().toString(36).substr(2, 9)}`, application_id: applicationId, note, author_id: authorId, created_at: new Date().toISOString() }, error: null };
+    const { data, error } = await supabase
+      .from('application_notes')
+      .insert({ application_id: applicationId, author_id: authorId, content: note })
+      .select()
+      .single();
+    if (error) return { data: null, error: error.message };
+    return { data, error: null };
   },
 
   async editNote(noteId: string, note: string): Promise<ServiceResponse<any>> {
-    return { data: null, error: null };
+    const { data, error } = await supabase
+      .from('application_notes')
+      .update({ content: note })
+      .eq('id', noteId)
+      .select()
+      .single();
+    if (error) return { data: null, error: error.message };
+    return { data, error: null };
   },
 
   async deleteNote(noteId: string): Promise<ServiceResponse<void>> {
+    const { error } = await supabase
+      .from('application_notes')
+      .delete()
+      .eq('id', noteId);
+    if (error) return { data: undefined, error: error.message };
     return { data: undefined, error: null };
   },
 
@@ -246,7 +264,14 @@ export const applicationService = {
   },
 
   async submitInfoResponse(requestId: string, submitted_info: string): Promise<ServiceResponse<any>> {
-    return { data: { id: requestId, submitted_info, status: 'submitted' }, error: null };
+    const { data, error } = await supabase
+      .from('application_info_requests')
+      .update({ response: submitted_info, status: 'responded', responded_at: new Date().toISOString() })
+      .eq('id', requestId)
+      .select()
+      .single();
+    if (error) return { data: null, error: error.message };
+    return { data, error: null };
   },
 
   async rejectApplication(id: string, reason: string, feedback?: string): Promise<ServiceResponse<void>> {

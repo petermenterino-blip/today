@@ -70,15 +70,6 @@ export const authService = {
     if (error) return { data: null, error: error.message };
     if (!data.user) return { data: null, error: 'Signup failed' };
 
-    const { error: profileError } = await supabase.from('profiles').insert({
-      id: data.user.id,
-      email,
-      name: fullName,
-      role: 'student',
-      application_status: 'pending',
-    });
-    if (profileError) return { data: null, error: profileError.message };
-
     const user: User = {
       id: data.user.id,
       email: data.user.email || email,

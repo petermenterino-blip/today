@@ -5,15 +5,6 @@
 export const NJ_TIMEZONE = 'America/New_York';
 
 /**
- * Returns the current date in New Jersey as a Date object
- */
-export function getNJDate(): Date {
-  const now = new Date();
-  const njString = now.toLocaleString('en-US', { timeZone: NJ_TIMEZONE });
-  return new Date(njString);
-}
-
-/**
  * Formats a date string or object to New Jersey relative format
  */
 export function formatToNJ(date: string | Date | number, options: Intl.DateTimeFormatOptions = {}): string {
