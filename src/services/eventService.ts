@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { NetworkEvent, ServiceResponse } from '../types';
+import { handleError } from '../lib/serviceHelper';
 
 function rowToEvent(row: any, attendees: string[] = []): NetworkEvent {
   const e: any = { id: row.id };
@@ -52,7 +53,7 @@ export const eventService = {
       .from('events')
       .select('*, event_attendees(user_id)')
       .order('date');
-    if (error) return { data: null, error: error.message };
+    if (error) return { data: null, error: handleError(error).error };
     const events = (data || []).map((row: any) => {
       const attendees = (row.event_attendees || []).map((a: any) => a.user_id);
       return rowToEvent(row, attendees);
@@ -67,13 +68,13 @@ export const eventService = {
       .insert(row)
       .select()
       .single();
-    if (error) return { data: null, error: error.message };
+    if (error) return { data: null, error: handleError(error).error };
     return { data: rowToEvent(data), error: null };
   },
 
   async delete(id: string): Promise<ServiceResponse<void>> {
     const { error } = await supabase.from('events').delete().eq('id', id);
-    if (error) return { data: undefined, error: error.message };
+    if (error) return { data: undefined, error: handleError(error).error };
     return { data: undefined, error: null };
   },
 
@@ -82,7 +83,7 @@ export const eventService = {
     if (userIds.length > 0) {
       const rows = userIds.map(user_id => ({ event_id: id, user_id, name: '' }));
       const { error } = await supabase.from('event_attendees').insert(rows as any);
-      if (error) return { data: undefined, error: error.message };
+      if (error) return { data: undefined, error: handleError(error).error };
     }
     return { data: undefined, error: null };
   },
@@ -93,7 +94,7 @@ export const eventService = {
       .select('*, event_attendees(user_id)')
       .eq('id', id)
       .single();
-    if (error) return { data: null, error: error.message };
+    if (error) return { data: null, error: handleError(error).error };
     const attendees = (data?.event_attendees || []).map((a: any) => a.user_id);
     return { data: rowToEvent(data, attendees), error: null };
   },
@@ -106,7 +107,7 @@ export const eventService = {
       .eq('id', id)
       .select()
       .single();
-    if (error) return { data: null, error: error.message };
+    if (error) return { data: null, error: handleError(error).error };
     if (!data) return { data: null, error: 'Event not found' };
     return { data: rowToEvent(data), error: null };
   },

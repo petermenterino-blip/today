@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { ServiceResponse } from '../types';
+import { handleError } from '../lib/serviceHelper';
 
 export const surveyService = {
   async fetchOrCreateCurrent(userId: string): Promise<ServiceResponse<{ id: string }>> {
@@ -15,7 +16,7 @@ export const surveyService = {
       .insert({ title: 'Session Audit', created_by: userId })
       .select('id')
       .single();
-    if (error) return { data: null, error: error.message };
+    if (error) return { data: null, error: handleError(error).error };
     return { data, error: null };
   },
 
@@ -30,7 +31,7 @@ export const surveyService = {
       })
       .select()
       .single();
-    if (error) return { data: null, error: error.message };
+    if (error) return { data: null, error: handleError(error).error };
     return { data, error: null };
   },
 

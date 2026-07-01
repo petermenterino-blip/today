@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { Booking, ServiceResponse } from '../types';
 import { notify } from './notificationService';
+import { handleError } from '../lib/serviceHelper';
 
 function rowToBooking(row: any): Booking {
   return {
@@ -42,7 +43,7 @@ export const bookingService = {
       .from('bookings')
       .select('*')
       .order('created_at', { ascending: false });
-    if (error) return { data: null, error: error.message };
+    if (error) return { data: null, error: handleError(error).error };
     return { data: (data || []).map(rowToBooking), error: null };
   },
 
@@ -54,7 +55,7 @@ export const bookingService = {
       .insert(row)
       .select()
       .single();
-    if (error) return { data: null, error: error.message };
+    if (error) return { data: null, error: handleError(error).error };
     const created = rowToBooking(data);
     notify.bookingConfirmed(created.user_id, created.mentor_id || '', created.date, created.time).catch(() => {});
     return { data: created, error: null };

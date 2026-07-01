@@ -1,6 +1,8 @@
 import { supabase } from '../lib/supabase';
 import { JournalEntry } from '../interfaces';
 import { notify } from './notificationService';
+import { safeQuery, safeMutate } from '../lib/supabaseFallback';
+import { interpretError } from '../lib/errorHandler';
 
 function rowToJournal(row: any): JournalEntry {
   return {
@@ -35,43 +37,46 @@ function journalToRow(entry: Partial<JournalEntry>): Record<string, any> {
 
 export const journalStorage = {
   async getAll(): Promise<JournalEntry[]> {
-    const { data, error } = await supabase
-      .from('journals')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (error) { console.error('journalStorage.getAll error:', error); return []; }
-    return (data || []).map(rowToJournal);
+    const result = await safeQuery(
+      'journalStorage.getAll',
+      () => supabase.from('journals').select('*').order('created_at', { ascending: false }),
+      [],
+      'journals',
+    );
+    if (result.error) console.warn('journalStorage.getAll:', interpretError(result.error));
+    return (result.data || []).map(rowToJournal);
   },
 
   async getByStudentId(studentId: string): Promise<JournalEntry[]> {
-    const { data, error } = await supabase
-      .from('journals')
-      .select('*')
-      .eq('student_id', studentId)
-      .order('created_at', { ascending: false });
-    if (error) { console.error('journalStorage.getByStudentId error:', error); return []; }
-    return (data || []).map(rowToJournal);
+    const result = await safeQuery(
+      'journalStorage.getByStudentId',
+      () => supabase.from('journals').select('*').eq('student_id', studentId).order('created_at', { ascending: false }),
+      [],
+      `journals:${studentId}`,
+    );
+    if (result.error) console.warn('journalStorage.getByStudentId:', interpretError(result.error));
+    return (result.data || []).map(rowToJournal);
   },
 
   async getById(id: string): Promise<JournalEntry | null> {
-    const { data, error } = await supabase
-      .from('journals')
-      .select('*')
-      .eq('id', id)
-      .single();
-    if (error) { return null; }
-    return rowToJournal(data);
+    const result = await safeQuery(
+      'journalStorage.getById',
+      () => supabase.from('journals').select('*').eq('id', id).single(),
+      null,
+    );
+    if (result.error || !result.data) return null;
+    return rowToJournal(result.data);
   },
 
   async create(data: Partial<JournalEntry>): Promise<JournalEntry> {
     const row = journalToRow(data as any);
-    const { data: created, error } = await supabase
-      .from('journals')
-      .insert(row)
-      .select()
-      .single();
-    if (error) throw error;
-    const journal = rowToJournal(created);
+    const result = await safeMutate<JournalEntry>(
+      'journalStorage.create',
+      () => supabase.from('journals').insert(row).select().single(),
+      'journals',
+    );
+    if (result.error) throw new Error(interpretError(result.error));
+    const journal = rowToJournal(result.data);
     if (journal.studentId) {
       notify.journalSubmitted(journal.studentId, '').catch(() => {});
     }
@@ -82,19 +87,34 @@ export const journalStorage = {
     const row = journalToRow(updates);
     if (Object.keys(row).length > 0) {
       row.updated_at = new Date().toISOString();
-      await supabase.from('journals').update(row).eq('id', id);
+      const result = await safeMutate(
+        'journalStorage.update',
+        () => supabase.from('journals').update(row).eq('id', id),
+        'journals',
+      );
+      if (result.error) {
+        console.warn('journalStorage.update:', interpretError(result.error));
+        return null;
+      }
     }
     return this.getById(id);
   },
 
   async delete(id: string): Promise<boolean> {
-    const { error } = await supabase.from('journals').delete().eq('id', id);
-    return !error;
+    const result = await safeMutate(
+      'journalStorage.delete',
+      () => supabase.from('journals').delete().eq('id', id),
+      'journals',
+    );
+    if (result.error) {
+      console.warn('journalStorage.delete:', interpretError(result.error));
+    }
+    return !result.error;
   },
 
   async seed(items: JournalEntry[]): Promise<void> {
     for (const item of items) {
-      await this.create(item);
+      try { await this.create(item); } catch {}
     }
   },
 };

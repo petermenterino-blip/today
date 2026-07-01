@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase';
 import { storageService } from './storageService';
 import { edgeFunctionService } from './edgeFunctionService';
 import { Application, ServiceResponse } from '../types';
+import { handleError } from '../lib/serviceHelper';
 
 const APP_COLS = [
   'id', 'user_id', 'email', 'first_name', 'last_name', 'phone_number',
@@ -111,7 +112,7 @@ export const applicationService = {
     }
 
     const { data, error, count } = await query;
-    if (error) return { data: null, error: error.message };
+    if (error) return { data: null, error: handleError(error).error };
     const mapped = (data || []).map(rowToApplication);
     return { data: { data: mapped, count: count ?? mapped.length }, error: null };
   },
@@ -122,7 +123,7 @@ export const applicationService = {
       .select('*')
       .eq('email', email.toLowerCase())
       .single();
-    if (error && error.code !== 'PGRST116') return { data: null, error: error.message };
+    if (error && error.code !== 'PGRST116') return { data: null, error: handleError(error).error };
     return { data: data ? rowToApplication(data) : null, error: null };
   },
 
@@ -167,7 +168,7 @@ export const applicationService = {
       })
       .select()
       .single();
-    if (error) return { data: null, error: error.message };
+    if (error) return { data: null, error: handleError(error).error };
     return { data: rowToApplication(data), error: null };
   },
 
@@ -176,13 +177,13 @@ export const applicationService = {
       .from('applications')
       .update({ status, updated_at: new Date().toISOString() })
       .eq('id', id);
-    if (error) return { data: undefined, error: error.message };
+    if (error) return { data: undefined, error: handleError(error).error };
     return { data: undefined, error: null };
   },
 
   async delete(id: string): Promise<ServiceResponse<void>> {
     const { error } = await supabase.from('applications').delete().eq('id', id);
-    if (error) return { data: undefined, error: error.message };
+    if (error) return { data: undefined, error: handleError(error).error };
     return { data: undefined, error: null };
   },
 
@@ -193,7 +194,7 @@ export const applicationService = {
       .from('applications')
       .update({ reason_for_applying: merged, updated_at: new Date().toISOString() })
       .eq('id', id);
-    if (error) return { data: undefined, error: error.message };
+    if (error) return { data: undefined, error: handleError(error).error };
     return { data: undefined, error: null };
   },
 
@@ -203,7 +204,7 @@ export const applicationService = {
       const url = await storageService.uploadStudentDocument(path, file);
       return { data: url, error: null };
     } catch (err: any) {
-      return { data: '', error: err.message };
+      return { data: '', error: handleError(err).error };
     }
   },
 
@@ -213,7 +214,7 @@ export const applicationService = {
       .select('*')
       .eq('id', id)
       .single();
-    if (error) return { data: null as any, error: error.message };
+    if (error) return { data: null as any, error: handleError(error).error };
     return {
       data: {
         application: data,
@@ -231,7 +232,7 @@ export const applicationService = {
       .insert({ application_id: applicationId, author_id: authorId, content: note })
       .select()
       .single();
-    if (error) return { data: null, error: error.message };
+    if (error) return { data: null, error: handleError(error).error };
     return { data, error: null };
   },
 
@@ -242,7 +243,7 @@ export const applicationService = {
       .eq('id', noteId)
       .select()
       .single();
-    if (error) return { data: null, error: error.message };
+    if (error) return { data: null, error: handleError(error).error };
     return { data, error: null };
   },
 
@@ -251,7 +252,7 @@ export const applicationService = {
       .from('application_notes')
       .delete()
       .eq('id', noteId);
-    if (error) return { data: undefined, error: error.message };
+    if (error) return { data: undefined, error: handleError(error).error };
     return { data: undefined, error: null };
   },
 
@@ -270,7 +271,7 @@ export const applicationService = {
       .eq('id', requestId)
       .select()
       .single();
-    if (error) return { data: null, error: error.message };
+    if (error) return { data: null, error: handleError(error).error };
     return { data, error: null };
   },
 
@@ -366,7 +367,7 @@ export const applicationService = {
       .eq('email', email.toLowerCase())
       .eq('status', 'invited')
       .single();
-    if (error && error.code !== 'PGRST116') return { data: null, error: error.message };
+    if (error && error.code !== 'PGRST116') return { data: null, error: handleError(error).error };
     if (!data) return { data: null, error: null };
     return {
       data: {

@@ -1,6 +1,8 @@
 import { supabase } from '../lib/supabase';
 import { Goal } from '../interfaces';
 import { notify } from './notificationService';
+import { safeQuery, safeMutate } from '../lib/supabaseFallback';
+import { interpretError } from '../lib/errorHandler';
 
 function rowToGoal(row: any, milestones?: any[]): Goal {
   return {
@@ -34,42 +36,46 @@ function goalToRow(goal: Partial<Goal>): Record<string, any> {
 
 export const goalStorage = {
   async getAll(): Promise<Goal[]> {
-    const { data, error } = await supabase
-      .from('goals')
-      .select('*, goal_milestones(*)')
-      .order('created_at', { ascending: false });
-    if (error) { console.error('goalStorage.getAll error:', error); return []; }
-    return (data || []).map((row: any) => rowToGoal(row, row.goal_milestones));
+    const result = await safeQuery(
+      'goalStorage.getAll',
+      () => supabase.from('goals').select('*, goal_milestones(*)').order('created_at', { ascending: false }),
+      [],
+      'goals',
+    );
+    if (result.error) console.warn('goalStorage.getAll:', interpretError(result.error));
+    return (result.data || []).map((row: any) => rowToGoal(row, row.goal_milestones));
   },
 
   async getByStudentId(studentId: string): Promise<Goal[]> {
-    const { data, error } = await supabase
-      .from('goals')
-      .select('*, goal_milestones(*)')
-      .eq('student_id', studentId)
-      .order('created_at', { ascending: false });
-    if (error) { console.error('goalStorage.getByStudentId error:', error); return []; }
-    return (data || []).map((row: any) => rowToGoal(row, row.goal_milestones));
+    const result = await safeQuery(
+      'goalStorage.getByStudentId',
+      () => supabase.from('goals').select('*, goal_milestones(*)').eq('student_id', studentId).order('created_at', { ascending: false }),
+      [],
+      `goals:${studentId}`,
+    );
+    if (result.error) console.warn('goalStorage.getByStudentId:', interpretError(result.error));
+    return (result.data || []).map((row: any) => rowToGoal(row, row.goal_milestones));
   },
 
   async getById(id: string): Promise<Goal | null> {
-    const { data, error } = await supabase
-      .from('goals')
-      .select('*, goal_milestones(*)')
-      .eq('id', id)
-      .single();
-    if (error) { console.error('goalStorage.getById error:', error); return null; }
-    return rowToGoal(data, data?.goal_milestones);
+    const result = await safeQuery(
+      'goalStorage.getById',
+      () => supabase.from('goals').select('*, goal_milestones(*)').eq('id', id).single(),
+      null,
+    );
+    if (result.error || !result.data) return null;
+    return rowToGoal(result.data, result.data?.goal_milestones);
   },
 
   async create(data: Partial<Goal>): Promise<Goal> {
     const row = goalToRow(data);
-    const { data: created } = await supabase
-      .from('goals')
-      .insert(row)
-      .select()
-      .single();
-    const goal = created ? rowToGoal(created) : (await this.getById(data.id || ''))!;
+    const result = await safeMutate(
+      'goalStorage.create',
+      () => supabase.from('goals').insert(row).select().single(),
+      'goals',
+    );
+    if (result.error || !result.data) throw new Error(interpretError(result.error));
+    const goal = rowToGoal(result.data);
     if (data.milestones && data.milestones.length > 0) {
       const milestoneRows = data.milestones.map((m: any) => ({
         goal_id: goal.id,
@@ -91,7 +97,15 @@ export const goalStorage = {
     const row = goalToRow(updates);
     if (Object.keys(row).length > 0) {
       row.updated_at = new Date().toISOString();
-      await supabase.from('goals').update(row).eq('id', id);
+      const result = await safeMutate(
+        'goalStorage.update',
+        () => supabase.from('goals').update(row).eq('id', id),
+        'goals',
+      );
+      if (result.error) {
+        console.warn('goalStorage.update:', interpretError(result.error));
+        return null;
+      }
     }
     if (updates.milestones) {
       await supabase.from('goal_milestones').delete().eq('goal_id', id);
@@ -112,13 +126,18 @@ export const goalStorage = {
   },
 
   async delete(id: string): Promise<boolean> {
-    const { error } = await supabase.from('goals').delete().eq('id', id);
-    return !error;
+    const result = await safeMutate(
+      'goalStorage.delete',
+      () => supabase.from('goals').delete().eq('id', id),
+      'goals',
+    );
+    if (result.error) console.warn('goalStorage.delete:', interpretError(result.error));
+    return !result.error;
   },
 
   async seed(items: Goal[]): Promise<void> {
     for (const item of items) {
-      await this.create(item);
+      try { await this.create(item); } catch {}
     }
   },
 };

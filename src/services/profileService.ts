@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { ServiceResponse } from '../types';
 import { storageService } from './storageService';
+import { handleError } from '../lib/serviceHelper';
 
 export interface UserProfileUpdate {
   first_name?: string;
@@ -56,7 +57,7 @@ export const profileService = {
       .eq('id', userId)
       .single();
     if (error && error.code !== 'PGRST116') {
-      return { data: null, error: error.message };
+      return { data: null, error: handleError(error).error };
     }
     return { data: fromDbColumns(data), error: null };
   },
@@ -69,7 +70,7 @@ export const profileService = {
       .from('profiles')
       .update({ ...dbData, updated_at: new Date().toISOString() })
       .eq('id', userId);
-    if (error) return { data: undefined, error: error.message };
+    if (error) return { data: undefined, error: handleError(error).error };
     return { data: undefined, error: null };
   },
 
@@ -89,7 +90,7 @@ export const profileService = {
       .eq('id', profileId)
       .single();
     if (error && error.code !== 'PGRST116') {
-      return { data: {}, error: error.message };
+      return { data: {}, error: handleError(error).error };
     }
     return { data: { ...(data?.settings || {}), username: data?.username || '' }, error: null };
   },
@@ -113,7 +114,7 @@ export const profileService = {
       .from('profiles')
       .update(updates)
       .eq('id', profileId);
-    if (error) return { data: undefined, error: error.message };
+    if (error) return { data: undefined, error: handleError(error).error };
     return { data: undefined, error: null };
   },
 

@@ -1,5 +1,7 @@
 import { supabase } from '../lib/supabase';
 import type { StudentProfile, StudentTimelineEvent } from '../interfaces';
+import { safeQuery, safeMutate } from '../lib/supabaseFallback';
+import { interpretError } from '../lib/errorHandler';
 
 function fromDbProfile(row: any): StudentProfile {
   return {
@@ -20,25 +22,24 @@ function fromDbProfile(row: any): StudentProfile {
 
 export const studentService = {
   async getAll(): Promise<StudentProfile[]> {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('role', 'student');
-
-    if (error) return [];
-    return (data || []).map(fromDbProfile);
+    const result = await safeQuery(
+      'studentService.getAll',
+      () => supabase.from('profiles').select('*').eq('role', 'student'),
+      [],
+      'students',
+    );
+    if (result.error) console.warn('studentService.getAll:', interpretError(result.error));
+    return (result.data || []).map(fromDbProfile);
   },
 
   async getById(id: string): Promise<StudentProfile | null> {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', id)
-      .eq('role', 'student')
-      .single();
-
-    if (error) return null;
-    return fromDbProfile(data);
+    const result = await safeQuery(
+      'studentService.getById',
+      () => supabase.from('profiles').select('*').eq('id', id).eq('role', 'student').single(),
+      null,
+    );
+    if (result.error || !result.data) return null;
+    return fromDbProfile(result.data);
   },
 
   async getByStatus(status: StudentProfile['status']): Promise<StudentProfile[]> {
@@ -59,32 +60,29 @@ export const studentService = {
     if (updates.metrics !== undefined) dbData.metrics = updates.metrics;
     dbData.updated_at = new Date().toISOString();
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .update(dbData)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) return null;
-    return fromDbProfile(data);
+    const result = await safeMutate(
+      'studentService.update',
+      () => supabase.from('profiles').update(dbData).eq('id', id).select().single(),
+      'students',
+    );
+    if (result.error || !result.data) return null;
+    return fromDbProfile(result.data);
   },
 
   async create(data: Partial<StudentProfile>): Promise<StudentProfile | null> {
-    const { data: created, error } = await supabase
-      .from('profiles')
-      .insert({
+    const result = await safeMutate(
+      'studentService.create',
+      () => supabase.from('profiles').insert({
         id: data.id || data.user_id,
         name: data.name || '',
         email: data.email || '',
         role: 'student',
         status: data.status || 'active',
-      })
-      .select()
-      .single();
-
-    if (error) return null;
-    return fromDbProfile(created);
+      }).select().single(),
+      'students',
+    );
+    if (result.error || !result.data) return null;
+    return fromDbProfile(result.data);
   },
 
   async seed(profiles: any[]): Promise<void> {
@@ -112,13 +110,12 @@ function fromDbTimeline(row: any): StudentTimelineEvent {
 
 export const studentTimelineService = {
   async getByStudentId(studentId: string): Promise<StudentTimelineEvent[]> {
-    const { data, error } = await supabase
-      .from('student_timeline_events')
-      .select('*')
-      .eq('student_id', studentId)
-      .order('timestamp', { ascending: false });
-
-    if (error) return [];
-    return (data || []).map(fromDbTimeline);
+    const result = await safeQuery(
+      'studentTimelineService.getByStudentId',
+      () => supabase.from('student_timeline_events').select('*').eq('student_id', studentId).order('timestamp', { ascending: false }),
+      [],
+    );
+    if (result.error) console.warn('studentTimelineService.getByStudentId:', interpretError(result.error));
+    return (result.data || []).map(fromDbTimeline);
   },
 };

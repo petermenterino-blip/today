@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { isNetworkError } from '../lib/errorHandler'
 
 type GeminiType = 'application_summary' | 'session_brief' | 'feedback' | 'insights' | 'chat'
 
@@ -20,11 +21,16 @@ interface ScheduledResponse {
 
 export const edgeFunctionService = {
   async gemini(prompt: string, type: GeminiType = 'chat', context?: Record<string, any>): Promise<string> {
-    const { data, error } = await supabase.functions.invoke<GeminiResponse>('gemini', {
-      body: { prompt, type, context },
-    })
-    if (error) throw new Error(error.message)
-    return data?.result || ''
+    try {
+      const { data, error } = await supabase.functions.invoke<GeminiResponse>('gemini', {
+        body: { prompt, type, context },
+      })
+      if (error) throw new Error(error.message)
+      return data?.result || ''
+    } catch (err: any) {
+      if (isNetworkError(err)) return 'AI features are unavailable offline.'
+      throw err
+    }
   },
 
   async sendEmail(
@@ -32,18 +38,28 @@ export const edgeFunctionService = {
     template: 'welcome' | 'session_reminder' | 'application_update' | 'notification',
     data: Record<string, any>
   ): Promise<EmailResponse> {
-    const { data: result, error } = await supabase.functions.invoke<EmailResponse>('resend', {
-      body: { to, template, data },
-    })
-    if (error) throw new Error(error.message)
-    return result || { success: false }
+    try {
+      const { data: result, error } = await supabase.functions.invoke<EmailResponse>('resend', {
+        body: { to, template, data },
+      })
+      if (error) throw new Error(error.message)
+      return result || { success: false }
+    } catch (err: any) {
+      if (isNetworkError(err)) return { success: false }
+      throw err
+    }
   },
 
   async runScheduledTask(task: 'session_reminders' | 'inactivity_alerts' | 'progress_summaries' | 'cleanup'): Promise<ScheduledResponse> {
-    const { data, error } = await supabase.functions.invoke<ScheduledResponse>('scheduled', {
-      body: { task },
-    })
-    if (error) throw new Error(error.message)
-    return data || { success: false, task }
+    try {
+      const { data, error } = await supabase.functions.invoke<ScheduledResponse>('scheduled', {
+        body: { task },
+      })
+      if (error) throw new Error(error.message)
+      return data || { success: false, task }
+    } catch (err: any) {
+      if (isNetworkError(err)) return { success: false, task }
+      throw err
+    }
   },
 }

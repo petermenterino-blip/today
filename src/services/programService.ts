@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { Program, ServiceResponse } from '../types';
+import { handleError } from '../lib/serviceHelper';
 
 const CAMEL_TO_SNAKE: Record<string, string> = {
   mentor: 'mentor_id',
@@ -43,7 +44,7 @@ export const programService = {
       .from('programs')
       .select('*')
       .order('title');
-    if (error) return { data: null, error: error.message };
+    if (error) return { data: null, error: handleError(error).error };
     return { data: (data || []).map(rowToProgram), error: null };
   },
 
@@ -54,7 +55,7 @@ export const programService = {
       .insert(row)
       .select()
       .single();
-    if (error) return { data: null, error: error.message };
+    if (error) return { data: null, error: handleError(error).error };
     return { data: rowToProgram(data), error: null };
   },
 
@@ -63,7 +64,7 @@ export const programService = {
       .from('programs')
       .delete()
       .eq('id', id);
-    if (error) return { data: undefined, error: error.message };
+    if (error) return { data: undefined, error: handleError(error).error };
     return { data: undefined, error: null };
   },
 
@@ -75,7 +76,7 @@ export const programService = {
       .eq('id', id)
       .select()
       .single();
-    if (error) return { data: null, error: error.message };
+    if (error) return { data: null, error: handleError(error).error };
     if (!data) return { data: null, error: 'Program not found' };
     return { data: rowToProgram(data), error: null };
   }

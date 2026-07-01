@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase';
 import { Session } from '../interfaces/session.interface';
 import { ServiceResponse } from '../types';
 import { notify } from './notificationService';
+import { handleError } from '../lib/serviceHelper';
 
 const SESSION_COLS = [
   'id', 'mentor_id', 'student_id', 'title', 'description',
@@ -61,7 +62,7 @@ export const sessionService = {
       .from('sessions')
       .select('*')
       .order('start_time', { ascending: true });
-    if (error) return { data: null, error: error.message };
+    if (error) return { data: null, error: handleError(error).error };
     return { data: (data || []).map(rowToSession), error: null };
   },
 
@@ -74,7 +75,7 @@ export const sessionService = {
       .insert(row)
       .select()
       .single();
-    if (error) return { data: null, error: error.message };
+    if (error) return { data: null, error: handleError(error).error };
     const created = rowToSession(data);
     notify.sessionScheduled(created.studentId, created.mentorId, created.title, created.startTime).catch(() => {});
     return { data: created, error: null };
@@ -89,7 +90,7 @@ export const sessionService = {
       .eq('id', id)
       .select()
       .single();
-    if (error) return { data: null, error: error.message };
+    if (error) return { data: null, error: handleError(error).error };
     if (!data) return { data: null, error: 'Session not found' };
     return { data: rowToSession(data), error: null };
   },
@@ -99,7 +100,7 @@ export const sessionService = {
       .from('sessions')
       .delete()
       .eq('id', id);
-    if (error) return { data: undefined, error: error.message };
+    if (error) return { data: undefined, error: handleError(error).error };
     return { data: undefined, error: null };
   }
 };

@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { ServiceResponse, TaskActivity } from '../types';
+import { handleError } from '../lib/serviceHelper';
 
 function rowToTaskActivity(row: any): TaskActivity {
   return {
@@ -25,7 +26,7 @@ export const taskService = {
       .from('tasks')
       .select('*, student:profiles!tasks_student_id_fkey(name)')
       .order('created_at', { ascending: false });
-    if (error) return { data: null, error: error.message };
+    if (error) return { data: null, error: handleError(error).error };
     const activities = (data || []).map((row: any) => {
       const t = rowToTaskActivity(row);
       t.user_name = row.student?.name || '';
@@ -40,7 +41,7 @@ export const taskService = {
       .select('*, student:profiles!tasks_student_id_fkey(name)')
       .eq('student_id', userId)
       .order('created_at', { ascending: false });
-    if (error) return { data: null, error: error.message };
+    if (error) return { data: null, error: handleError(error).error };
     const activities = (data || []).map((row: any) => {
       const t = rowToTaskActivity(row);
       t.user_name = row.student?.name || '';
@@ -63,7 +64,7 @@ export const taskService = {
       })
       .select()
       .single();
-    if (error) return { data: null, error: error.message };
+    if (error) return { data: null, error: handleError(error).error };
     return { data: rowToTaskActivity(data), error: null };
   },
 
@@ -74,7 +75,7 @@ export const taskService = {
       updates.feedback = response;
     }
     const { error } = await supabase.from('tasks').update(updates).eq('id', id);
-    if (error) return { data: undefined, error: error.message };
+    if (error) return { data: undefined, error: handleError(error).error };
     return { data: undefined, error: null };
   },
 
@@ -89,13 +90,13 @@ export const taskService = {
     if (updates.mentor_response !== undefined) row.mentor_response = updates.mentor_response;
     row.updated_at = new Date().toISOString();
     const { error } = await supabase.from('tasks').update(row).eq('id', id);
-    if (error) return { data: undefined, error: error.message };
+    if (error) return { data: undefined, error: handleError(error).error };
     return { data: undefined, error: null };
   },
 
   async delete(id: string): Promise<ServiceResponse<void>> {
     const { error } = await supabase.from('tasks').delete().eq('id', id);
-    if (error) return { data: undefined, error: error.message };
+    if (error) return { data: undefined, error: handleError(error).error };
     return { data: undefined, error: null };
   },
 };

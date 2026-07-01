@@ -1,16 +1,19 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { User, UserRole } from '../types';
 import { authService, UserProfileDetails } from '../services/authService';
+import { interpretError } from '../lib/errorHandler';
 
 interface AuthContextType {
   user: (User & { profile?: UserProfileDetails }) | null;
   role: UserRole;
   authLoading: boolean;
+  authError: string | null;
   login: (email: string, password: string) => Promise<User & { profile?: UserProfileDetails }>;
   signup: (email: string, password: string, fullName: string) => Promise<void>;
   logout: () => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (password: string) => Promise<void>;
+  clearError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -19,6 +22,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<(User & { profile?: UserProfileDetails }) | null>(null);
   const [role, setRole] = useState<UserRole>('visitor');
   const [authLoading, setAuthLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  const clearError = useCallback(() => setAuthError(null), []);
 
   useEffect(() => {
     let mounted = true;
@@ -34,8 +40,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setRole('visitor');
           }
         }
-      } catch (err) {
-        console.error('Failed to initialize session:', err);
+      } catch (err: any) {
+        if (mounted) {
+          console.error('Failed to initialize session:', err);
+          setAuthError(interpretError(err?.message || 'Connection failed. Please check your internet.'));
+        }
       } finally {
         if (mounted) {
           setAuthLoading(false);
@@ -44,7 +53,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
     initializeSession();
 
-    // Supabase real-time auth state listener (no-op if not using Supabase)
     const unsubscribe = authService.onAuthStateChange((user) => {
       if (!mounted) return;
       if (user) {
@@ -56,7 +64,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     });
 
-    // Re-read auth user when profile/applications change (e.g. mentor approves)
     const handleProfileChange = async () => {
       const { data } = await authService.getCurrentUser();
       if (data && mounted) {
@@ -74,9 +81,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string): Promise<User & { profile?: UserProfileDetails }> => {
     setAuthLoading(true);
+    setAuthError(null);
     const { data, error } = await authService.signIn(email, password);
     if (error || !data) {
       setAuthLoading(false);
+      setAuthError(interpretError(error));
       throw new Error(error || 'Login failed');
     }
     setUser(data);
@@ -87,9 +96,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signup = async (email: string, password: string, fullName: string): Promise<void> => {
     setAuthLoading(true);
+    setAuthError(null);
     const { data, error } = await authService.signUp(email, password, fullName);
     if (error || !data) {
       setAuthLoading(false);
+      setAuthError(interpretError(error));
       throw new Error(error || 'Signup failed');
     }
     setAuthLoading(false);
@@ -97,28 +108,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     setAuthLoading(true);
-    await authService.signOut();
+    setAuthError(null);
+    try {
+      await authService.signOut();
+    } catch {}
     setUser(null);
     setRole('visitor');
     setAuthLoading(false);
   };
 
   const forgotPassword = async (email: string): Promise<void> => {
+    setAuthError(null);
     const { error } = await authService.resetPassword(email);
     if (error) {
+      setAuthError(interpretError(error));
       throw new Error(error);
     }
   };
 
   const resetPassword = async (password: string): Promise<void> => {
+    setAuthError(null);
     const { error } = await authService.updatePassword(password);
     if (error) {
+      setAuthError(interpretError(error));
       throw new Error(error);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, role, authLoading, login, signup, logout, forgotPassword, resetPassword }}>
+    <AuthContext.Provider value={{ user, role, authLoading, authError, login, signup, logout, forgotPassword, resetPassword, clearError }}>
       {children}
     </AuthContext.Provider>
   );

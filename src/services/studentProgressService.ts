@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { ServiceResponse } from '../types';
+import { handleError } from '../lib/serviceHelper';
 
 export interface StudentProgress {
   userId: string;
@@ -76,7 +77,7 @@ export const studentProgressService = {
       .select()
       .single();
 
-    if (error) return { data: null, error: error.message };
+    if (error) return { data: null, error: handleError(error).error };
     return { data: fromDb(data), error: null };
   },
 
@@ -110,7 +111,7 @@ export const studentProgressService = {
       .select()
       .single();
 
-    if (error) return { data: null, error: error.message };
+    if (error) return { data: null, error: handleError(error).error };
     return { data: fromDb(data), error: null };
   },
 

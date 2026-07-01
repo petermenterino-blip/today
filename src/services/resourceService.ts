@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { ResourceLink, ServiceResponse } from '../types';
+import { handleError } from '../lib/serviceHelper';
 
 export const resourceService = {
   async fetchAll(lessonId?: string): Promise<ServiceResponse<ResourceLink[]>> {
@@ -8,7 +9,7 @@ export const resourceService = {
       query = query.eq('lesson_id', lessonId);
     }
     const { data, error } = await query;
-    if (error) return { data: null, error: error.message };
+    if (error) return { data: null, error: handleError(error).error };
     return { data: data || [], error: null };
   },
 
@@ -23,7 +24,7 @@ export const resourceService = {
       })
       .select()
       .single();
-    if (error) return { data: null, error: error.message };
+    if (error) return { data: null, error: handleError(error).error };
     return { data: data as ResourceLink, error: null };
   },
 
@@ -37,7 +38,7 @@ export const resourceService = {
 
   async delete(id: string): Promise<ServiceResponse<void>> {
     const { error } = await supabase.from('resources').delete().eq('id', id);
-    if (error) return { data: undefined, error: error.message };
+    if (error) return { data: undefined, error: handleError(error).error };
     return { data: undefined, error: null };
   },
 };

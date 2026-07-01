@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { ServiceResponse, User, UserRole } from '../types';
+import { handleError } from '../lib/serviceHelper';
 
 export interface UserProfileDetails {
   id: string;
@@ -35,7 +36,7 @@ export const authService = {
     }
 
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) return { data: null, error: error.message };
+    if (error) return { data: null, error: handleError(error).error };
     if (!data.user) return { data: null, error: 'Login failed' };
 
     const { data: profile } = await supabase
@@ -67,7 +68,7 @@ export const authService = {
       password,
       options: { data: { full_name: fullName, role: 'student' } },
     });
-    if (error) return { data: null, error: error.message };
+    if (error) return { data: null, error: handleError(error).error };
     if (!data.user) return { data: null, error: 'Signup failed' };
 
     const user: User = {
@@ -86,7 +87,7 @@ export const authService = {
     }
 
     const { error } = await supabase.auth.signOut();
-    if (error) return { data: undefined, error: error.message };
+    if (error) return { data: undefined, error: handleError(error).error };
     return { data: undefined, error: null };
   },
 
@@ -96,7 +97,7 @@ export const authService = {
     }
 
     const { data: { session }, error } = await supabase.auth.getSession();
-    if (error) return { data: null, error: error.message };
+    if (error) return { data: null, error: handleError(error).error };
     if (!session?.user) return { data: null, error: 'No active session' };
 
     const { data: profile } = await supabase
@@ -129,7 +130,7 @@ export const authService = {
       .eq('id', userId)
       .single();
 
-    if (error) return { data: null, error: error.message };
+    if (error) return { data: null, error: handleError(error).error };
 
     const userData: User & { profile?: UserProfileDetails } = {
       id: userId,
@@ -150,7 +151,7 @@ export const authService = {
     }
 
     const { error } = await supabase.auth.resetPasswordForEmail(email);
-    if (error) return { data: undefined, error: error.message };
+    if (error) return { data: undefined, error: handleError(error).error };
     return { data: undefined, error: null };
   },
 
@@ -160,7 +161,7 @@ export const authService = {
     }
 
     const { error } = await supabase.auth.updateUser({ password });
-    if (error) return { data: undefined, error: error.message };
+    if (error) return { data: undefined, error: handleError(error).error };
     return { data: undefined, error: null };
   },
 

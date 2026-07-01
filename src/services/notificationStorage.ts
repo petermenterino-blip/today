@@ -1,5 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { Notification } from '../interfaces';
+import { safeQuery, safeMutate } from '../lib/supabaseFallback';
+import { interpretError, isNetworkError } from '../lib/errorHandler';
 
 function rowToNotification(row: any): Notification {
   return {
@@ -16,80 +18,93 @@ function rowToNotification(row: any): Notification {
 
 export const notificationStorage = {
   async getAll(): Promise<Notification[]> {
-    const { data, error } = await supabase
-      .from('notifications')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (error) { console.error('notificationStorage.getAll error:', error); return []; }
-    return (data || []).map(rowToNotification);
+    const result = await safeQuery(
+      'notificationStorage.getAll',
+      () => supabase.from('notifications').select('*').order('created_at', { ascending: false }),
+      [],
+      'notifications',
+    );
+    if (result.error) console.warn('notificationStorage.getAll:', interpretError(result.error));
+    return (result.data || []).map(rowToNotification);
   },
 
   async getByUserId(userId: string): Promise<Notification[]> {
-    const { data, error } = await supabase
-      .from('notifications')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-    if (error) { console.error('notificationStorage.getByUserId error:', error); return []; }
-    return (data || []).map(rowToNotification);
+    const result = await safeQuery(
+      'notificationStorage.getByUserId',
+      () => supabase.from('notifications').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
+      [],
+      `notifications:${userId}`,
+    );
+    if (result.error) console.warn('notificationStorage.getByUserId:', interpretError(result.error));
+    return (result.data || []).map(rowToNotification);
   },
 
   async getUnreadCount(userId: string): Promise<number> {
-    const { count, error } = await supabase
-      .from('notifications')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .eq('read', false);
-    if (error) return 0;
-    return count || 0;
+    try {
+      const { count, error } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('read', false);
+      if (error) {
+        if (isNetworkError(error)) return 0;
+        console.warn('notificationStorage.getUnreadCount:', interpretError(error));
+        return 0;
+      }
+      return count || 0;
+    } catch {
+      return 0;
+    }
   },
 
   async getById(id: string): Promise<Notification | null> {
-    const { data, error } = await supabase
-      .from('notifications')
-      .select('*')
-      .eq('id', id)
-      .single();
-    if (error) return null;
-    return rowToNotification(data);
+    const result = await safeQuery(
+      'notificationStorage.getById',
+      () => supabase.from('notifications').select('*').eq('id', id).single(),
+      null,
+    );
+    if (result.error || !result.data) return null;
+    return rowToNotification(result.data);
   },
 
   async create(data: Partial<Notification>): Promise<Notification> {
-    const { data: created, error } = await supabase
-      .rpc('insert_notification', {
+    const rpcResult = await safeMutate(
+      'notificationStorage.create',
+      () => supabase.rpc('insert_notification', {
         p_user_id: data.userId,
         p_title: data.title,
         p_message: data.message,
         p_type: data.type || 'system',
-      });
+      }),
+    );
 
-    if (error) {
-      const { data: fallback, error: fallbackError } = await supabase
-        .from('notifications')
-        .insert({
-          user_id: data.userId,
-          title: data.title,
-          message: data.message,
-          type: data.type || 'system',
-          read: data.read ?? false,
-          link: data.link || null,
-        })
-        .select()
-        .single();
-      if (fallbackError) throw fallbackError;
-      return rowToNotification(fallback);
+    if (!rpcResult.error && rpcResult.data) {
+      return {
+        id: '',
+        userId: data.userId || '',
+        title: data.title || '',
+        message: data.message || '',
+        read: data.read ?? false,
+        type: data.type || 'system',
+        link: data.link,
+        createdAt: new Date().toISOString(),
+      };
     }
 
-    return {
-      id: '',
-      userId: data.userId || '',
-      title: data.title || '',
-      message: data.message || '',
-      read: data.read ?? false,
-      type: data.type || 'system',
-      link: data.link,
-      createdAt: new Date().toISOString(),
-    };
+    const fallbackResult = await safeMutate(
+      'notificationStorage.createFallback',
+      () => supabase.from('notifications').insert({
+        user_id: data.userId,
+        title: data.title,
+        message: data.message,
+        type: data.type || 'system',
+        read: data.read ?? false,
+        link: data.link || null,
+      }).select().single(),
+      'notifications',
+    );
+    if (fallbackResult.error || !fallbackResult.data) throw new Error(interpretError(fallbackResult.error));
+    return rowToNotification(fallbackResult.data);
   },
 
   async update(id: string, updates: Partial<Notification>): Promise<Notification | null> {
@@ -99,19 +114,32 @@ export const notificationStorage = {
     if (updates.message !== undefined) row.message = updates.message;
 
     if (Object.keys(row).length > 0) {
-      await supabase.from('notifications').update(row).eq('id', id);
+      const result = await safeMutate(
+        'notificationStorage.update',
+        () => supabase.from('notifications').update(row).eq('id', id),
+        'notifications',
+      );
+      if (result.error) {
+        console.warn('notificationStorage.update:', interpretError(result.error));
+        return null;
+      }
     }
     return this.getById(id);
   },
 
   async delete(id: string): Promise<boolean> {
-    const { error } = await supabase.from('notifications').delete().eq('id', id);
-    return !error;
+    const result = await safeMutate(
+      'notificationStorage.delete',
+      () => supabase.from('notifications').delete().eq('id', id),
+      'notifications',
+    );
+    if (result.error) console.warn('notificationStorage.delete:', interpretError(result.error));
+    return !result.error;
   },
 
   async seed(items: Notification[]): Promise<void> {
     for (const item of items) {
-      await this.create(item);
+      try { await this.create(item); } catch {}
     }
   },
 };

@@ -1,6 +1,8 @@
 import { supabase } from '../lib/supabase';
 import { ActionItem } from '../interfaces';
 import { notify } from './notificationService';
+import { safeQuery, safeMutate } from '../lib/supabaseFallback';
+import { interpretError } from '../lib/errorHandler';
 
 function rowToActionItem(row: any): ActionItem {
   return {
@@ -29,53 +31,57 @@ function actionItemToRow(item: Partial<ActionItem>): Record<string, any> {
 
 export const taskStorage = {
   async getAll(): Promise<ActionItem[]> {
-    const { data, error } = await supabase
-      .from('tasks')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (error) { console.error('taskStorage.getAll error:', error); return []; }
-    return (data || []).map(rowToActionItem);
+    const result = await safeQuery(
+      'taskStorage.getAll',
+      () => supabase.from('tasks').select('*').order('created_at', { ascending: false }),
+      [],
+      'tasks',
+    );
+    if (result.error) console.warn('taskStorage.getAll:', interpretError(result.error));
+    return (result.data || []).map(rowToActionItem);
   },
 
   async getByStudentId(studentId: string): Promise<ActionItem[]> {
-    const { data, error } = await supabase
-      .from('tasks')
-      .select('*')
-      .eq('student_id', studentId)
-      .order('created_at', { ascending: false });
-    if (error) { console.error('taskStorage.getByStudentId error:', error); return []; }
-    return (data || []).map(rowToActionItem);
+    const result = await safeQuery(
+      'taskStorage.getByStudentId',
+      () => supabase.from('tasks').select('*').eq('student_id', studentId).order('created_at', { ascending: false }),
+      [],
+      `tasks:${studentId}`,
+    );
+    if (result.error) console.warn('taskStorage.getByStudentId:', interpretError(result.error));
+    return (result.data || []).map(rowToActionItem);
   },
 
   async getByMentorId(mentorId: string): Promise<ActionItem[]> {
-    const { data, error } = await supabase
-      .from('tasks')
-      .select('*')
-      .eq('mentor_id', mentorId)
-      .order('created_at', { ascending: false });
-    if (error) { console.error('taskStorage.getByMentorId error:', error); return []; }
-    return (data || []).map(rowToActionItem);
+    const result = await safeQuery(
+      'taskStorage.getByMentorId',
+      () => supabase.from('tasks').select('*').eq('mentor_id', mentorId).order('created_at', { ascending: false }),
+      [],
+      `tasks:mentor:${mentorId}`,
+    );
+    if (result.error) console.warn('taskStorage.getByMentorId:', interpretError(result.error));
+    return (result.data || []).map(rowToActionItem);
   },
 
   async getById(id: string): Promise<ActionItem | null> {
-    const { data, error } = await supabase
-      .from('tasks')
-      .select('*')
-      .eq('id', id)
-      .single();
-    if (error) { return null; }
-    return rowToActionItem(data);
+    const result = await safeQuery(
+      'taskStorage.getById',
+      () => supabase.from('tasks').select('*').eq('id', id).single(),
+      null,
+    );
+    if (result.error || !result.data) return null;
+    return rowToActionItem(result.data);
   },
 
   async create(data: Partial<ActionItem>): Promise<ActionItem> {
     const row = actionItemToRow(data);
-    const { data: created, error } = await supabase
-      .from('tasks')
-      .insert(row)
-      .select()
-      .single();
-    if (error) throw error;
-    const task = rowToActionItem(created);
+    const result = await safeMutate(
+      'taskStorage.create',
+      () => supabase.from('tasks').insert(row).select().single(),
+      'tasks',
+    );
+    if (result.error || !result.data) throw new Error(interpretError(result.error));
+    const task = rowToActionItem(result.data);
     notify.taskAssigned(task.studentId, task.mentorId, task.title).catch(() => {});
     return task;
   },
@@ -84,7 +90,15 @@ export const taskStorage = {
     const row = actionItemToRow(updates);
     if (Object.keys(row).length > 0) {
       row.updated_at = new Date().toISOString();
-      await supabase.from('tasks').update(row).eq('id', id);
+      const result = await safeMutate(
+        'taskStorage.update',
+        () => supabase.from('tasks').update(row).eq('id', id),
+        'tasks',
+      );
+      if (result.error) {
+        console.warn('taskStorage.update:', interpretError(result.error));
+        return null;
+      }
     }
     if (updates.status === 'completed') {
       const current = await this.getById(id);
@@ -96,13 +110,18 @@ export const taskStorage = {
   },
 
   async delete(id: string): Promise<boolean> {
-    const { error } = await supabase.from('tasks').delete().eq('id', id);
-    return !error;
+    const result = await safeMutate(
+      'taskStorage.delete',
+      () => supabase.from('tasks').delete().eq('id', id),
+      'tasks',
+    );
+    if (result.error) console.warn('taskStorage.delete:', interpretError(result.error));
+    return !result.error;
   },
 
   async seed(items: ActionItem[]): Promise<void> {
     for (const item of items) {
-      await this.create(item);
+      try { await this.create(item); } catch {}
     }
   },
 };

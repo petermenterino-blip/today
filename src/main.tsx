@@ -4,9 +4,11 @@ import App from './app/App';
 import '../index.css';
 import { QueryProvider } from './utils/queryClient';
 import { AuthProvider } from './context/AuthContext';
+import { ConnectionProvider } from './context/ConnectionContext';
 import { seedDatabase } from './utils/seedData';
 import { initSentry } from './lib/sentry';
 import ErrorBoundary from './components/shared/ErrorBoundary';
+import OfflineBanner from './components/shared/OfflineBanner';
 
 initSentry();
 if (import.meta.env.DEV) {
@@ -23,9 +25,12 @@ root.render(
   <React.StrictMode>
     <ErrorBoundary>
       <QueryProvider>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
+        <ConnectionProvider>
+          <AuthProvider>
+            <OfflineBanner />
+            <App />
+          </AuthProvider>
+        </ConnectionProvider>
       </QueryProvider>
     </ErrorBoundary>
   </React.StrictMode>

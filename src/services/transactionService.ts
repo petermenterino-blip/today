@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { ServiceResponse } from '../types';
+import { handleError } from '../lib/serviceHelper';
 
 function rowToTransaction(row: any): { id: string; user_id: string; user_name: string; amount: number; product: string; status: 'successful' | 'failed' | 'pending'; created_at: string } {
   return {
@@ -20,7 +21,7 @@ export const transactionService = {
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
-    if (error) return { data: null, error: error.message };
+    if (error) return { data: null, error: handleError(error).error };
     return { data: (data || []).map(rowToTransaction), error: null };
   },
 
@@ -36,7 +37,7 @@ export const transactionService = {
       })
       .select()
       .single();
-    if (error) return { data: null, error: error.message };
+    if (error) return { data: null, error: handleError(error).error };
     return { data, error: null };
   },
 
@@ -45,7 +46,7 @@ export const transactionService = {
       .from('transactions')
       .select('*')
       .order('created_at', { ascending: false });
-    if (error) return { data: null, error: error.message };
+    if (error) return { data: null, error: handleError(error).error };
     return { data: (data || []).map(rowToTransaction), error: null };
   },
 };
