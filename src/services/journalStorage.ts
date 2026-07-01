@@ -1,11 +1,13 @@
 import { supabase } from '../lib/supabase';
 import { JournalEntry } from '../interfaces';
+import { notify } from './notificationService';
 
 function rowToJournal(row: any): JournalEntry {
   return {
     id: row.id,
     studentId: row.student_id,
     type: row.type,
+    title: row.title || '',
     content: row.content,
     mood: row.mood,
     wins: row.wins || [],
@@ -21,6 +23,7 @@ function journalToRow(entry: Partial<JournalEntry>): Record<string, any> {
   const row: Record<string, any> = {};
   if (entry.studentId !== undefined) row.student_id = entry.studentId;
   if (entry.type !== undefined) row.type = entry.type;
+  if (entry.title !== undefined) row.title = entry.title;
   if (entry.content !== undefined) row.content = entry.content;
   if (entry.mood !== undefined) row.mood = entry.mood;
   if (entry.wins !== undefined) row.wins = entry.wins;
@@ -68,7 +71,11 @@ export const journalStorage = {
       .select()
       .single();
     if (error) throw error;
-    return rowToJournal(created);
+    const journal = rowToJournal(created);
+    if (journal.studentId) {
+      notify.journalSubmitted(journal.studentId, '').catch(() => {});
+    }
+    return journal;
   },
 
   async update(id: string, updates: Partial<JournalEntry>): Promise<JournalEntry | null> {

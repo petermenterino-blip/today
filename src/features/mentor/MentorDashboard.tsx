@@ -244,7 +244,38 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
       )}
 
       {d.activeTab === 'analytics' && (
-        <div>{/* TODO: Implement AnalyticsTab in future feature sprint */}</div>
+        <div className="space-y-6 animate-in fade-in duration-500">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-slate-900">Analytics</h1>
+            <p className="text-xs text-slate-500 mt-1 font-medium">Student progress and engagement metrics</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Active Students</p>
+              <p className="text-4xl font-black text-slate-900">{d.activeStudentsCount}</p>
+            </div>
+            <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Pending Applications</p>
+              <p className="text-4xl font-black text-slate-900">{d.pendingApplications.length}</p>
+            </div>
+            <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Upcoming Sessions</p>
+              <p className="text-4xl font-black text-slate-900">{d.upcomingSessions.length}</p>
+            </div>
+          </div>
+          <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
+            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-4">Student Health Overview</p>
+            <div className="space-y-3">
+              {d.studentProfiles.filter((s: any) => s.healthStatus).map((s: any) => (
+                <div key={s.user_id || s.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl">
+                  <div className={`w-2.5 h-2.5 rounded-full ${s.healthStatus === 'active' ? 'bg-emerald-500' : s.healthStatus === 'needs_attention' ? 'bg-amber-500' : 'bg-red-500'}`} />
+                  <span className="text-sm font-bold text-slate-800 flex-1">{s.name}</span>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">{s.healthStatus}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
 
       {d.activeTab === 'ai' && (

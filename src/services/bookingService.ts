@@ -1,10 +1,12 @@
 import { supabase } from '../lib/supabase';
 import { Booking, ServiceResponse } from '../types';
+import { notify } from './notificationService';
 
 function rowToBooking(row: any): Booking {
   return {
     id: row.id,
     user_id: row.user_id,
+    mentor_id: row.mentor_id || '',
     user_name: row.user_name || '',
     program_id: row.program_id,
     date: row.date || '',
@@ -21,6 +23,7 @@ function rowToBooking(row: any): Booking {
 function bookingToRow(b: Partial<Booking>): Record<string, any> {
   const row: Record<string, any> = {};
   if (b.user_id !== undefined) row.user_id = b.user_id;
+  if (b.mentor_id !== undefined) row.mentor_id = b.mentor_id;
   if (b.user_name !== undefined) row.user_name = b.user_name;
   if (b.program_id !== undefined) row.program_id = b.program_id;
   if (b.date !== undefined) row.date = b.date;
@@ -52,6 +55,8 @@ export const bookingService = {
       .select()
       .single();
     if (error) return { data: null, error: error.message };
-    return { data: rowToBooking(data), error: null };
+    const created = rowToBooking(data);
+    notify.bookingConfirmed(created.user_id, created.mentor_id || '', created.date, created.time).catch(() => {});
+    return { data: created, error: null };
   },
 };

@@ -70,6 +70,15 @@ export const authService = {
     if (error) return { data: null, error: error.message };
     if (!data.user) return { data: null, error: 'Signup failed' };
 
+    const { error: profileError } = await supabase.from('profiles').insert({
+      id: data.user.id,
+      email,
+      name: fullName,
+      role: 'student',
+      application_status: 'pending',
+    });
+    if (profileError) return { data: null, error: profileError.message };
+
     const user: User = {
       id: data.user.id,
       email: data.user.email || email,
@@ -170,21 +179,25 @@ export const authService = {
     const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         if (session?.user) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
 
-          const userData: User = {
-            id: session.user.id,
-            email: session.user.email || '',
-            name: profile?.name || session.user.user_metadata?.full_name || '',
-            role: profile?.role || null,
-            application_status: profile?.application_status || null,
-            created_at: session.user.created_at,
-          };
-          callback(userData);
+            const userData: User = {
+              id: session.user.id,
+              email: session.user.email || '',
+              name: profile?.name || session.user.user_metadata?.full_name || '',
+              role: profile?.role || null,
+              application_status: profile?.application_status || null,
+              created_at: session.user.created_at,
+            };
+            callback(userData);
+          } catch {
+            callback(null);
+          }
         }
       } else if (event === 'SIGNED_OUT') {
         callback(null);

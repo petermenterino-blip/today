@@ -33,21 +33,9 @@ export function formatToNJ(date: string | Date | number, options: Intl.DateTimeF
  */
 export function getNJISOString(): string {
   const now = new Date();
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: NJ_TIMEZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  });
-  
-  const parts = formatter.formatToParts(now);
-  const getPart = (type: string) => parts.find(p => p.type === type)?.value;
-  
-  return `${getPart('year')}-${getPart('month')}-${getPart('day')}T${getPart('hour')}:${getPart('minute')}:${getPart('second')}Z`;
+  const njTime = now.toLocaleString('en-US', { timeZone: NJ_TIMEZONE });
+  const njDate = new Date(njTime);
+  return njDate.toISOString();
 }
 
 /**

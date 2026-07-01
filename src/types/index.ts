@@ -86,6 +86,7 @@ export interface StudentProfile {
 export interface TaskActivity {
   id: string;
   user_id: string;
+  mentor_id?: string;
   user_name: string;
   status: 'pending' | 'in_progress' | 'submitted' | 'completed' | 'reviewed' | 'approved' | 'rejected';
   mentor_response?: string;
@@ -178,6 +179,7 @@ export interface MentorAvailability {
 export interface Booking {
   id: string;
   user_id: string;
+  mentor_id?: string;
   user_name: string;
   date: string;
   time: string;
@@ -352,15 +354,6 @@ export interface Module {
   title: string;
   description: string;
   lessons: Lesson[];
-}
-
-export interface Goal {
-  id: string;
-  user_id: string;
-  title: string;
-  description?: string;
-  status: 'todo' | 'in_progress' | 'completed';
-  due_date?: string;
 }
 
 export interface ServiceResponse<T> {

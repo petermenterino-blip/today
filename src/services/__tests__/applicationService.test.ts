@@ -12,7 +12,8 @@ const { mockFrom, mockSingle } = vi.hoisted(() => {
   const mUpdate = vi.fn(() => ({ eq: mUpdateEq }));
   const mDeleteEq = vi.fn();
   const mDelete = vi.fn(() => ({ eq: mDeleteEq }));
-  const mFrom = vi.fn(() => ({ select: mSelect, insert: mInsert, update: mUpdate, delete: mDelete }));
+  const mUpsert = vi.fn().mockResolvedValue({ error: null });
+  const mFrom = vi.fn(() => ({ select: mSelect, insert: mInsert, update: mUpdate, delete: mDelete, upsert: mUpsert }));
   return { mockFrom: mFrom, mockSingle: mSingle };
 });
 
@@ -180,6 +181,7 @@ describe('applicationService', () => {
           single: singleMock,
         })),
         update: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) })),
+        upsert: vi.fn().mockResolvedValue({ error: null }),
       });
 
       mockSignUp.mockResolvedValue({

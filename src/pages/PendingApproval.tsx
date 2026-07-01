@@ -1,10 +1,40 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Clock, ShieldCheck, Mail } from 'lucide-react';
+import { Clock, ShieldCheck, Mail, XCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const PendingApproval: React.FC = () => {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
+  const isRejected = user?.application_status === 'rejected';
+
+  if (isRejected) {
+    return (
+      <div className="min-h-screen bg-[#FDFDFD] flex items-center justify-center p-6">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-md w-full bg-white p-12 rounded-[48px] shadow-2xl shadow-black/5 border border-slate-100 text-center"
+        >
+          <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-8">
+            <XCircle size={40} />
+          </div>
+          
+          <h1 className="text-3xl font-black uppercase tracking-tight text-slate-900 mb-4">Application Not Approved.</h1>
+          <p className="text-slate-500 text-sm font-medium leading-relaxed mb-10">
+            Unfortunately, your application for the Mentarino Workspace has not been approved at this time. 
+            Please check your email for further details.
+          </p>
+
+          <button 
+            onClick={() => logout()}
+            className="mt-12 w-full py-5 bg-black text-white text-[10px] font-black uppercase tracking-[0.3em] rounded-full hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-black/10"
+          >
+            Sign Out
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#FDFDFD] flex items-center justify-center p-6">

@@ -5,8 +5,13 @@ import '../index.css';
 import { QueryProvider } from './utils/queryClient';
 import { AuthProvider } from './context/AuthContext';
 import { seedDatabase } from './utils/seedData';
+import { initSentry } from './lib/sentry';
+import ErrorBoundary from './components/shared/ErrorBoundary';
 
-seedDatabase().catch(() => {});
+initSentry();
+if (import.meta.env.DEV) {
+  seedDatabase().catch(() => {});
+}
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -16,10 +21,12 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <QueryProvider>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
-    </QueryProvider>
+    <ErrorBoundary>
+      <QueryProvider>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </QueryProvider>
+    </ErrorBoundary>
   </React.StrictMode>
 );

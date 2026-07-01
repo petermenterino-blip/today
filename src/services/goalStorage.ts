@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { Goal } from '../interfaces';
+import { notify } from './notificationService';
 
 function rowToGoal(row: any, milestones?: any[]): Goal {
   return {
@@ -99,6 +100,12 @@ export const goalStorage = {
           goal_id: id, title: m.title, completed: m.completed || false,
         }));
         await supabase.from('goal_milestones').insert(milestoneRows);
+      }
+    }
+    if (updates.status === 'completed') {
+      const current = await supabase.from('goals').select('title, student_id').eq('id', id).single();
+      if (current.data) {
+        notify.goalCompleted(current.data.student_id, '', current.data.title).catch(() => {});
       }
     }
     return this.getById(id);

@@ -5,6 +5,7 @@ function rowToTaskActivity(row: any): TaskActivity {
   return {
     id: row.id,
     user_id: row.student_id,
+    mentor_id: row.mentor_id || '',
     user_name: '', // resolved below
     status: row.status,
     mentor_response: row.mentor_response || '',
@@ -48,12 +49,12 @@ export const taskService = {
     return { data: activities, error: null };
   },
 
-  async insert(activity: Omit<TaskActivity, 'id' | 'created_at'>): Promise<ServiceResponse<TaskActivity>> {
+  async insert(activity: Omit<TaskActivity, 'id' | 'created_at'> & { mentor_id?: string }): Promise<ServiceResponse<TaskActivity>> {
     const { data, error } = await supabase
       .from('tasks')
       .insert({
         student_id: activity.user_id,
-        mentor_id: activity.user_id,
+        mentor_id: activity.mentor_id || null,
         title: activity.task_title || 'Untitled Task',
         description: activity.description,
         due_date: activity.due_date,

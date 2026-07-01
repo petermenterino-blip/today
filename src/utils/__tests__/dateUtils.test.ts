@@ -32,7 +32,7 @@ describe('formatToNJ', () => {
 describe('getNJISOString', () => {
   it('returns ISO-like string with Z suffix', () => {
     const result = getNJISOString();
-    expect(result).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/);
+    expect(result).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
   });
 });
 

@@ -197,9 +197,10 @@ export const applicationService = {
     return { data: undefined, error: null };
   },
 
-  async uploadDocument(file: File): Promise<ServiceResponse<string>> {
+  async uploadDocument(file: File, userId?: string): Promise<ServiceResponse<string>> {
     try {
-      const url = await storageService.uploadStudentDocument('applications', file);
+      const path = userId || 'applications';
+      const url = await storageService.uploadStudentDocument(path, file);
       return { data: url, error: null };
     } catch (err: any) {
       return { data: '', error: err.message };
@@ -286,9 +287,9 @@ export const applicationService = {
 
     const fullName = `${app.first_name || ''} ${app.last_name || ''}`.trim();
     const email = app.email;
-    const tempPassword = crypto.randomUUID().slice(0, 16) + '!Aa1';
+    const tempPassword = (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2, 18)) + '!Aa1';
 
-    const { error: signUpError } = await supabase.auth.signUp({
+    const { error: signUpError, data: signUpData } = await supabase.auth.signUp({
       email,
       password: tempPassword,
       options: {
@@ -296,6 +297,18 @@ export const applicationService = {
       },
     });
     if (signUpError) return { data: null, error: signUpError.message };
+
+    if (signUpData?.user) {
+      await supabase.from('profiles').upsert({
+        id: signUpData.user.id,
+        email,
+        name: fullName,
+        role: 'student',
+        application_status: 'approved',
+        first_name: app.first_name || null,
+        last_name: app.last_name || null,
+      });
+    }
 
     const { error: updateError } = await supabase
       .from('applications')
@@ -307,7 +320,7 @@ export const applicationService = {
       await edgeFunctionService.sendEmail(email, 'welcome', {
         name: fullName,
         email,
-        password: tempPassword,
+        tempPassword,
       });
     } catch {
       // Email send failure does not block the invitation

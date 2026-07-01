@@ -9,16 +9,17 @@ export interface FormTemplate {
 
 export interface FormField {
   id: string;
-  type: 'text' | 'textarea' | 'radio' | 'checkbox' | 'rating' | 'date' | 'file';
+  type: 'short_text' | 'paragraph' | 'multiple_choice' | 'checkboxes' | 'rating' | 'date';
   label: string;
   required: boolean;
-  options?: string[]; // for radio, checkbox
+  options?: string[];
 }
 
 export interface FormSubmission {
   id: string;
-  formId: string;
-  studentId: string;
+  form_id: string;
+  user_id: string;
+  user_name: string;
   responses: Record<string, any>;
-  submittedAt: string;
+  submitted_at: string;
 }

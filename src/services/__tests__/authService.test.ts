@@ -6,7 +6,9 @@ const { mockSingle, mockFrom, mockSignIn, mockSignUp, mockSignOut, mockGetSessio
   const mOrder = vi.fn();
   const mEq = vi.fn(() => ({ single: mSingle, order: mOrder }));
   const mSelect = vi.fn(() => ({ eq: mEq }));
-  const mFrom = vi.fn(() => ({ select: mSelect }));
+  const mInsert = vi.fn().mockResolvedValue({ error: null });
+  const mUpsert = vi.fn().mockResolvedValue({ error: null });
+  const mFrom = vi.fn(() => ({ select: mSelect, insert: mInsert, upsert: mUpsert }));
 
   return {
     mockSingle: mSingle,

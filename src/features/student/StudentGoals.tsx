@@ -35,7 +35,7 @@ const StudentGoals: React.FC<StudentGoalsProps> = ({ studentId }) => {
     setView('list');
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (!goalToDelete) return;
     if (goalToDelete.studentId !== studentId) {
       notifyError("You can delete only your own completed goals.");
@@ -45,7 +45,7 @@ const StudentGoals: React.FC<StudentGoalsProps> = ({ studentId }) => {
     }
 
     try {
-      const success = deleteGoal(goalToDelete.id);
+      const success = await deleteGoal(goalToDelete.id);
       if (success) {
         notifySuccess("Goal deleted successfully.");
       } else {

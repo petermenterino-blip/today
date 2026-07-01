@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { ActionItem } from '../interfaces';
+import { notify } from './notificationService';
 
 function rowToActionItem(row: any): ActionItem {
   return {
@@ -74,7 +75,9 @@ export const taskStorage = {
       .select()
       .single();
     if (error) throw error;
-    return rowToActionItem(created);
+    const task = rowToActionItem(created);
+    notify.taskAssigned(task.studentId, task.mentorId, task.title).catch(() => {});
+    return task;
   },
 
   async update(id: string, updates: Partial<ActionItem>): Promise<ActionItem | null> {
@@ -82,6 +85,12 @@ export const taskStorage = {
     if (Object.keys(row).length > 0) {
       row.updated_at = new Date().toISOString();
       await supabase.from('tasks').update(row).eq('id', id);
+    }
+    if (updates.status === 'completed') {
+      const current = await this.getById(id);
+      if (current) {
+        notify.taskCompleted(current.studentId, current.mentorId, current.title).catch(() => {});
+      }
     }
     return this.getById(id);
   },

@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { Session } from '../interfaces/session.interface';
 import { ServiceResponse } from '../types';
+import { notify } from './notificationService';
 
 const SESSION_COLS = [
   'id', 'mentor_id', 'student_id', 'title', 'description',
@@ -74,7 +75,9 @@ export const sessionService = {
       .select()
       .single();
     if (error) return { data: null, error: error.message };
-    return { data: rowToSession(data), error: null };
+    const created = rowToSession(data);
+    notify.sessionScheduled(created.studentId, created.mentorId, created.title, created.startTime).catch(() => {});
+    return { data: created, error: null };
   },
 
   async update(id: string, session: Partial<Session>): Promise<ServiceResponse<Session>> {

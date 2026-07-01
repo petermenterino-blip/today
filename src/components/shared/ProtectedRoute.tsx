@@ -28,8 +28,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
   }
 
   if (allowedRoles && !allowedRoles.includes(role)) {
-    // If they are a student but not approved, we should handle that state
-    if (role === 'student' && user?.application_status !== 'approved') {
+    if (role === 'student' && (user?.application_status === 'pending' || user?.application_status === 'rejected')) {
        return <Navigate to="/pending-approval" replace />;
     }
     
