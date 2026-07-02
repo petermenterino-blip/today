@@ -33,24 +33,6 @@ const DEFAULT_GALLERY = [
     description: "One-on-one career counselling sessions guiding students through certification pathways, resume strategy, and professional growth planning."
   },
   {
-    id: 'g-2',
-    title: "Career Counselling Session",
-    image: "/images/event-2.jpeg",
-    category: "Careers",
-    date: "October 2025",
-    location: "Manhattan Creative Hub",
-    description: "Intensive career counselling workshop covering CV engineering, LinkedIn optimization, and live technical mock interviews."
-  },
-  {
-    id: 'g-3',
-    title: "Career Counselling Session",
-    image: "/images/event-3.jpeg",
-    category: "Careers",
-    date: "January 2026",
-    location: "Virtual Campus",
-    description: "Virtual career counselling roundtable focused on overcoming career overthinking, academic pressures, and mastering goal-setting systems."
-  },
-  {
     id: 'g-4',
     title: "Student Professional Presence Event",
     image: "/images/event-4.jpg",
