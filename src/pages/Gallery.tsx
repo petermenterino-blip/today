@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, X, Calendar, MapPin, Sparkles, Filter, Trash2, Image as ImageIcon, Upload, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, X, Calendar, MapPin, Sparkles, Filter, Trash2, Image as ImageIcon, Upload } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { VisitorHeader } from '../components/shared/VisitorHeader';
 import Footer from '../components/shared/Footer';
@@ -20,30 +20,30 @@ interface GalleryItem {
 const DEFAULT_GALLERY: GalleryItem[] = [
   {
     id: 'g-1',
-    title: "CompTIA Certification Celebration",
+    title: "Career Counselling Session",
     image: "/images/event-1.jpeg",
-    category: "Ceremonies",
+    category: "Careers",
     date: "May 2026",
     location: "Hoboken Tech Labs",
-    description: "Celebrating our latest cohort graduating and passing their CompTIA A+ and Security+ exams. Five students obtained employment prior to graduation."
+    description: "One-on-one career counselling sessions guiding students through certification pathways, resume strategy, and professional growth planning."
   },
   {
     id: 'g-2',
-    title: "IT Career Trajectory Masterclass",
+    title: "Career Counselling Session",
     image: "/images/event-2.jpeg",
     category: "Careers",
     date: "October 2025",
     location: "Manhattan Creative Hub",
-    description: "Over 80 college students joined us for an intensive 1-day deep dive into CV engineering, LinkedIn optimization, and live technical mock interviews."
+    description: "Intensive career counselling workshop covering CV engineering, LinkedIn optimization, and live technical mock interviews."
   },
   {
     id: 'g-3',
-    title: "Hybrid Life Strategy Roundtable",
+    title: "Career Counselling Session",
     image: "/images/event-3.jpeg",
-    category: "Virtual",
+    category: "Careers",
     date: "January 2026",
     location: "Virtual Campus",
-    description: "An interactive, hybrid roundtable discussion focusing on overcoming career overthinking, dealing with academic pressures, and mastering the 3-Daily-Goals system."
+    description: "Virtual career counselling roundtable focused on overcoming career overthinking, academic pressures, and mastering goal-setting systems."
   },
   {
     id: 'g-4',
@@ -72,7 +72,6 @@ const GalleryPage: React.FC = () => {
 
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [carouselIdx, setCarouselIdx] = useState(0);
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
   const [isAddOpen, setIsAddOpen] = useState(false);
 
@@ -86,8 +85,6 @@ const GalleryPage: React.FC = () => {
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [hiddenPresets, setHiddenPresets] = useState<number[]>([]);
-
-  useEffect(() => { setCarouselIdx(0); }, [selectedCategory]);
 
   useEffect(() => {
     const saved = localStorage.getItem('gallery_items_v1');
@@ -269,113 +266,74 @@ const GalleryPage: React.FC = () => {
           ))}
         </div>
 
-        {/* Project Card with Image Carousel */}
+        {/* Gallery Grid */}
         {filteredItems.length === 0 ? (
           <div className="text-center py-24 bg-slate-50 rounded-[40px] border border-slate-100 space-y-4">
             <ImageIcon size={48} className="mx-auto text-slate-300" />
             <p className="text-slate-400 font-medium text-sm">No events found in this category.</p>
           </div>
         ) : (
-          <div className="max-w-5xl mx-auto">
-            <motion.div
-              key={selectedCategory}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white border border-slate-100 rounded-[40px] overflow-hidden shadow-sm"
-            >
-              {/* Carousel */}
-              <div className="relative">
-                <div className="overflow-hidden">
-                  <motion.div
-                    className="flex"
-                    animate={{ x: `-${carouselIdx * 100}%` }}
-                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                  >
-                    {filteredItems.map((item) => (
-                      <div key={item.id} className="min-w-full relative aspect-[16/9] sm:aspect-[21/9] bg-slate-900 shrink-0">
-                        <img
-                          src={item.image}
-                          alt={item.title}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                        <div className="absolute bottom-6 left-6 bg-white/90 backdrop-blur-md text-black px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest border border-black/5">
-                          {item.category}
-                        </div>
-                      </div>
-                    ))}
-                  </motion.div>
+          <motion.div 
+            key={selectedCategory}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-8"
+          >
+            {filteredItems.map((item, idx) => (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: idx * 0.05 }}
+                onClick={() => setSelectedItem(item)}
+                className="group bg-white border border-slate-100 rounded-[36px] overflow-hidden shadow-sm hover:shadow-xl hover:border-slate-200 transition-all duration-500 cursor-pointer flex flex-col justify-between"
+              >
+                <div className="relative aspect-[3/2] overflow-hidden bg-slate-100">
+                  <img 
+                    src={item.image} 
+                    alt={item.title} 
+                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105"
+                    referrerPolicy="no-referrer"
+                    loading="lazy"
+                  />
+                  <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md text-black px-3.5 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest border border-black/5">
+                    {item.category}
+                  </div>
+
+                  {isMentor && (
+                    <button 
+                      onClick={(e) => handleDeleteItem(item.id, e)}
+                      className="absolute top-4 right-4 bg-red-50 text-red-600 hover:bg-red-100 p-2.5 rounded-full border border-red-100/30 transition-all"
+                      title="Delete from Gallery"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
                 </div>
 
-                {filteredItems.length > 1 && (
-                  <>
-                    <button
-                      onClick={() => setCarouselIdx(prev => prev === 0 ? filteredItems.length - 1 : prev - 1)}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-md border border-slate-100 transition-all z-10"
-                    >
-                      <ChevronLeft size={18} />
-                    </button>
-                    <button
-                      onClick={() => setCarouselIdx(prev => prev === filteredItems.length - 1 ? 0 : prev + 1)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-md border border-slate-100 transition-all z-10"
-                    >
-                      <ChevronRight size={18} />
-                    </button>
-                  </>
-                )}
-
-                {/* Dots */}
-                {filteredItems.length > 1 && (
-                  <div className="absolute bottom-6 right-6 flex gap-2 z-10">
-                    {filteredItems.map((_, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setCarouselIdx(i)}
-                        className={`w-2 h-2 rounded-full transition-all ${
-                          i === carouselIdx ? 'bg-white w-6' : 'bg-white/40 hover:bg-white/60'
-                        }`}
-                      />
-                    ))}
+                <div className="p-6 md:p-8 space-y-4 flex-1 flex flex-col justify-between">
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-slate-400 text-[10px] font-black uppercase tracking-widest">
+                      <span className="flex items-center gap-1.5"><Calendar size={12} /> {item.date}</span>
+                      <span className="flex items-center gap-1.5"><MapPin size={12} /> {item.location}</span>
+                    </div>
+                    <h3 className="text-lg font-black uppercase tracking-tight text-slate-900 group-hover:text-indigo-600 transition-colors leading-snug">
+                      {item.title}
+                    </h3>
+                    <p className="text-slate-500 text-xs font-medium leading-relaxed line-clamp-2">
+                      {item.description}
+                    </p>
                   </div>
-                )}
-              </div>
 
-              {/* Content for active item */}
-              {filteredItems[carouselIdx] && (
-                <div
-                  onClick={() => setSelectedItem(filteredItems[carouselIdx])}
-                  className="p-8 md:p-10 space-y-4 cursor-pointer hover:bg-slate-50/50 transition-colors"
-                >
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-slate-400 text-[10px] font-black uppercase tracking-widest">
-                    <span className="flex items-center gap-1.5"><Calendar size={12} /> {filteredItems[carouselIdx].date}</span>
-                    <span className="flex items-center gap-1.5"><MapPin size={12} /> {filteredItems[carouselIdx].location}</span>
-                  </div>
-                  <h3 className="text-xl md:text-2xl font-black uppercase tracking-tight text-slate-900 leading-snug">
-                    {filteredItems[carouselIdx].title}
-                  </h3>
-                  <p className="text-slate-500 text-sm font-medium leading-relaxed">
-                    {filteredItems[carouselIdx].description}
-                  </p>
-                  <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-indigo-600 pt-2">
+                  <div className="pt-2 flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-slate-400 group-hover:text-black transition-colors">
                     <span>View details</span>
                     <span>→</span>
                   </div>
                 </div>
-              )}
-
-              {isMentor && filteredItems[carouselIdx] && (
-                <div className="px-8 md:px-10 pb-6 flex justify-end">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleDeleteItem(filteredItems[carouselIdx].id, e); }}
-                    className="px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-full text-[9px] font-black uppercase tracking-widest border border-red-100/30 transition-all flex items-center gap-2"
-                  >
-                    <Trash2 size={12} /> Delete
-                  </button>
-                </div>
-              )}
-            </motion.div>
-          </div>
+              </motion.div>
+            ))}
+          </motion.div>
         )}
       </section>
 

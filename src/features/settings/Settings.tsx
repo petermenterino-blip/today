@@ -25,30 +25,30 @@ import { profileService } from '../../services/profileService';
 const DEFAULT_GALLERY = [
   {
     id: 'g-1',
-    title: "CompTIA Certification Celebration",
+    title: "Career Counselling Session",
     image: "/images/event-1.jpeg",
-    category: "Ceremonies",
+    category: "Careers",
     date: "May 2026",
     location: "Hoboken Tech Labs",
-    description: "Celebrating our latest cohort graduating and passing their CompTIA A+ and Security+ exams. Five students obtained employment prior to graduation."
+    description: "One-on-one career counselling sessions guiding students through certification pathways, resume strategy, and professional growth planning."
   },
   {
     id: 'g-2',
-    title: "IT Career Trajectory Masterclass",
+    title: "Career Counselling Session",
     image: "/images/event-2.jpeg",
     category: "Careers",
     date: "October 2025",
     location: "Manhattan Creative Hub",
-    description: "Over 80 college students joined us for an intensive 1-day deep dive into CV engineering, LinkedIn optimization, and live technical mock interviews."
+    description: "Intensive career counselling workshop covering CV engineering, LinkedIn optimization, and live technical mock interviews."
   },
   {
     id: 'g-3',
-    title: "Hybrid Life Strategy Roundtable",
+    title: "Career Counselling Session",
     image: "/images/event-3.jpeg",
-    category: "Virtual",
+    category: "Careers",
     date: "January 2026",
     location: "Virtual Campus",
-    description: "An interactive, hybrid roundtable discussion focusing on overcoming career overthinking, dealing with academic pressures, and mastering the 3-Daily-Goals system."
+    description: "Virtual career counselling roundtable focused on overcoming career overthinking, academic pressures, and mastering goal-setting systems."
   },
   {
     id: 'g-4',
