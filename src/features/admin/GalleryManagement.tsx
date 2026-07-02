@@ -251,16 +251,16 @@ const GalleryManagement: React.FC = () => {
           <h3 className="text-2xl font-black uppercase tracking-tight text-slate-900">Event Gallery</h3>
           <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Manage photos and event entries shown on the public gallery page</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
           <button
             onClick={() => navigate('/gallery')}
-            className="px-5 py-2.5 border border-slate-200 rounded-full text-[9px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all text-slate-500 flex items-center gap-2"
+            className="px-5 py-2.5 border border-slate-200 rounded-full text-[9px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all text-slate-500 flex items-center justify-center gap-2"
           >
             <ExternalLink size={12} /> View Public Page
           </button>
           <button
             onClick={openAddForm}
-            className="px-5 py-2.5 bg-black text-white rounded-full text-[9px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-sm flex items-center gap-2"
+            className="px-5 py-2.5 bg-black text-white rounded-full text-[9px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-sm flex items-center justify-center gap-2"
           >
             <Plus size={14} /> Add Event Photo
           </button>
@@ -291,7 +291,7 @@ const GalleryManagement: React.FC = () => {
           <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">No events in this category</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredItems.map(item => (
             <motion.div
               key={item.id}

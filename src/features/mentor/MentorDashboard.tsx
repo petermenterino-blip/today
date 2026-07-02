@@ -205,47 +205,92 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
       )}
 
       {d.activeTab === 'events' && (
-        <div>{/* TODO: Implement EventsTab in future feature sprint */}</div>
+        <div className="space-y-6 animate-in fade-in duration-500">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-slate-900">Events</h1>
+            <p className="text-xs text-slate-500 mt-1 font-medium">Manage workshops and events</p>
+          </div>
+          {d.events.length === 0 ? (
+            <div className="bg-white p-12 rounded-[32px] border border-slate-100 shadow-sm text-center">
+              <p className="text-sm text-slate-400 font-medium">No events created yet.</p>
+              <p className="text-[10px] text-slate-300 mt-2 font-bold uppercase tracking-widest">Use the Overview tab to create your first event.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {d.events.map((evt: any) => (
+                <div key={evt.id} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-md transition-all">
+                  {evt.image && <img src={evt.image} alt={evt.title} className="w-full h-32 object-cover rounded-2xl mb-4" />}
+                  <h3 className="text-sm font-black uppercase tracking-tight text-slate-900">{evt.title}</h3>
+                  <p className="text-[10px] text-slate-500 mt-1 font-medium">{evt.date} {evt.time && `at ${evt.time}`}</p>
+                  <p className="text-xs text-slate-600 mt-2 line-clamp-2">{evt.description}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       {d.activeTab === 'programs' && (
-        <div>{/* TODO: Implement ProgramsTab in future feature sprint */}</div>
+        <div className="space-y-6 animate-in fade-in duration-500">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-slate-900">Programs</h1>
+            <p className="text-xs text-slate-500 mt-1 font-medium">Mentorship program templates and curricula</p>
+          </div>
+          {d.programs.length === 0 ? (
+            <div className="bg-white p-12 rounded-[32px] border border-slate-100 shadow-sm text-center">
+              <p className="text-sm text-slate-400 font-medium">No programs created yet.</p>
+              <p className="text-[10px] text-slate-300 mt-2 font-bold uppercase tracking-widest">Use the Overview tab to design your first program.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {d.programs.map((prg: any) => (
+                <div key={prg.id} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-md transition-all">
+                  <h3 className="text-sm font-black uppercase tracking-tight text-slate-900">{prg.title}</h3>
+                  <p className="text-[10px] text-slate-500 mt-1 font-medium">{prg.modules?.length || 0} modules</p>
+                  <p className="text-xs text-slate-600 mt-2 line-clamp-2">{prg.description}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       {d.activeTab === 'sessions' && (
         <MentorScheduler
-          sessions={d.sessions}
-          events={d.events}
-          studentProfiles={d.studentProfiles}
-          applications={d.applications}
-          allTags={d.allTags}
           currentUser={d.currentUser}
-          onOpenStudentProfile={d.handleOpenStudentProfile}
-          onMessageStudent={d.handleMessageStudent}
-          weeklyAvailability={d.weeklyAvailability}
-          setWeeklyAvailability={d.setWeeklyAvailability}
-          isConfiguringAvailability={d.isConfiguringAvailability}
-          setIsConfiguringAvailability={d.setIsConfiguringAvailability}
-          isSchedulingSession={d.isSchedulingSession}
-          setIsSchedulingSession={d.setIsSchedulingSession}
-          sessionTitle={d.sessionTitle}
-          setSessionTitle={d.setSessionTitle}
-          sessionDesc={d.sessionDesc}
-          setSessionDesc={d.setSessionDesc}
-          sessionDate={d.sessionDate}
-          setSessionDate={d.setSessionDate}
-          sessionTime={d.sessionTime}
-          setSessionTime={d.setSessionTime}
-          sessionDuration={d.sessionDuration}
-          setSessionDuration={d.setSessionDuration}
-          sessionMeetingUrl={d.sessionMeetingUrl}
-          setSessionMeetingUrl={d.setSessionMeetingUrl}
-          handleScheduleSession={d.handleScheduleSession}
+          studentProfiles={d.studentProfiles}
+          programs={d.programs}
+          sessions={d.sessions}
+          addSession={d.addSession}
+          updateSession={d.updateSession}
+          deleteSession={d.deleteSession}
+          refreshSessions={d.refreshSessions}
         />
       )}
 
       {d.activeTab === 'resources' && (
-        <div>{/* TODO: Implement ResourcesTab in future feature sprint */}</div>
+        <div className="space-y-6 animate-in fade-in duration-500">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-slate-900">Resources</h1>
+            <p className="text-xs text-slate-500 mt-1 font-medium">Shared learning materials and links</p>
+          </div>
+          {d.resources.length === 0 ? (
+            <div className="bg-white p-12 rounded-[32px] border border-slate-100 shadow-sm text-center">
+              <p className="text-sm text-slate-400 font-medium">No resources shared yet.</p>
+              <p className="text-[10px] text-slate-300 mt-2 font-bold uppercase tracking-widest">Resources will appear here once you share them with students.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {d.resources.map((res: any) => (
+                <div key={res.id} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-md transition-all">
+                  <h3 className="text-sm font-black uppercase tracking-tight text-slate-900">{res.title}</h3>
+                  {res.url && <a href={res.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-indigo-600 font-bold hover:underline mt-1 block">{res.url}</a>}
+                  <p className="text-xs text-slate-600 mt-2">{res.description}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       {d.activeTab === 'analytics' && (
@@ -284,7 +329,60 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
       )}
 
       {d.activeTab === 'ai' && (
-        <div>{/* TODO: Implement AiInsightsTab in future feature sprint */}</div>
+        <div className="space-y-6 animate-in fade-in duration-500">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-slate-900">AI Insights</h1>
+            <p className="text-xs text-slate-500 mt-1 font-medium">Intelligent recommendations and analysis</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Student Analysis</p>
+              <p className="text-3xl font-black text-slate-900">{d.studentProfiles.length}</p>
+              <p className="text-[10px] text-slate-500 mt-1 font-medium">Total students analyzed</p>
+            </div>
+            <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Session Intel</p>
+              <p className="text-3xl font-black text-slate-900">{d.sessions.length}</p>
+              <p className="text-[10px] text-slate-500 mt-1 font-medium">Sessions processed</p>
+            </div>
+            <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Applications</p>
+              <p className="text-3xl font-black text-slate-900">{d.applications.length}</p>
+              <p className="text-[10px] text-slate-500 mt-1 font-medium">Total applications</p>
+            </div>
+          </div>
+          <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
+            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-4">AI Assistant</p>
+            <div className="flex gap-3">
+              <input
+                type="text"
+                placeholder="Ask AI about your students, sessions, or programs..."
+                className="flex-1 px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-medium outline-none focus:border-black transition-all"
+                value={d.userInput}
+                onChange={(e) => d.setUserInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !d.isAiLoading) d.handleAiChat(); }}
+              />
+              <button
+                onClick={d.handleAiChat}
+                disabled={d.isAiLoading || !d.userInput.trim()}
+                className="px-6 py-4 bg-black text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all disabled:opacity-50"
+              >
+                {d.isAiLoading ? 'Thinking...' : 'Ask'}
+              </button>
+            </div>
+            {d.chatHistory.length > 0 && (
+              <div className="mt-6 space-y-4 max-h-[300px] overflow-y-auto">
+                {d.chatHistory.map((msg: any, i: number) => (
+                  <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[80%] p-4 rounded-2xl text-sm ${msg.role === 'user' ? 'bg-black text-white' : 'bg-slate-50 text-slate-800 border border-slate-100'}`}>
+                      {msg.content}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {d.activeTab === 'gallery' && (
@@ -299,7 +397,7 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             className="bg-white rounded-[40px] max-w-lg w-full p-10 shadow-2xl relative"
           >
-            <button onClick={() => d.setIsAddingTag(false)} className="absolute top-8 right-8 w-10 h-10 flex items-center justify-center bg-slate-50 rounded-full hover:bg-slate-100 transition-colors">
+            <button onClick={() => d.setIsAddingTag(false)} className="absolute top-8 right-8 w-10 h-10 flex items-center justify-center bg-slate-50 rounded-full hover:bg-slate-100 transition-colors" aria-label="Close add tag">
               <X size={18} />
             </button>
             <div className="mb-8">
@@ -332,6 +430,7 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
                           notifySuccess('Tag removed from library');
                         }}
                         className="w-8 h-8 flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-rose-50 rounded-full transition-all opacity-0 group-hover:opacity-100"
+                        aria-label="Delete tag"
                       >
                         <Trash size={14} />
                       </button>
@@ -358,9 +457,9 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               className="bg-white rounded-[40px] max-w-lg w-full p-10 shadow-2xl relative"
             >
-              <button onClick={() => d.setIsSchedulingSession(false)} className="absolute top-8 right-8 w-10 h-10 flex items-center justify-center bg-slate-50 rounded-full hover:bg-slate-100 transition-colors">
-                <X size={18} />
-              </button>
+            <button onClick={() => d.setIsSchedulingSession(false)} className="absolute top-8 right-8 w-10 h-10 flex items-center justify-center bg-slate-50 rounded-full hover:bg-slate-100 transition-colors" aria-label="Close schedule session">
+              <X size={18} />
+            </button>
               <div className="mb-6">
                 <h3 className="text-3xl font-black uppercase tracking-tighter">Schedule 1:1</h3>
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Set up a session with {mentee.full_name}</p>
@@ -418,7 +517,7 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             className="bg-white rounded-[40px] max-w-4xl w-full max-h-[90vh] overflow-y-auto p-10 shadow-2xl relative"
           >
-            <button onClick={d.handleCancelEventEdit} className="absolute top-8 right-8 w-10 h-10 flex items-center justify-center bg-slate-50 rounded-full hover:bg-slate-100 transition-colors">
+            <button onClick={d.handleCancelEventEdit} className="absolute top-8 right-8 w-10 h-10 flex items-center justify-center bg-slate-50 rounded-full hover:bg-slate-100 transition-colors" aria-label="Close edit event">
               <X size={18} />
             </button>
 
@@ -526,10 +625,20 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
                 <div>
                   <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2 px-1">Banner Image URL</p>
                   <input type="text" placeholder="https://images.unsplash.com/..." className="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:border-black transition-all" value={d.newEventData.image || ''} onChange={e => d.setNewEventData(prev => ({ ...prev, image: e.target.value }))} />
+                  {d.newEventData.image && (
+                    <div className="mt-2 w-full h-24 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200">
+                      <img src={d.newEventData.image} alt="Banner preview" className="w-full h-full object-cover" referrerPolicy="no-referrer" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    </div>
+                  )}
                 </div>
                 <div>
                   <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2 px-1">Cover Image URL</p>
                   <input type="text" placeholder="https://images.unsplash.com/..." className="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:border-black transition-all" value={d.newEventData.coverImage || ''} onChange={e => d.setNewEventData(prev => ({ ...prev, coverImage: e.target.value }))} />
+                  {d.newEventData.coverImage && (
+                    <div className="mt-2 w-full h-24 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200">
+                      <img src={d.newEventData.coverImage} alt="Cover preview" className="w-full h-full object-cover" referrerPolicy="no-referrer" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    </div>
+                  )}
                 </div>
                 <div>
                   <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2 px-1">Visibility</p>

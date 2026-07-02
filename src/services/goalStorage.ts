@@ -119,7 +119,13 @@ export const goalStorage = {
     if (updates.status === 'completed') {
       const current = await supabase.from('goals').select('title, student_id').eq('id', id).single();
       if (current.data) {
-        notify.goalCompleted(current.data.student_id, '', current.data.title).catch(() => {});
+        const { data: enrollment } = await supabase
+          .from('program_enrollments')
+          .select('program:program_id(mentor_id)')
+          .eq('student_id', current.data.student_id)
+          .maybeSingle();
+        const mentorId: string = (enrollment as any)?.program?.mentor_id || '';
+        notify.goalCompleted(current.data.student_id, mentorId, current.data.title).catch(() => {});
       }
     }
     return this.getById(id);

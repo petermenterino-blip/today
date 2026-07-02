@@ -29,7 +29,7 @@ export function useMentees(currentUser: User | null) {
   const [newTagLabel, setNewTagLabel] = useState('');
   const [newTagColor, setNewTagColor] = useState('bg-blue-100 text-blue-700');
 
-  const mentees = applications.filter(app => app.status === 'approved');
+  const mentees = applications.filter(app => app.status === 'approved' || app.status === 'invited');
   const filteredMentees = mentees.filter(app => {
     const matchesSearch = app.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       app.user_email.toLowerCase().includes(searchQuery.toLowerCase()) ||

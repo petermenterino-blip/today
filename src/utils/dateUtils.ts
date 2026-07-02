@@ -15,18 +15,28 @@ export function formatToNJ(date: string | Date | number, options: Intl.DateTimeF
   });
 }
 
-/**
- * Returns ISO string adjusted for NJ (useful for database/storage)
- * Note: This keeps the local time but sets the Z offset, which is a bit of a hack 
- * but common for the requested "everything in NJ time" feel.
- * Better yet, just return the local string or use a proper library like luxon.
- * For this app, we'll favor clean display.
- */
 export function getNJISOString(): string {
   const now = new Date();
-  const njTime = now.toLocaleString('en-US', { timeZone: NJ_TIMEZONE });
-  const njDate = new Date(njTime);
-  return njDate.toISOString();
+  const fmt = new Intl.DateTimeFormat('en-US', {
+    timeZone: NJ_TIMEZONE,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour12: false,
+  });
+  const p = (type: string) => {
+    const v = fmt.formatToParts(now).find(x => x.type === type)?.value;
+    return v ? v.padStart(2, '0') : '00';
+  };
+
+  const offsetFmt = new Intl.DateTimeFormat('en-US', {
+    timeZone: NJ_TIMEZONE,
+    timeZoneName: 'longOffset',
+  });
+  const offsetStr = offsetFmt.formatToParts(now).find(x => x.type === 'timeZoneName')?.value || 'GMT-05:00';
+  const m = offsetStr.replace('GMT', '').match(/([+-])(\d{2}):(\d{2})/);
+  const offsetFormatted = m ? `${m[1]}${m[2]}:${m[3]}` : '-05:00';
+
+  return `${p('year')}-${p('month')}-${p('day')}T${p('hour')}:${p('minute')}:${p('second')}.000${offsetFormatted}`;
 }
 
 /**

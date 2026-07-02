@@ -607,10 +607,10 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onLogout, currentUser }) =>
                       <button
                         type="button"
                         onClick={() => { setHiddenPresets([]); localStorage.removeItem(HIDDEN_PRESETS_KEY); }}
-                        className="aspect-video rounded-2xl border-2 border-dashed border-amber-300 hover:border-amber-500 bg-amber-50 flex flex-col items-center justify-center gap-1 transition-all"
-                        title="Restore removed presets"
+                        className="aspect-video rounded-2xl border-2 border-dashed border-blue-300 hover:border-blue-500 bg-blue-50 flex flex-col items-center justify-center gap-1 transition-all"
+                        title="Show hidden presets again"
                       >
-                        <span className="text-[7px] font-black uppercase tracking-widest text-amber-500 leading-tight text-center px-1">Restore</span>
+                        <span className="text-[7px] font-black uppercase tracking-widest text-blue-500 leading-tight text-center px-1">Show Hidden</span>
                       </button>
                     )}
                   </div>

@@ -27,9 +27,9 @@ interface MentorSchedulerProps {
   studentProfiles: StudentProfile[];
   programs: Program[];
   sessions: Session[];
-  addSession: (session: Omit<Session, 'id' | 'createdAt' | 'updatedAt'>) => Session;
-  updateSession: (id: string, updates: Partial<Session>) => Session | undefined;
-  deleteSession: (id: string) => boolean;
+  addSession: (session: Omit<Session, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Session> | Session;
+  updateSession: (id: string, updates: Partial<Session>) => Promise<any> | undefined;
+  deleteSession: (id: string) => Promise<any> | boolean;
   refreshSessions: () => void;
 }
 
@@ -894,7 +894,7 @@ export const MentorScheduler: React.FC<MentorSchedulerProps> = ({
                     {editingSession.status !== 'cancelled' && (
                         <button type="button" onClick={() => { setConfirmCancel(editingSession); }} className="px-3 py-2.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 rounded-xl transition-all text-[9px] font-black uppercase tracking-widest">Cancel</button>
                       )}
-                      <button type="button" onClick={() => { setConfirmDelete(editingSession); }} className="p-2.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 rounded-xl transition-all" title="Delete Forever"><Trash2 size={12} /></button>
+                      <button type="button" onClick={() => { setConfirmDelete(editingSession); }} className="p-2.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 rounded-xl transition-all" title="Delete Forever" aria-label="Delete Forever"><Trash2 size={12} /></button>
                   </div>
                 ) : <div />}
 

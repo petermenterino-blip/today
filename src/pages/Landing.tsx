@@ -30,7 +30,6 @@ import {
   Send,
   AlertCircle,
   Sparkles,
-  ShieldAlert,
   Calendar
 } from 'lucide-react';
 
@@ -389,18 +388,37 @@ const LandingPage: React.FC<LandingPageProps> = ({ currentRole = 'visitor' }) =>
                 color: "bg-black text-white"
               }
             ].map((item, i) => (
-              <div key={i} className="relative z-10 space-y-7">
-                <div className={`w-[60px] h-[60px] rounded-[14px] ${item.color} flex items-center justify-center shadow-[0_18px_45px_-24px_rgba(15,23,42,0.8)]`}>
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-80px' }}
+                transition={{ duration: 0.7, delay: i * 0.12, ease: [0.16, 1, 0.3, 1] }}
+                className="relative z-10 space-y-7"
+              >
+                <motion.div
+                  initial={{ scale: 0 }}
+                  whileInView={{ scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: i * 0.12 + 0.15, ease: [0.16, 1, 0.3, 1] }}
+                  className={`w-[60px] h-[60px] rounded-[14px] ${item.color} flex items-center justify-center shadow-[0_18px_45px_-24px_rgba(15,23,42,0.8)]`}
+                >
                   <item.icon size={24} strokeWidth={2.2} />
-                </div>
+                </motion.div>
                 <div className="space-y-4">
                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-300">{item.phase}</p>
                   <h3 className="text-lg md:text-xl font-black uppercase tracking-tight text-slate-950">{item.title}</h3>
-                  <div className="w-10 h-[3px] bg-slate-100"></div>
+                  <motion.div
+                    initial={{ width: 0 }}
+                    whileInView={{ width: 40 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: i * 0.12 + 0.3, ease: [0.16, 1, 0.3, 1] }}
+                    className="h-[3px] bg-slate-100"
+                  />
                   <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
                   <p className="text-sm font-semibold leading-relaxed text-slate-500">{item.desc}</p>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -496,7 +514,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ currentRole = 'visitor' }) =>
       {/* RESTORED SECTION: Philosophy Section */}
       <section className="bg-black text-white py-28 md:py-44 px-6 overflow-hidden">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-28 items-start">
-          <div className="space-y-10">
+          <motion.div
+            initial={{ opacity: 0, x: -40 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: '-100px' }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            className="space-y-10"
+          >
             <div>
               <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-[0.9] text-white">
                 MOST PEOPLE <br />
@@ -512,16 +536,29 @@ const LandingPage: React.FC<LandingPageProps> = ({ currentRole = 'visitor' }) =>
                 "Confused about education path",
                 "Feeling pressure from family & society",
                 "Overthinking your future"
-              ].map((item) => (
-                <li key={item} className="flex items-center gap-4 text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">
+              ].map((item, i) => (
+                <motion.li
+                  key={item}
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: 0.3 + i * 0.1 }}
+                  className="flex items-center gap-4 text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500"
+                >
                   <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span>
                   {item}
-                </li>
+                </motion.li>
               ))}
             </ul>
-          </div>
+          </motion.div>
 
-          <div className="space-y-10">
+          <motion.div
+            initial={{ opacity: 0, x: 40 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: '-100px' }}
+            transition={{ duration: 0.8, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+            className="space-y-10"
+          >
             <div>
               <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-[0.9] text-white">
                 PROGRAMS THAT <br />
@@ -537,14 +574,21 @@ const LandingPage: React.FC<LandingPageProps> = ({ currentRole = 'visitor' }) =>
                 "Make confident decisions",
                 "Build a realistic plan",
                 "Reduce stress and confusion"
-              ].map((item) => (
-                <li key={item} className="flex items-center gap-4 text-[11px] font-black uppercase tracking-[0.16em] text-emerald-500">
+              ].map((item, i) => (
+                <motion.li
+                  key={item}
+                  initial={{ opacity: 0, x: 20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: 0.45 + i * 0.1 }}
+                  className="flex items-center gap-4 text-[11px] font-black uppercase tracking-[0.16em] text-emerald-500"
+                >
                   <CheckCircle2 size={15} strokeWidth={2.5} className="shrink-0" />
                   {item}
-                </li>
+                </motion.li>
               ))}
             </ul>
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -605,10 +649,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ currentRole = 'visitor' }) =>
         </div>
       </section>
 
-      {/* Conducted Events Section (kept exactly as request) */}
-      <section className="bg-slate-950 text-white py-20 px-6 overflow-hidden">
+      <section className="bg-black text-white py-20 px-6 overflow-hidden">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          <div className="lg:col-span-5 space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-100px' }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            className="lg:col-span-5 space-y-6"
+          >
             <span className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-400">CONDUCTED EVENTS</span>
             <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter leading-none">
               SEE COHORTS <br />
@@ -623,26 +672,56 @@ const LandingPage: React.FC<LandingPageProps> = ({ currentRole = 'visitor' }) =>
                 <ImageIcon size={16} />
               </Link>
             </div>
-          </div>
+          </motion.div>
           
-          <div className="lg:col-span-7 grid grid-cols-2 gap-4 relative">
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true, margin: '-100px' }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="lg:col-span-7 grid grid-cols-2 gap-4 relative"
+          >
             <div className="space-y-4">
-              <div className="aspect-[4/3] rounded-3xl overflow-hidden bg-slate-900 border border-white/10">
-                <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80&w=400" alt="" className="w-full h-full object-cover grayscale opacity-60 hover:opacity-100 hover:grayscale-0 transition-all duration-500" loading="lazy" />
-              </div>
-              <div className="aspect-square rounded-3xl overflow-hidden bg-slate-900 border border-white/10">
-                <img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&q=80&w=400" alt="" className="w-full h-full object-cover grayscale opacity-60 hover:opacity-100 hover:grayscale-0 transition-all duration-500" loading="lazy" />
-              </div>
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="aspect-[4/3] rounded-3xl overflow-hidden bg-slate-900 border border-white/10 group"
+              >
+                <img src="/images/event-1.jpeg" alt="CompTIA celebration meetup" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-all duration-700 scale-105 group-hover:scale-110" loading="lazy" />
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.5 }}
+                className="aspect-square rounded-3xl overflow-hidden bg-slate-900 border border-white/10 group"
+              >
+                <img src="/images/event-2.jpeg" alt="Career bootcamp session" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-all duration-700 scale-105 group-hover:scale-110" loading="lazy" />
+              </motion.div>
             </div>
             <div className="space-y-4 pt-8">
-              <div className="aspect-square rounded-3xl overflow-hidden bg-slate-900 border border-white/10">
-                <img src="https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&q=80&w=400" alt="" className="w-full h-full object-cover grayscale opacity-60 hover:opacity-100 hover:grayscale-0 transition-all duration-500" loading="lazy" />
-              </div>
-              <div className="aspect-[4/3] rounded-3xl overflow-hidden bg-slate-900 border border-white/10">
-                <img src="https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&q=80&w=400" alt="" className="w-full h-full object-cover grayscale opacity-60 hover:opacity-100 hover:grayscale-0 transition-all duration-500" loading="lazy" />
-              </div>
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+                className="aspect-square rounded-3xl overflow-hidden bg-slate-900 border border-white/10 group"
+              >
+                <img src="/images/event-3.jpeg" alt="Hybrid virtual roundtable" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-all duration-700 scale-105 group-hover:scale-110" loading="lazy" />
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.6 }}
+                className="aspect-[4/3] rounded-3xl overflow-hidden bg-slate-900 border border-white/10 group"
+              >
+                <img src="/images/event-4.jpg" alt="Student professional presence event" className="w-full h-full object-cover object-top opacity-80 group-hover:opacity-100 transition-all duration-700 scale-105 group-hover:scale-110" loading="lazy" />
+              </motion.div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -745,7 +824,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ currentRole = 'visitor' }) =>
         </div>
 
         {/* Deliverables detail */}
-        <div className="space-y-12 max-w-4xl mx-auto py-12">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-100px' }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="space-y-12 max-w-4xl mx-auto py-12"
+        >
           <h2 className="text-3xl font-black uppercase tracking-tighter text-center">WHAT IS INCLUDED IN EVERY CALL</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {[
@@ -754,7 +839,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ currentRole = 'visitor' }) =>
               { title: 'Post-Call Email Support', icon: Calendar, desc: 'Access for up to 2 direct clarification questions after.' },
               { title: 'Resource Checklist', icon: ArrowRight, desc: 'Links to specific guides, tools, and downloads.' }
             ].map((f, i) => (
-              <div key={i} className="flex gap-4 p-8 bg-white border border-slate-100 rounded-[32px] shadow-sm hover:border-indigo-100 hover:bg-slate-50 transition-colors">
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.1 + i * 0.1 }}
+                className="flex gap-4 p-8 bg-white border border-slate-100 rounded-[32px] shadow-sm hover:border-indigo-100 hover:bg-slate-50 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5"
+              >
                 <div className="shrink-0 w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center shadow-sm text-indigo-600">
                   <f.icon size={18} />
                 </div>
@@ -762,30 +854,36 @@ const LandingPage: React.FC<LandingPageProps> = ({ currentRole = 'visitor' }) =>
                   <h4 className="text-sm font-black uppercase tracking-tight mb-1 text-black">{f.title}</h4>
                   <p className="text-[11px] text-slate-500 font-medium leading-relaxed">{f.desc}</p>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
 
-        {/* Notice alert */}
-        <div className="max-w-3xl mx-auto bg-amber-50 border border-amber-200 p-6 rounded-[28px] flex gap-4 items-start mt-12">
-          <ShieldAlert size={20} className="text-amber-600 shrink-0 mt-0.5" />
-          <p className="text-amber-800 text-xs font-semibold leading-relaxed">
-            Note: Standard cohorts for long-term programs require an approved application. If you wish to join Peter’s monthly coaching plans, please submit an application. Individual strategy calls can be scheduled directly without an application audit.
-          </p>
-        </div>
       </section>
 
       {/* Testimonials */}
-      <section className="py-20 md:py-32 px-6 bg-slate-50">
+      <section className="py-20 md:py-32 px-6 bg-slate-50 overflow-hidden">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16 space-y-4">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-100px' }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            className="text-center mb-16 space-y-4"
+          >
             <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter">SUCCESS STORIES.</h2>
             <p className="text-slate-400 font-medium text-sm">Real outcomes from our dedicated mentees.</p>
-          </div>
+          </motion.div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {testimonials.map((t, i) => (
-              <div key={i} className="bg-white p-8 md:p-10 rounded-[36px] border border-slate-100 shadow-sm flex flex-col justify-between">
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-80px' }}
+                transition={{ duration: 0.7, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] }}
+                className="bg-white p-8 md:p-10 rounded-[36px] border border-slate-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-500 flex flex-col justify-between"
+              >
                 <p className="text-slate-600 font-medium leading-relaxed mb-8 italic text-sm md:text-base">"{t.text}"</p>
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 bg-indigo-50 rounded-full flex items-center justify-center font-black text-xs text-indigo-600">{t.name.charAt(0)}</div>
@@ -794,7 +892,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ currentRole = 'visitor' }) =>
                     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{t.role}</p>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -896,7 +994,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ currentRole = 'visitor' }) =>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-stretch max-w-6xl mx-auto">
             {/* Info Details Column */}
-            <div className="lg:col-span-5 bg-black text-white p-10 md:p-14 rounded-[48px] md:rounded-[64px] flex flex-col justify-between shadow-2xl relative overflow-hidden">
+            <motion.div
+              initial={{ opacity: 0, x: -40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: '-100px' }}
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+              className="lg:col-span-5 bg-black text-white p-10 md:p-14 rounded-[48px] md:rounded-[64px] flex flex-col justify-between shadow-2xl relative overflow-hidden"
+            >
               {/* Ambient pattern */}
               <div className="absolute -bottom-16 -left-16 w-64 h-64 bg-indigo-500/10 rounded-full blur-[80px] pointer-events-none"></div>
 
@@ -941,16 +1045,28 @@ const LandingPage: React.FC<LandingPageProps> = ({ currentRole = 'visitor' }) =>
                 </div>
               </div>
 
-              <div className="pt-12 border-t border-white/10 relative z-10 mt-12">
+              <motion.div
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.5 }}
+                className="pt-12 border-t border-white/10 relative z-10 mt-12"
+              >
                 <div className="flex items-center gap-3">
                   <Sparkles size={16} className="text-indigo-400" />
                   <span className="text-[10px] font-black uppercase tracking-[0.22em] text-white/60">Strict Confidentiality Guaranteed</span>
                 </div>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
 
             {/* Form Column */}
-            <div className="lg:col-span-7 bg-white border border-slate-100 rounded-[48px] md:rounded-[64px] p-8 md:p-12 shadow-sm flex flex-col justify-center">
+            <motion.div
+              initial={{ opacity: 0, x: 40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: '-100px' }}
+              transition={{ duration: 0.8, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+              className="lg:col-span-7 bg-white border border-slate-100 rounded-[48px] md:rounded-[64px] p-8 md:p-12 shadow-sm flex flex-col justify-center"
+            >
               {success ? (
                 <motion.div 
                   initial={{ opacity: 0, scale: 0.95 }}
@@ -1064,15 +1180,27 @@ const LandingPage: React.FC<LandingPageProps> = ({ currentRole = 'visitor' }) =>
                   </button>
                 </form>
               )}
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
 
       {/* Call To Action */}
-      <section className="py-24 px-6 bg-black text-white text-center relative overflow-hidden">
+      <motion.section
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true, margin: '-100px' }}
+        transition={{ duration: 0.8 }}
+        className="py-24 px-6 bg-black text-white text-center relative overflow-hidden"
+      >
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-500/10 via-transparent to-transparent pointer-events-none"></div>
-        <div className="max-w-3xl mx-auto space-y-8 relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+          className="max-w-3xl mx-auto space-y-8 relative z-10"
+        >
           <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter">
             READY FOR <span className="text-indigo-400">CLARITY?</span>
           </h2>
@@ -1080,16 +1208,22 @@ const LandingPage: React.FC<LandingPageProps> = ({ currentRole = 'visitor' }) =>
             Take control of your trajectory today. Submit an application for structured long-term cohorts or schedule a strategy consultation call with Peter.
           </p>
           
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4"
+          >
             <Link to="/apply" className="btn-normal bg-white text-black w-full sm:w-auto hover:bg-slate-100">
               Apply for Programs
             </Link>
             <Link to="/consultation" className="btn-normal bg-transparent border border-white/20 text-white w-full sm:w-auto hover:bg-white/5">
               Book Strategy Session
             </Link>
-          </div>
-        </div>
-      </section>
+          </motion.div>
+        </motion.div>
+      </motion.section>
 
       <Footer />
 

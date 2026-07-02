@@ -163,8 +163,8 @@ const BookingPage: React.FC = () => {
           <div className="flex items-center justify-between mb-8 sm:mb-10">
             <h3 className={`text-[11px] sm:text-sm font-black uppercase tracking-widest ${isRapid ? 'text-white' : 'text-slate-900'}`}>May 2026</h3>
             <div className="flex gap-1 sm:gap-2">
-              <button className="p-1.5 sm:p-2 hover:bg-slate-50 rounded-xl text-slate-400 transition-colors"><ChevronLeft size={16} /></button>
-              <button className="p-1.5 sm:p-2 hover:bg-slate-50 rounded-xl text-slate-400 transition-colors"><ChevronRight size={16} /></button>
+              <button className="p-1.5 sm:p-2 hover:bg-slate-50 rounded-xl text-slate-400 transition-colors" aria-label="Previous month"><ChevronLeft size={16} /></button>
+              <button className="p-1.5 sm:p-2 hover:bg-slate-50 rounded-xl text-slate-400 transition-colors" aria-label="Next month"><ChevronRight size={16} /></button>
             </div>
           </div>
           <div className="grid grid-cols-7 gap-2 sm:gap-3 text-center mb-4 sm:mb-6">

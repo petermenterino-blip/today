@@ -1,177 +1,151 @@
 import React from 'react';
-import { motion } from 'motion/react';
-import { CheckCircle2, BookOpen, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Brain, Briefcase, Eye, Instagram, Linkedin, Shield, Target, Twitter, Youtube } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { VisitorHeader } from '../components/shared/VisitorHeader';
 import Footer from '../components/shared/Footer';
 
 const AboutPage: React.FC = () => {
-  const mentorImageUrl = "https://lh3.googleusercontent.com/d/1u6X_oVTZvmMVfiITy0Felr6yukTDkW9y";
+  const mentorImageUrl = 'https://lh3.googleusercontent.com/d/1u6X_oVTZvmMVfiITy0Felr6yukTDkW9y';
+
+  const approach = [
+    {
+      title: 'Calm Clarity',
+      desc: 'No hype, no motivation talk. Just structured analysis of your current state vs your desired state.',
+      icon: Brain,
+    },
+    {
+      title: 'Real Experience',
+      desc: 'Advice rooted in two decades of corporate and entrepreneurial reality, not textbook theory.',
+      icon: Briefcase,
+    },
+    {
+      title: 'Extreme Truth',
+      desc: 'Honest feedback that others are too polite to give, but you need to hear to grow.',
+      icon: Target,
+    },
+  ];
+
+  const values = ['Integrity', 'Impact', 'Strategic Thought', 'Discipline'];
 
   return (
-    <div className="bg-transparent font-['Inter'] antialiased min-h-screen flex flex-col pt-24 md:pt-32">
+    <div className="bg-white font-['Inter'] antialiased min-h-screen text-slate-950 pt-24 md:pt-32">
       <VisitorHeader />
-      
-      {/* Hero Section */}
-      <section className="bg-black text-white px-6 py-16 md:py-20 w-full flex-1 overflow-hidden scroll-mt-24">
-        <div className="grid grid-cols-1 lg:grid-cols-[0.95fr_1fr] gap-12 md:gap-24 items-center max-w-6xl mx-auto">
-          
-          {/* Visual Container */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="relative group max-w-[540px] mx-auto lg:mx-0 w-full"
+
+      <main className="px-6">
+        <div className="max-w-5xl mx-auto pt-4 md:pt-6">
+          <Link
+            to="/"
+            aria-label="Back"
+            className="w-12 h-12 rounded-full bg-white border border-slate-100 shadow-sm flex items-center justify-center text-slate-500 hover:text-black hover:border-slate-200 transition-colors"
           >
-            <div className="aspect-[4/5] bg-zinc-950 rounded-[44px] md:rounded-[58px] overflow-hidden border border-white/10 shadow-[0_40px_120px_-30px_rgba(79,70,229,0.45)] relative">
-              <img 
-                src={mentorImageUrl} 
-                alt="Peter Mannarino" 
-                className="w-full h-full object-cover filter grayscale contrast-110 transition-all duration-1000 scale-110 group-hover:scale-105"
-                referrerPolicy="no-referrer"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/15 to-transparent opacity-70"></div>
-              <div className="absolute bottom-10 left-10 md:bottom-12 md:left-12">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></div>
-                  <span className="text-[9px] font-black uppercase tracking-[0.45em] text-white/70">Lead Strategist</span>
-                </div>
-                <h3 className="text-3xl md:text-4xl font-black uppercase tracking-tight text-white">Mentorino</h3>
-              </div>
-            </div>
-            
-            {/* Floating Badge */}
-            <motion.div 
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -top-10 -right-9 bg-indigo-600 text-white px-8 py-7 rounded-[32px] shadow-2xl border border-white/15 hidden md:block"
-            >
-              <div className="text-center">
-                <p className="text-4xl font-black mb-1">1k+</p>
-                <p className="text-[8px] font-black uppercase tracking-widest opacity-85">People Guided</p>
-              </div>
-            </motion.div>
-          </motion.div>
+            <ArrowLeft size={18} />
+          </Link>
+        </div>
 
-          {/* Text/Content Container */}
-          <div className="space-y-9">
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-[1px] bg-indigo-500"></div>
-                <span className="text-[10px] font-black uppercase tracking-[0.45em] text-indigo-500">Since 2010</span>
-              </div>
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black uppercase tracking-tighter leading-[0.88] text-white">
-                GUIDANCE FROM <br />
-                <span className="italic text-transparent bg-clip-text bg-gradient-to-b from-zinc-300 via-zinc-500 to-zinc-800">EXPERIENCE.</span>
-              </h1>
-            </div>
+        <section className="max-w-5xl mx-auto text-center pt-2 md:pt-4 pb-16 md:pb-24 flex flex-col items-center">
+          <h1 className="text-6xl sm:text-7xl md:text-8xl font-black uppercase tracking-tighter leading-[0.9]">
+            Peter
+          </h1>
+          <div className="mt-5 mx-auto inline-flex justify-center bg-black px-8 sm:px-10 md:px-12 py-4 md:py-5">
+            <h2 className="text-5xl sm:text-6xl md:text-7xl font-black uppercase tracking-tighter leading-none text-white">
+              Mentorino
+            </h2>
+          </div>
+          <div className="mt-8 mx-auto inline-flex justify-center border border-slate-200 px-10 sm:px-14 py-4">
+            <p className="text-center text-[10px] font-black uppercase tracking-[0.45em] text-slate-400">
+              Mentor & Strategic Consultant
+            </p>
+          </div>
+        </section>
 
-            <div className="space-y-7 text-slate-400 font-semibold text-base md:text-lg leading-relaxed max-w-[560px]">
+        <section className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-[0.85fr_1fr] gap-12 md:gap-20 items-center pb-24 md:pb-32">
+          <div className="mx-auto w-full max-w-[330px] aspect-[0.78] rounded-[72px] overflow-hidden shadow-[0_28px_70px_-42px_rgba(15,23,42,0.7)] bg-slate-100">
+            <img
+              src={mentorImageUrl}
+              alt="Peter Mentorino"
+              className="w-full h-full object-cover grayscale contrast-105"
+              referrerPolicy="no-referrer"
+              loading="lazy"
+            />
+          </div>
+
+          <div>
+            <h3 className="text-3xl font-black uppercase tracking-tighter mb-8">The Bio</h3>
+            <div className="space-y-7 text-slate-500 text-base md:text-lg font-semibold leading-relaxed">
               <p>
-                Leveraging over 25 years of professional experience, I have been guiding college students, recent grads, and people in the game of life for 15 years.
+                Leveraging over 25 years of high-performance leadership in specialized sectors, I have dedicated the last 15 years to bridging the guidance gap for the next generation. Since 2010, I have guided over 1,000 people in this game called life, helping them navigate the complexities of career, education, and personal purpose.
               </p>
-              <p className="text-white/85">
-                I help people make better decisions through calm, structured, and practical guidance — not pressure or motivation talk.
+              <p>
+                My approach is built on "Calm Clarity"--stripping away the noise and pressure of modern expectations to help college students, recent grads, and those seeking direction make decisions rooted in their own strengths and realistic trajectories.
               </p>
             </div>
+            <div className="flex gap-12 mt-12">
+              <div>
+                <p className="text-5xl font-black tracking-tighter text-black">25+</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-300">Years Exp</p>
+              </div>
+              <div>
+                <p className="text-5xl font-black tracking-tighter text-black">15y</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-300">Guidance</p>
+              </div>
+            </div>
+          </div>
+        </section>
 
-            {/* Quick Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-[540px]">
-              {[
-                { label: "Career", val: "Strategic Paths" },
-                { label: "Life", val: "Decision Mastery" },
-                { label: "Academic", val: "Future Clarity" },
-                { label: "Growth", val: "Discipline Systems" }
-              ].map((item, i) => (
-                <div key={i} className="min-h-[90px] p-6 bg-white/[0.055] border border-white/10 rounded-[28px] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-indigo-500/40 transition-colors flex flex-col justify-center">
-                  <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-3">{item.label}</p>
-                  <p className="text-sm md:text-base font-black uppercase tracking-tight text-white">{item.val}</p>
+        <section className="max-w-3xl mx-auto text-center pb-24 md:pb-32">
+          <span className="inline-flex rounded-full bg-slate-50 px-5 py-2 text-[9px] font-black uppercase tracking-[0.35em] text-slate-400">
+            The Backstory
+          </span>
+          <h2 className="mt-8 text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none">
+            Why Mentorino Exists.
+          </h2>
+          <div className="mt-10 space-y-7 text-slate-500 text-base md:text-lg font-semibold leading-relaxed">
+            <p>
+              Before Mentorino, I spent over 25 years in corporate and entrepreneurial environments -- across multiple sectors and leadership roles. I saw the same pattern repeat: talented, smart people stalling not because they lacked ability, but because they lacked clarity and structured guidance.
+            </p>
+            <p>
+              In 2010, I started mentoring on the side. One conversation led to another. Within a few years, I had guided over 1,000 individuals -- college students, recent grads, career changers -- helping them navigate the noise and build real, actionable trajectories.
+            </p>
+            <p>
+              Mentorino was built to formalize what was already working. No hype, no motivation talk. Just calm, structured, honest guidance rooted in real-world experience.
+            </p>
+          </div>
+        </section>
+
+        <section className="max-w-5xl mx-auto pb-24 md:pb-32">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tighter">Program Approach</h2>
+            <div className="mx-auto mt-5 w-10 h-1 bg-black rounded-full"></div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {approach.map((item) => (
+              <div key={item.title} className="bg-white border border-slate-100 rounded-[42px] p-10 min-h-[250px] shadow-sm">
+                <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-700 mb-10">
+                  <item.icon size={20} />
+                </div>
+                <h3 className="text-base font-black uppercase tracking-tight mb-6">{item.title}</h3>
+                <p className="text-slate-400 text-sm font-bold leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="max-w-5xl mx-auto pb-20 md:pb-28">
+          <div className="bg-black rounded-[56px] md:rounded-[86px] px-8 md:px-16 py-20 md:py-28 text-center text-white">
+            <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tighter">Philosophy & Vision</h2>
+            <blockquote className="mt-12 max-w-3xl mx-auto text-3xl md:text-4xl italic font-black leading-relaxed text-white/45">
+              "Direction is more important than speed. Many people are running fast toward a wall. My mission is to show them where the door is."
+            </blockquote>
+            <div className="mt-16 flex flex-wrap justify-center gap-5">
+              {values.map((value) => (
+                <div key={value} className="min-w-[120px] rounded-full bg-white/[0.06] border border-white/10 px-7 py-4">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-white">{value}</p>
                 </div>
               ))}
             </div>
-
-            <a href="#backstory" className="btn-normal bg-white text-black hover:bg-slate-100 inline-flex items-center gap-7 px-9 rounded-full">
-              Read the backstory <ArrowRight size={16} />
-            </a>
           </div>
-        </div>
-      </section>
-
-      {/* Philosophy and Journey details */}
-      <section id="backstory" className="bg-black text-white py-28 md:py-44 px-6 overflow-hidden scroll-mt-24">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-28 items-start">
-          <div className="space-y-10">
-            <div>
-              <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-[0.9] text-white">
-                MOST PEOPLE <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-b from-zinc-500 to-zinc-800">FEEL LOST.</span>
-              </h2>
-            </div>
-            <p className="text-zinc-500 text-lg md:text-xl font-bold leading-relaxed max-w-[560px]">
-              It's normal, but it's a guidance gap. You might be unsure which career path to choose, feeling family pressure, or stuck without direction.
-            </p>
-            <ul className="space-y-4 pt-2">
-              {[
-                "Unsure which career path to choose",
-                "Confused about education path",
-                "Feeling pressure from family & society",
-                "Overthinking your future"
-              ].map((item) => (
-                <li key={item} className="flex items-center gap-4 text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">
-                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span>
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="space-y-10">
-            <div>
-              <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-[0.9] text-white">
-                PROGRAMS THAT <br />
-                <span className="text-emerald-500">BRING CLARITY.</span>
-              </h2>
-            </div>
-            <p className="text-zinc-500 text-lg md:text-xl font-bold leading-relaxed max-w-[560px]">
-              No hype. No shortcuts. Just clear guidance to help you understand yourself and move forward with a realistic plan.
-            </p>
-            <ul className="space-y-4 pt-2">
-              {[
-                "Understand yourself better",
-                "Make confident decisions",
-                "Build a realistic plan",
-                "Reduce stress and confusion"
-              ].map((item) => (
-                <li key={item} className="flex items-center gap-4 text-[11px] font-black uppercase tracking-[0.16em] text-emerald-500">
-                  <CheckCircle2 size={15} strokeWidth={2.5} className="shrink-0" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      {/* Ready CTA Section */}
-      <section className="py-24 px-6 text-center max-w-4xl mx-auto">
-        <div className="space-y-8">
-          <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter">
-            WANT TO WORK 1-ON-1 WITH PETER?
-          </h2>
-          <p className="text-slate-500 text-lg font-medium">
-            Peter works with a strictly limited cohort of dedicated students and professionals each year to ensure high-intensity, personal attention.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Link to="/apply" className="btn-normal bg-black text-white hover:bg-slate-800 w-full sm:w-auto">
-              Submit Your Application
-            </Link>
-            <Link to="/programs" className="btn-normal bg-slate-100 text-black hover:bg-slate-200 w-full sm:w-auto inline-flex items-center gap-2 justify-center">
-              Explore Programs <ArrowRight size={14} />
-            </Link>
-          </div>
-        </div>
-      </section>
+        </section>
+      </main>
 
       <Footer />
     </div>

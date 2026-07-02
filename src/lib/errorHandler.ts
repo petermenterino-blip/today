@@ -5,7 +5,7 @@ const KNOWN_CODES: Record<string, string> = {
   '42501': 'Permission denied. Your account may not have access to this resource.',
   '23505': 'This record already exists.',
   '23503': 'This operation references a record that does not exist.',
-  '42P01': 'A system configuration error occurred. Please contact support.',
+  '42P01': 'The visitor_bookings table does not exist. Please run the database migration (018_visitor_bookings.sql) in your Supabase SQL Editor to create it.',
   'auth/user-not-found': 'No account found with this email address.',
   'auth/wrong-password': 'Invalid email or password.',
   'auth/email-already-in-use': 'An account with this email already exists.',

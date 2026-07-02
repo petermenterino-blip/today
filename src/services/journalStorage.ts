@@ -78,7 +78,13 @@ export const journalStorage = {
     if (result.error) throw new Error(interpretError(result.error));
     const journal = rowToJournal(result.data);
     if (journal.studentId) {
-      notify.journalSubmitted(journal.studentId, '').catch(() => {});
+      const { data: enrollment } = await supabase
+        .from('program_enrollments')
+        .select('program:program_id(mentor_id)')
+        .eq('student_id', journal.studentId)
+        .maybeSingle();
+      const mentorId: string = (enrollment as any)?.program?.mentor_id || '';
+      notify.journalSubmitted(journal.studentId, mentorId).catch(() => {});
     }
     return journal;
   },

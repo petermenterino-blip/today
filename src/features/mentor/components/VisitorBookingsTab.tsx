@@ -28,7 +28,7 @@ export const VisitorBookingsTab: React.FC = () => {
     setLoading(true);
     const { data, error } = await visitorBookingService.fetchAll();
     if (data) setBookings(data);
-    if (error) notifyError(error);
+    if (error && !error.includes('relation') && !error.includes('42P01')) notifyError(error);
     setLoading(false);
   };
 

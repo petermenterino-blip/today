@@ -106,30 +106,23 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
   }, [currentUserId, role, selectedConversation?.id, location.search]);
 
   useEffect(() => {
-    const init = async () => {
-      if (role === 'student') {
-        const convos = await messageService.getConversations(currentUserId, role);
+    if (role === 'student') {
+      messageService.getConversations(currentUserId, role).then(convos => {
         if (convos.length === 0) {
-          const { data: enrollment } = await supabase
+          supabase
             .from('program_enrollments')
             .select('program:program_id(mentor_id)')
             .eq('student_id', currentUserId)
-            .maybeSingle();
-          const mentorId = (enrollment as any)?.program?.mentor_id;
-          if (mentorId) {
-            await messageService.createConversation(currentUserId, 'Mentor', mentorId);
-          }
+            .maybeSingle()
+            .then(({ data: enrollment }) => {
+              const mentorId = (enrollment as any)?.program?.mentor_id;
+              if (mentorId) {
+                messageService.createConversation(currentUserId, 'Mentor', mentorId);
+              }
+            });
         }
-      }
-      if (role === 'mentor') {
-        const students = await studentService.getAll();
-        const activeStudents = students.filter(s => s.status === 'active');
-        activeStudents.forEach(s => {
-          messageService.createConversation(s.user_id || '', s.name || '', currentUserId);
-        });
-      }
-    };
-    init();
+      });
+    }
   }, [role, currentUserId]);
 
   // Initial load

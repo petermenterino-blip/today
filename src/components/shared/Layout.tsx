@@ -98,6 +98,7 @@ const Layout: React.FC<LayoutProps> = ({ children, role, onLogout }) => {
     { label: 'AI Insights', path: '/mentor?tab=ai', icon: Zap, roles: ['mentor'] },
     { label: 'Gallery', path: '/mentor?tab=gallery', icon: ImageIcon, roles: ['mentor'] },
     { label: 'Bookings', path: '/mentor?tab=bookings', icon: CalendarCheck, roles: ['mentor'] },
+    { label: 'Settings', path: '/settings', icon: Settings, roles: ['mentor'] },
   ].filter(item => item.roles.includes(role));
 
   const isActive = (path: string) => {
@@ -243,11 +244,6 @@ const Layout: React.FC<LayoutProps> = ({ children, role, onLogout }) => {
                 </button>
               </div>
               {renderSidebarLinks(false)}
-              <div className="p-6 border-t border-slate-50 mt-auto">
-                <button onClick={onLogout} className="flex items-center gap-3 w-full px-4 py-3 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-2xl transition-all text-[13px] font-medium">
-                  <LogOut size={18} /> Sign Out
-                </button>
-              </div>
             </motion.aside>
           </>
         )}
@@ -307,25 +303,8 @@ const Layout: React.FC<LayoutProps> = ({ children, role, onLogout }) => {
           {/* Nav links */}
           {renderSidebarLinks(isCollapsed)}
 
-          {/* Logout pinned to bottom */}
-          <div className={`border-t border-slate-50 p-4 ${isCollapsed ? 'flex justify-center' : ''}`}>
-            <button
-              onClick={onLogout}
-              className={`flex items-center gap-3 transition-all duration-250 ease-in-out ${
-                isCollapsed
-                  ? 'justify-center h-[42px] w-[42px] rounded-[12px] text-slate-400 hover:text-rose-600 hover:bg-rose-50'
-                  : 'w-full px-4 py-3 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-2xl text-[13px] font-medium'
-              }`}
-              title="Sign Out"
-            >
-              <LogOut size={18} className="shrink-0" />
-              <span className={`whitespace-nowrap transition-all duration-150 ease-in-out ${
-                isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-[200px]'
-              }`}>
-                Sign Out
-              </span>
-            </button>
-          </div>
+          {/* Empty spacer to push content up instead of logout */}
+          <div className="p-4" />
         </motion.aside>
       )}
 

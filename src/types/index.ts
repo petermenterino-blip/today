@@ -46,7 +46,7 @@ export interface Application {
   resume_link?: string;
   goal: string;
   message_to_mentor?: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'approved' | 'rejected' | 'invited';
   created_at: string;
   mentor_type?: string;
   phone?: string;

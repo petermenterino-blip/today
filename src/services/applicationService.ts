@@ -43,7 +43,7 @@ function rowToApplication(row: any): Application {
   } catch {}
 
   let mappedStatus: 'pending' | 'approved' | 'rejected' = 'pending';
-  if (row.status === 'approved') mappedStatus = 'approved';
+  if (row.status === 'approved' || row.status === 'invited') mappedStatus = 'approved';
   if (row.status === 'rejected') mappedStatus = 'rejected';
 
     return {
@@ -202,7 +202,7 @@ export const applicationService = {
 
   async uploadDocument(file: File, userId?: string): Promise<ServiceResponse<string>> {
     try {
-      const path = userId || 'applications';
+      const path = userId || `applicant_${file.name.replace(/[^a-zA-Z0-9]/g, '_')}`;
       const url = await storageService.uploadStudentDocument(path, file);
       return { data: url, error: null };
     } catch (err: any) {

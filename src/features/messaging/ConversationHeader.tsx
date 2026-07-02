@@ -68,7 +68,7 @@ export const ConversationHeader: React.FC<ConversationHeaderProps> = ({
               autoFocus
             />
             {searchInChatQuery && (
-              <button onClick={() => setSearchInChatQuery('')} className="text-slate-400 hover:text-slate-600"><X size={14} /></button>
+              <button onClick={() => setSearchInChatQuery('')} className="text-slate-400 hover:text-slate-600" aria-label="Clear search"><X size={14} /></button>
             )}
           </div>
         </div>

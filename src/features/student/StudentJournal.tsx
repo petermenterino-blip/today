@@ -77,7 +77,7 @@ const StudentJournal: React.FC<StudentJournalProps> = ({ studentId }) => {
               {journals.map(entry => (
                 <motion.div whileHover={{ y: -2 }} key={entry.id} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-lg transition-all">
                    <div className="flex justify-between items-start mb-4">
-                     <h4 className="font-bold text-lg text-brand-charcoal">{entry.type} Reflection</h4>
+                     <h4 className="font-bold text-lg text-brand-charcoal">{entry.title || `${entry.type} Reflection`}</h4>
                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-50 px-3 py-1 rounded-full">
                        {new Date(entry.createdAt).toLocaleDateString()}
                      </span>

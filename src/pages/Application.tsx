@@ -146,6 +146,7 @@ const ApplicationPage: React.FC = () => {
       <button 
         onClick={() => navigate(-1)}
         className="mb-8 sm:mb-10 flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-white border border-black/[0.05] rounded-full shadow-sm hover:scale-110 active:scale-95 transition-all group"
+        aria-label="Go back"
       >
         <ArrowLeft size={18} className="sm:w-5 sm:h-5 text-black group-hover:-translate-x-1 transition-transform" />
       </button>

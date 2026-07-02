@@ -599,7 +599,7 @@ export const MenteesTab: React.FC<MenteesTabProps> = ({
                               </div>
                               <div className="mt-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button className="flex-1 py-2 bg-indigo-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest">Download</button>
-                                <button className="p-2 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-red-500"><Trash size={12} /></button>
+                                <button className="p-2 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-red-500" aria-label="Delete file"><Trash size={12} /></button>
                               </div>
                             </div>
                           ))}

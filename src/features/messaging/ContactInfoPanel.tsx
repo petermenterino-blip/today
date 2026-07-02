@@ -77,7 +77,7 @@ export const ContactInfoPanel: React.FC<ContactInfoPanelProps> = ({
           <button 
             onClick={onClose}
             className="p-1.5 hover:bg-[#f0f2f5] rounded-full transition-colors text-[#54656f] focus:outline-none shrink-0"
-            title="Close panel"
+            title="Close panel" aria-label="Close panel"
           >
             <ArrowLeft size={20} />
           </button>

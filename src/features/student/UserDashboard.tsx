@@ -842,7 +842,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
             <p className="text-[10px] font-black uppercase tracking-widest flex-1">
               {notification}
             </p>
-            <button onClick={() => setNotification(null)}>
+            <button onClick={() => setNotification(null)} aria-label="Dismiss notification">
               <X size={16} />
             </button>
           </div>

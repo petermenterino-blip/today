@@ -91,7 +91,7 @@ export const ConversationList = React.memo<ConversationListProps>(({
           <div className="p-4 bg-slate-50 border-b border-emerald-100 animate-in fade-in slide-in-from-top-2">
             <div className="flex justify-between items-center mb-3">
               <h3 className="text-xs font-black uppercase tracking-widest text-emerald-600">Start New Conversation</h3>
-              <button onClick={() => setShowNewChatModal(false)} className="text-slate-400 hover:text-slate-600"><X size={16} /></button>
+              <button onClick={() => setShowNewChatModal(false)} className="text-slate-400 hover:text-slate-600" aria-label="Close"><X size={16} /></button>
             </div>
             <div className="max-h-[200px] overflow-y-auto space-y-1">
                   {role === 'mentor' ? (

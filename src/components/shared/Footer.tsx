@@ -41,7 +41,7 @@ const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 sm:gap-16 mb-16 sm:mb-20">
           {/* Brand Column */}
-          <div className="space-y-6 sm:space-y-8">
+          <div className="space-y-6 sm:space-y-8 lg:col-span-2">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 sm:w-10 sm:h-10 bg-black rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-black italic">M</div>
               <span className="text-lg sm:text-xl font-black uppercase tracking-tighter">Mentorino.</span>
@@ -61,38 +61,37 @@ const Footer: React.FC = () => {
             </div>
           </div>
 
-          {/* Links Columns */}
-          <div className="grid grid-cols-2 gap-8 sm:block sm:space-y-4">
-            <div>
-              <h4 className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.4em] text-indigo-500 mb-6 sm:mb-8">Navigate</h4>
-              <ul className="space-y-3 sm:space-y-4">
-                {[
-                  { label: 'About Mentor', to: '/about' },
-                  { label: 'Programs', to: '/programs' },
-                  { label: 'Consultation', to: '/consultation' },
-                  { label: 'FAQ', to: '/faq' },
-                ].map((item) => (
-                  <li key={item.label}>
-                    <Link to={item.to} className="text-slate-500 hover:text-black transition-colors text-xs sm:text-sm font-medium">{item.label}</Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          {/* Navigate Column */}
+          <div>
+            <h4 className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.4em] text-indigo-500 mb-6 sm:mb-8">Navigate</h4>
+            <ul className="space-y-3 sm:space-y-4">
+              {[
+                { label: 'About Mentor', to: '/about' },
+                { label: 'Programs', to: '/programs' },
+                { label: 'Consultation', to: '/consultation' },
+                { label: 'FAQ', to: '/faq' },
+              ].map((item) => (
+                <li key={item.label}>
+                  <Link to={item.to} className="text-slate-500 hover:text-black transition-colors text-xs sm:text-sm font-medium">{item.label}</Link>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-            <div className="sm:mt-8">
-              <h4 className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.4em] text-indigo-500 mb-6 sm:mb-8">Connect</h4>
-              <ul className="space-y-3 sm:space-y-4">
-                {[
-                  { label: 'Contact', to: '/contact' },
-                  { label: 'Gallery', to: '/gallery' },
-                  { label: 'MEMBERS PORTAL', to: '/auth' },
-                ].map((item) => (
-                  <li key={item.label}>
-                    <Link to={item.to} className="text-slate-500 hover:text-black transition-colors text-xs sm:text-sm font-medium">{item.label}</Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          {/* Connect Column */}
+          <div>
+            <h4 className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.4em] text-indigo-500 mb-6 sm:mb-8">Connect</h4>
+            <ul className="space-y-3 sm:space-y-4">
+              {[
+                { label: 'Contact', to: '/contact' },
+                { label: 'Gallery', to: '/gallery' },
+                { label: 'MEMBERS PORTAL', to: '/auth' },
+              ].map((item) => (
+                <li key={item.label}>
+                  <Link to={item.to} className="text-slate-500 hover:text-black transition-colors text-xs sm:text-sm font-medium">{item.label}</Link>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
 
