@@ -26,7 +26,7 @@ const DEFAULT_GALLERY = [
   {
     id: 'g-1',
     title: "CompTIA Certification Celebration",
-    image: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80&w=800",
+    image: "/images/event-1.jpeg",
     category: "Ceremonies",
     date: "May 2026",
     location: "Hoboken Tech Labs",
@@ -35,7 +35,7 @@ const DEFAULT_GALLERY = [
   {
     id: 'g-2',
     title: "IT Career Trajectory Masterclass",
-    image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&q=80&w=800",
+    image: "/images/event-2.jpeg",
     category: "Careers",
     date: "October 2025",
     location: "Manhattan Creative Hub",
@@ -44,17 +44,17 @@ const DEFAULT_GALLERY = [
   {
     id: 'g-3',
     title: "Hybrid Life Strategy Roundtable",
-    image: "https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&q=80&w=800",
-    category: "Academic",
+    image: "/images/event-3.jpeg",
+    category: "Virtual",
     date: "January 2026",
     location: "Virtual Campus",
     description: "An interactive, hybrid roundtable discussion focusing on overcoming career overthinking, dealing with academic pressures, and mastering the 3-Daily-Goals system."
   },
   {
     id: 'g-4',
-    title: "Fireside Chat with Industry Leaders",
-    image: "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&q=80&w=800",
-    category: "Careers",
+    title: "Student Professional Presence Event",
+    image: "/images/event-4.jpg",
+    category: "Academic",
     date: "March 2026",
     location: "Jersey City Incubator",
     description: "Former alumni now serving as Lead Security Operations managers and Cloud Architects joined us to share raw, un-hyped advice on entering the job market today."
@@ -63,10 +63,10 @@ const DEFAULT_GALLERY = [
 
 const HIDDEN_PRESETS_KEY = 'gallery_hidden_presets';
 const PRESET_IMAGES = [
-  "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=800", // Team meeting
-  "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&q=80&w=800", // Workshop
-  "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=800", // Collaboration
-  "https://images.unsplash.com/photo-1528605248644-14dd04022da1?auto=format&fit=crop&q=80&w=800", // Presentation
+  "/images/event-1.jpeg",
+  "/images/event-2.jpeg",
+  "/images/event-3.jpeg",
+  "/images/event-4.jpg",
 ];
 
 interface SettingsPageProps {
