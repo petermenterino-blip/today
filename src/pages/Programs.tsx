@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Briefcase, GraduationCap, Compass, ArrowRight, CheckCircle2, Zap, Target, BookOpen } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Briefcase, CalendarDays, CheckCircle2, ClipboardList, Compass, GraduationCap, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { VisitorHeader } from '../components/shared/VisitorHeader';
 import Footer from '../components/shared/Footer';
@@ -54,64 +54,111 @@ const ProgramsPage: React.FC = () => {
     }
   ];
 
+  const academyPrograms = [
+    {
+      id: 'career',
+      title: 'IT Career Planning',
+      icon: Briefcase,
+      iconBg: 'bg-blue-500',
+      duration: '12 weeks',
+      level: 'All levels',
+      desc: 'Build a strategic roadmap for your IT career with personalized guidance on certifications, skills, and job placement.',
+      points: ['Career Path Assessment', 'Certification Roadmap', 'Resume Strategy', 'Interview Preparation']
+    },
+    {
+      id: 'cybersecurity',
+      title: 'Becoming a Cybersecurity Analyst',
+      icon: ShieldCheck,
+      iconBg: 'bg-purple-500',
+      duration: '18 weeks',
+      level: 'Beginner to intermediate',
+      desc: 'Protect systems and networks from digital attacks. Master ethical hacking, networking security, and compliance.',
+      points: ['Network Security', 'Ethical Hacking', 'Incident Response', 'Compliance & GRC']
+    },
+    {
+      id: 'project-management',
+      title: 'Project Management',
+      icon: ClipboardList,
+      iconBg: 'bg-emerald-500',
+      duration: '10 weeks',
+      level: 'Beginner',
+      desc: 'Develop the skills to lead projects effectively using industry-standard frameworks and practical methodologies.',
+      points: ['Agile & Scrum', 'Risk Management', 'Stakeholder Communication', 'PMP Prep']
+    },
+    {
+      id: 'academic-success',
+      title: 'Academic Success Planning',
+      icon: CalendarDays,
+      iconBg: 'bg-orange-500',
+      duration: '8 weeks',
+      level: 'Student focused',
+      desc: 'Create practical study systems, course planning routines, and accountability habits for consistent performance.',
+      points: ['Study Planning', 'Course Decisions', 'Weekly Reviews', 'Confidence Building']
+    }
+  ];
+
   return (
     <div className="bg-transparent font-['Inter'] antialiased min-h-screen flex flex-col pt-24 md:pt-32">
       <VisitorHeader />
 
       {/* Hero Section */}
-      <section className="px-6 py-12 md:py-16 max-w-7xl mx-auto w-full">
-        <div className="text-center max-w-3xl mx-auto space-y-6 mb-16 md:mb-24">
-          <div className="flex items-center justify-center gap-3">
-            <div className="w-8 h-[1px] bg-indigo-500"></div>
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-600">The Framework</span>
-            <div className="w-8 h-[1px] bg-indigo-500"></div>
+      <section className="px-6 py-10 md:py-14 max-w-6xl mx-auto w-full">
+        <div className="max-w-3xl space-y-8 mb-16 md:mb-24">
+          <Link to="/" className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-700 transition-colors">
+            <ArrowLeft size={14} />
+            Back
+          </Link>
+          <div className="space-y-5">
+            <span className="inline-flex rounded-full bg-slate-100 px-4 py-2 text-[9px] font-black uppercase tracking-[0.35em] text-slate-400">Curated Learning Paths</span>
+            <div>
+              <h1 className="text-5xl md:text-7xl font-black tracking-tighter leading-[0.78] text-slate-950">
+                Specialized <br />
+                <span className="italic text-slate-400">Academy Programs</span>
+              </h1>
+            </div>
+            <p className="text-slate-600 text-lg md:text-xl font-medium leading-relaxed">
+              Mentorship-first programs designed for industry-ready proficiency.
+            </p>
           </div>
-          <h1 className="text-4xl sm:text-6xl font-black uppercase tracking-tighter leading-none text-black">
-            OUR GUIDANCE <span className="text-indigo-600 italic">PILLARS.</span>
-          </h1>
-          <p className="text-slate-500 text-lg md:text-xl font-medium leading-relaxed">
-            We do not sell pre-recorded video courses. Our program is a active, collaborative 1-on-1 strategic alliance custom-tailored to solve your specific chaos.
-          </p>
         </div>
 
-        {/* Detailed Program Pillars Grid */}
-        <div className="space-y-12 md:space-y-20">
-          {programs.map((prog, idx) => (
+        {/* Academy Programs Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {academyPrograms.map((prog, idx) => (
             <motion.div
               key={prog.id}
               initial={{ opacity: 0, y: 35 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-100px' }}
               transition={{ duration: 0.8, delay: idx * 0.1 }}
-              className="bg-white border border-slate-100 rounded-[48px] md:rounded-[64px] p-8 md:p-16 shadow-sm hover:shadow-xl hover:border-slate-200 transition-all duration-500 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center"
+              className="bg-white border border-slate-100 rounded-[36px] md:rounded-[44px] p-8 md:p-10 shadow-sm hover:shadow-xl hover:border-slate-200 transition-all duration-500 min-h-[470px] flex flex-col"
             >
-              {/* Left Column (Icon & Summary) */}
-              <div className="lg:col-span-5 space-y-6">
-                <div className={`w-16 h-16 ${prog.bgColor} rounded-3xl flex items-center justify-center`}>
-                  <prog.icon size={28} className={prog.color} />
+              <div className="space-y-7 flex-1">
+                <div className={`w-14 h-14 ${prog.iconBg} rounded-2xl flex items-center justify-center text-white shadow-[0_18px_35px_-24px_rgba(15,23,42,0.8)]`}>
+                  <prog.icon size={24} />
                 </div>
-                <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-black">{prog.title}</h2>
-                <p className="text-slate-500 text-sm md:text-base leading-relaxed font-medium">{prog.short}</p>
-                <div className="pt-2">
-                  <Link to="/apply" className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-indigo-600 hover:text-indigo-800 transition-colors">
-                    Apply for this tier <ArrowRight size={14} />
-                  </Link>
+                <div className="flex items-center gap-3 text-[9px] font-black uppercase tracking-widest text-slate-400">
+                  <span>{prog.duration}</span>
+                  <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                  <span>{prog.level}</span>
                 </div>
-              </div>
-
-              {/* Right Column (List of Deliverables) */}
-              <div className="lg:col-span-7 bg-slate-50 border border-slate-100 rounded-[36px] p-8 md:p-12 space-y-6">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">WHAT WE ARCHITECT TOGETHER</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {prog.details.map((detail, dIdx) => (
-                    <div key={dIdx} className="flex gap-3 items-start">
-                      <div className="shrink-0 mt-1">
-                        <CheckCircle2 size={16} className={prog.color} />
-                      </div>
-                      <p className="text-xs sm:text-sm font-semibold text-slate-700 leading-relaxed">{detail}</p>
-                    </div>
+                <div className="space-y-5">
+                  <h2 className="text-2xl font-black tracking-tight text-slate-950 leading-tight">{prog.title}</h2>
+                  <p className="text-slate-500 text-sm md:text-base leading-relaxed font-medium">{prog.desc}</p>
+                </div>
+                <ul className="space-y-3 pt-2">
+                  {prog.points.map((point) => (
+                    <li key={point} className="flex items-center gap-3 text-xs font-black text-slate-700">
+                      <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
+                      {point}
+                    </li>
                   ))}
-                </div>
+                </ul>
+              </div>
+              <div className="pt-8 mt-8">
+                <Link to="/apply" className="h-12 w-full rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-950 flex items-center justify-center text-[10px] font-black uppercase tracking-[0.18em] transition-colors">
+                  Enroll Now
+                </Link>
               </div>
             </motion.div>
           ))}

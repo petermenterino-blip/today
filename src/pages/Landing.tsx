@@ -335,44 +335,70 @@ const LandingPage: React.FC<LandingPageProps> = ({ currentRole = 'visitor' }) =>
       </div>
 
       {/* Process Section */}
-      <section className="py-20 md:py-32 px-6 bg-transparent relative overflow-hidden">
+      <section className="py-20 md:py-28 px-6 bg-transparent relative overflow-hidden">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-[40%_60%] gap-8 lg:gap-20 items-center mb-16">
-            <div className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-10 lg:gap-28 items-center mb-20 md:mb-24">
+            <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-[1px] bg-indigo-600"></div>
-                <span className="text-[11px] font-black uppercase tracking-[0.4em] text-indigo-600">The Framework</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.45em] text-indigo-600">The Journey</span>
               </div>
-              <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter leading-none text-slate-900">
-                HOW THE <br />
-                COACHING <br />
-                WORKS
+              <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-[0.9] text-slate-950">
+                OUR STRATEGIC <br />
+                <span className="text-slate-200">PROCESS.</span>
               </h2>
             </div>
-            <p className="text-slate-500 font-medium leading-relaxed text-sm md:text-base max-w-xl">
-              Every student follows a structured mentorship journey designed to provide absolute clarity, build practical life skills, and create a personalized trajectory for long-term career growth.
+            <p className="text-slate-500 font-semibold leading-relaxed text-base md:text-lg max-w-[520px] lg:pt-16">
+              We've refined a results-driven methodology to ensure every student finds their ideal trajectory through structured introspection and action.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-16">
+            <div className="hidden lg:block absolute left-0 right-0 top-[78px] h-px bg-slate-200/80"></div>
             {[
-              { step: "01", title: "Assessment", desc: "Understand your current starting point, core strengths, and obstacles.", icon: ClipboardList, color: "text-indigo-600 bg-indigo-50" },
-              { step: "02", title: "Discovery", desc: "Identify your true career interests and academic alignment choices.", icon: Search, color: "text-emerald-600 bg-emerald-50" },
-              { step: "03", title: "Mentorship", desc: "Engage in highly structured, actionable 1:1 strategy sessions.", icon: Video, color: "text-amber-600 bg-amber-50" },
-              { step: "04", title: "Trajectory", desc: "Follow your personalized roadmap with measurable goals.", icon: Map, color: "text-slate-900 bg-slate-100" }
+              {
+                phase: "Phase 01",
+                title: "Apply",
+                label: "The Intent",
+                desc: "Complete the 2-minute application. We look for seriousness and readiness for guidance.",
+                icon: ClipboardList,
+                color: "bg-indigo-600 text-white"
+              },
+              {
+                phase: "Phase 02",
+                title: "Review",
+                label: "The Audit",
+                desc: "We review your current goal. Your application is approved within 48 hours.",
+                icon: Search,
+                color: "bg-emerald-600 text-white"
+              },
+              {
+                phase: "Phase 03",
+                title: "Consult",
+                label: "The Clarity",
+                desc: "A 1-on-1 session to verify goals and identify the exact hurdles in your way.",
+                icon: Video,
+                color: "bg-amber-500 text-white"
+              },
+              {
+                phase: "Phase 04",
+                title: "Roadmap",
+                label: "The Growth",
+                desc: "Get your custom trajectory plan. Weekly audits, tasks, and real-time support.",
+                icon: Map,
+                color: "bg-black text-white"
+              }
             ].map((item, i) => (
-              <div key={i} className="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col justify-between h-full group">
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div className={`w-12 h-12 rounded-2xl ${item.color} flex items-center justify-center`}>
-                      <item.icon size={20} />
-                    </div>
-                    <span className="text-2xl font-black text-slate-200 group-hover:text-indigo-500 transition-colors duration-300">{item.step}</span>
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="text-base font-black uppercase tracking-tight text-slate-900">{item.title}</h3>
-                    <p className="text-slate-500 text-xs leading-relaxed font-medium">{item.desc}</p>
-                  </div>
+              <div key={i} className="relative z-10 space-y-7">
+                <div className={`w-[60px] h-[60px] rounded-[14px] ${item.color} flex items-center justify-center shadow-[0_18px_45px_-24px_rgba(15,23,42,0.8)]`}>
+                  <item.icon size={24} strokeWidth={2.2} />
+                </div>
+                <div className="space-y-4">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-300">{item.phase}</p>
+                  <h3 className="text-lg md:text-xl font-black uppercase tracking-tight text-slate-950">{item.title}</h3>
+                  <div className="w-10 h-[3px] bg-slate-100"></div>
+                  <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
+                  <p className="text-sm font-semibold leading-relaxed text-slate-500">{item.desc}</p>
                 </div>
               </div>
             ))}
@@ -381,8 +407,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ currentRole = 'visitor' }) =>
       </section>
 
       {/* RESTORED SECTION: About Mentor */}
-      <section id="about" className="py-24 md:py-32 px-6 max-w-7xl mx-auto w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 md:gap-24 items-center">
+      <section id="about" className="bg-black text-white py-16 md:py-20 px-6 w-full overflow-hidden scroll-mt-24">
+        <div className="grid grid-cols-1 lg:grid-cols-[0.95fr_1fr] gap-12 md:gap-24 items-center max-w-6xl mx-auto">
           
           {/* Visual Container */}
           <motion.div
@@ -390,23 +416,23 @@ const LandingPage: React.FC<LandingPageProps> = ({ currentRole = 'visitor' }) =>
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true, margin: '-100px' }}
             transition={{ duration: 0.8 }}
-            className="relative group"
+            className="relative group max-w-[540px] mx-auto lg:mx-0 w-full"
           >
-            <div className="aspect-[4/5] bg-slate-900 rounded-[48px] md:rounded-[64px] overflow-hidden border border-black/5 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] relative">
+            <div className="aspect-[4/5] bg-zinc-950 rounded-[44px] md:rounded-[58px] overflow-hidden border border-white/10 shadow-[0_40px_120px_-30px_rgba(79,70,229,0.45)] relative">
               <img 
                 src={mentorImageUrl} 
                 alt="Peter Mannarino" 
-                className="w-full h-full object-cover filter grayscale hover:grayscale-0 transition-all duration-1000 scale-105 group-hover:scale-100"
+                className="w-full h-full object-cover filter grayscale contrast-110 transition-all duration-1000 scale-110 group-hover:scale-105"
                 referrerPolicy="no-referrer"
                 loading="lazy"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-60"></div>
-              <div className="absolute bottom-12 left-12">
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/15 to-transparent opacity-70"></div>
+              <div className="absolute bottom-10 left-10 md:bottom-12 md:left-12">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></div>
-                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/75">Lead Strategist & Coach</span>
+                  <span className="text-[9px] font-black uppercase tracking-[0.45em] text-white/70">Lead Strategist</span>
                 </div>
-                <h3 className="text-3xl md:text-4xl font-black uppercase tracking-tight text-white">Peter Mannarino.</h3>
+                <h3 className="text-3xl md:text-4xl font-black uppercase tracking-tight text-white">Mentorino</h3>
               </div>
             </div>
             
@@ -414,138 +440,168 @@ const LandingPage: React.FC<LandingPageProps> = ({ currentRole = 'visitor' }) =>
             <motion.div 
               animate={{ y: [0, -10, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -top-6 -right-6 bg-indigo-600 text-white p-6 rounded-[32px] shadow-2xl border border-white/20 hidden md:block"
+              className="absolute -top-10 -right-9 bg-indigo-600 text-white px-8 py-7 rounded-[32px] shadow-2xl border border-white/15 hidden md:block"
             >
               <div className="text-center">
-                <p className="text-4xl font-black mb-1">15+</p>
-                <p className="text-[8px] font-black uppercase tracking-widest opacity-80">Years Mentoring</p>
+                <p className="text-4xl font-black mb-1">1k+</p>
+                <p className="text-[8px] font-black uppercase tracking-widest opacity-85">People Guided</p>
               </div>
             </motion.div>
           </motion.div>
 
           {/* Text/Content Container */}
-          <div className="space-y-10">
+          <div className="space-y-9">
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-[1px] bg-indigo-500"></div>
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-600">The Mentor</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.45em] text-indigo-500">Since 2010</span>
               </div>
-              <h1 className="text-4xl sm:text-6xl font-black uppercase tracking-tighter leading-none text-black">
+              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black uppercase tracking-tighter leading-[0.88] text-white">
                 GUIDANCE FROM <br />
-                <span className="text-indigo-600 italic">REAL EXPERIENCE.</span>
+                <span className="italic text-transparent bg-clip-text bg-gradient-to-b from-zinc-300 via-zinc-500 to-zinc-800">EXPERIENCE.</span>
               </h1>
             </div>
 
-            <div className="space-y-6 text-slate-600 font-medium text-base md:text-lg leading-relaxed">
+            <div className="space-y-7 text-slate-400 font-semibold text-base md:text-lg leading-relaxed max-w-[560px]">
               <p>
-                Peter Mannarino has over 20 years of professional corporate and technical experience, and has spent the last 15 years guiding college students, recent graduates, and high-potential individuals through the game of life.
+                Leveraging over 25 years of professional experience, I have been guiding college students, recent grads, and people in the game of life for 15 years.
               </p>
-              <p className="text-black">
-                He believes in tactical, case-by-case strategy. His mentoring is centered on developing actionable daily plans and calm, clear direction, strictly avoiding over-hyped motivation talks or generic advice.
+              <p className="text-white/85">
+                I help people make better decisions through calm, structured, and practical guidance — not pressure or motivation talk.
               </p>
             </div>
 
             {/* Quick Stats Grid */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-[540px]">
               {[
-                { label: "EXPERIENCE", val: "20+ Years Exp", icon: Award, color: "text-indigo-500" },
-                { label: "GUIDANCE", val: "1k+ Lives Touched", icon: Users, color: "text-emerald-500" },
-                { label: "METHODOLOGY", val: "No Hype, Pure Logic", icon: Target, color: "text-amber-500" },
-                { label: "AVAILABILITY", val: "Limited Cohorts", icon: Clock, color: "text-blue-500" }
+                { label: "Career", val: "Strategic Paths" },
+                { label: "Life", val: "Decision Mastery" },
+                { label: "Academic", val: "Future Clarity" },
+                { label: "Growth", val: "Discipline Systems" }
               ].map((item, i) => (
-                <div key={i} className="p-6 bg-slate-50 border border-slate-100 rounded-[32px] hover:bg-slate-100 transition-colors flex gap-4 items-center">
-                  <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm">
-                    <item.icon size={18} className={item.color} />
-                  </div>
-                  <div>
-                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">{item.label}</p>
-                    <p className="text-xs sm:text-sm font-black uppercase tracking-tight text-black">{item.val}</p>
-                  </div>
+                <div key={i} className="min-h-[90px] p-6 bg-white/[0.055] border border-white/10 rounded-[28px] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-indigo-500/40 transition-colors flex flex-col justify-center">
+                  <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-3">{item.label}</p>
+                  <p className="text-sm md:text-base font-black uppercase tracking-tight text-white">{item.val}</p>
                 </div>
               ))}
             </div>
+
+            <Link to="/about" className="btn-normal bg-white text-black hover:bg-slate-100 inline-flex items-center gap-7 px-9 rounded-full">
+              Read the backstory <ArrowRight size={16} />
+            </Link>
           </div>
         </div>
       </section>
 
       {/* RESTORED SECTION: Philosophy Section */}
-      <section className="bg-slate-950 text-white py-20 md:py-32 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="max-w-3xl space-y-8 mb-20">
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-400">Core Principles</span>
-            <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter">
-              THE MENTORSHIP PHILOSOPHY
-            </h2>
-            <p className="text-slate-400 text-lg md:text-xl font-medium leading-relaxed">
-              "Directional alignment always trumps raw velocity. If you are running as fast as you can but in the wrong direction, you are simply getting lost quicker."
+      <section className="bg-black text-white py-28 md:py-44 px-6 overflow-hidden">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-28 items-start">
+          <div className="space-y-10">
+            <div>
+              <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-[0.9] text-white">
+                MOST PEOPLE <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-b from-zinc-500 to-zinc-800">FEEL LOST.</span>
+              </h2>
+            </div>
+            <p className="text-zinc-500 text-lg md:text-xl font-bold leading-relaxed max-w-[560px]">
+              It's normal, but it's a guidance gap. You might be unsure which career path to choose, feeling family pressure, or stuck without direction.
             </p>
+            <ul className="space-y-4 pt-2">
+              {[
+                "Unsure which career path to choose",
+                "Confused about education path",
+                "Feeling pressure from family & society",
+                "Overthinking your future"
+              ].map((item) => (
+                <li key={item} className="flex items-center gap-4 text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span>
+                  {item}
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                title: "1. No Motivation Hype",
-                desc: "Motivation is temporary and reactive. We focus on building consistent daily systems, micro-routines, and structured workflows that run on auto-pilot even when motivation is absent."
-              },
-              {
-                title: "2. Tactical Roadmapping",
-                desc: "Every person has a unique set of circumstances, biases, strengths, and constraints. We construct personalized, hyper-realistic, day-by-day action trajectories for your specific situation."
-              },
-              {
-                title: "3. Direct Accountability",
-                desc: "We don't tell you what you want to hear; we tell you what you need to hear. Clear feedback loops, goal audits, and active review sessions keep you grounded and moving forward."
-              }
-            ].map((principle, idx) => (
-              <div key={idx} className="p-8 bg-white/5 border border-white/10 rounded-[36px] space-y-4 hover:border-indigo-500/30 transition-all duration-300">
-                <h3 className="text-xl font-black uppercase tracking-tight text-white">{principle.title}</h3>
-                <p className="text-slate-400 text-sm leading-relaxed font-medium">{principle.desc}</p>
-              </div>
-            ))}
+          <div className="space-y-10">
+            <div>
+              <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-[0.9] text-white">
+                PROGRAMS THAT <br />
+                <span className="text-emerald-500">BRING CLARITY.</span>
+              </h2>
+            </div>
+            <p className="text-zinc-500 text-lg md:text-xl font-bold leading-relaxed max-w-[560px]">
+              No hype. No shortcuts. Just clear guidance to help you understand yourself and move forward with a realistic plan.
+            </p>
+            <ul className="space-y-4 pt-2">
+              {[
+                "Understand yourself better",
+                "Make confident decisions",
+                "Build a realistic plan",
+                "Reduce stress and confusion"
+              ].map((item) => (
+                <li key={item} className="flex items-center gap-4 text-[11px] font-black uppercase tracking-[0.16em] text-emerald-500">
+                  <CheckCircle2 size={15} strokeWidth={2.5} className="shrink-0" />
+                  {item}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </section>
 
       {/* RESTORED SECTION: Programs Section */}
-      <section id="programs" className="py-24 md:py-32 px-6 max-w-7xl mx-auto w-full border-t border-slate-100">
-        <div className="text-center max-w-3xl mx-auto space-y-6 mb-16 md:mb-24">
-          <div className="flex items-center justify-center gap-3">
-            <div className="w-8 h-[1px] bg-indigo-500"></div>
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-600">The Framework</span>
-            <div className="w-8 h-[1px] bg-indigo-500"></div>
-          </div>
-          <h1 className="text-4xl sm:text-6xl font-black uppercase tracking-tighter leading-none text-black">
-            OUR GUIDANCE <span className="text-indigo-600 italic">PILLARS.</span>
+      <section id="programs" className="py-20 md:py-24 px-6 w-full border-t border-slate-100 overflow-hidden">
+        <div className="max-w-7xl mx-auto">
+        <div className="text-center max-w-3xl mx-auto space-y-4 mb-14 md:mb-20">
+          <h1 className="text-4xl sm:text-6xl font-black uppercase tracking-tighter leading-none text-slate-950">
+            THE 3 PILLARS.
           </h1>
-          <p className="text-slate-500 text-lg md:text-xl font-medium leading-relaxed">
-            We do not sell pre-recorded video courses. Our program is an active, collaborative 1-on-1 strategic alliance custom-tailored to solve your specific chaos.
+          <p className="text-slate-400 text-lg md:text-xl font-bold leading-relaxed">
+            Focused guidance for every aspect of your growth.
           </p>
         </div>
 
         {/* Detailed Program Pillars Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {programs.map((prog, idx) => (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-11">
+          {[
+            {
+              title: "Life",
+              desc: "Decision clarity, confidence, stress management, and personal direction.",
+              icon: Compass,
+              iconClass: "text-amber-500"
+            },
+            {
+              title: "Schooling",
+              desc: "Education choices, course decisions, study planning, and academic confidence.",
+              icon: GraduationCap,
+              iconClass: "text-emerald-500"
+            },
+            {
+              title: "Career",
+              desc: "Career clarity, skill roadmap, job preparation, and long-term planning.",
+              icon: Briefcase,
+              iconClass: "text-indigo-500"
+            }
+          ].map((pillar, idx) => (
             <motion.div
-              key={prog.id}
+              key={pillar.title}
               initial={{ opacity: 0, y: 35 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-100px' }}
               transition={{ duration: 0.8, delay: idx * 0.1 }}
-              className="bg-white border border-slate-100 rounded-[40px] p-8 md:p-10 shadow-sm hover:shadow-xl hover:border-slate-200 transition-all duration-500 flex flex-col justify-between h-full"
+              className="bg-white border border-slate-100 rounded-[40px] md:rounded-[44px] min-h-[300px] p-9 md:p-11 shadow-[0_18px_50px_-38px_rgba(15,23,42,0.55)] hover:shadow-[0_24px_70px_-42px_rgba(15,23,42,0.7)] transition-all duration-500 flex flex-col justify-center"
             >
-              <div className="space-y-6">
-                <div className={`w-16 h-16 ${prog.bgColor} rounded-3xl flex items-center justify-center`}>
-                  <prog.icon size={28} className={prog.color} />
+              <div className="space-y-8">
+                <div className="w-16 h-16 bg-slate-50 border border-slate-100 rounded-[20px] flex items-center justify-center shadow-sm">
+                  <pillar.icon size={24} className={pillar.iconClass} />
                 </div>
-                <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-black">{prog.title}</h2>
-                <p className="text-slate-500 text-xs sm:text-sm leading-relaxed font-medium">{prog.short}</p>
-              </div>
-              <div className="pt-6 mt-8 border-t border-slate-50">
-                <Link to="/apply" className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-indigo-600 hover:text-indigo-800 transition-colors">
-                  Apply for this tier <ArrowRight size={14} />
-                </Link>
+                <div className="space-y-5">
+                  <h2 className="text-2xl font-black uppercase tracking-tight text-black">{pillar.title}</h2>
+                  <p className="text-slate-400 text-base leading-relaxed font-bold max-w-[280px]">{pillar.desc}</p>
+                </div>
               </div>
             </motion.div>
           ))}
+        </div>
         </div>
       </section>
 
