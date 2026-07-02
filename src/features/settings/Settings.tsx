@@ -10,6 +10,13 @@ import {
   Upload, 
   Image as ImageIcon,
   X,
+  Instagram,
+  Twitter,
+  Linkedin,
+  Youtube,
+  Globe,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { User } from '../../types';
 import { notifyError, notifySuccess } from '../../utils/toast';
@@ -67,11 +74,35 @@ interface SettingsPageProps {
   currentUser: any;
 }
 
+interface SocialLinkItem {
+  platform: string;
+  url: string;
+  enabled: boolean;
+}
+
+const SOCIAL_PLATFORMS = [
+  { key: 'Instagram', icon: Instagram, color: 'text-pink-500' },
+  { key: 'Twitter', icon: Twitter, color: 'text-sky-500' },
+  { key: 'Linkedin', icon: Linkedin, color: 'text-blue-600' },
+  { key: 'Youtube', icon: Youtube, color: 'text-red-500' },
+];
+
+const DEFAULT_SOCIAL_LINKS: SocialLinkItem[] = [
+  { platform: 'Instagram', url: '', enabled: true },
+  { platform: 'Twitter', url: '', enabled: true },
+  { platform: 'Linkedin', url: '', enabled: true },
+  { platform: 'Youtube', url: '', enabled: true },
+];
+
 const SettingsPage: React.FC<SettingsPageProps> = ({ onLogout, currentUser }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [avatarLoading, setAvatarLoading] = useState(false);
+
+  // Social Media Links
+  const [socialLinks, setSocialLinks] = useState<SocialLinkItem[]>(DEFAULT_SOCIAL_LINKS);
+  const [socialSaved, setSocialSaved] = useState(false);
 
   // Profile fields state
   const [name, setName] = useState('');
@@ -116,6 +147,11 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onLogout, currentUser }) =>
 
     const savedHidden = localStorage.getItem(HIDDEN_PRESETS_KEY);
     if (savedHidden) setHiddenPresets(JSON.parse(savedHidden));
+
+    const savedSocial = localStorage.getItem('mentor_social_links');
+    if (savedSocial) {
+      try { setSocialLinks(JSON.parse(savedSocial)); } catch {}
+    }
   }, [currentUser]);
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -607,6 +643,78 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onLogout, currentUser }) =>
                 </button>
               </div>
             </form>
+          </div>
+        )}
+
+        {/* Social Media Links Section (Mentors only) */}
+        {currentUser?.role === 'mentor' && (
+          <div className="bg-white p-8 sm:p-12 rounded-[48px] border border-black/[0.03] shadow-sm">
+            <div className="flex items-center gap-3 mb-8">
+              <Globe size={20} className="text-indigo-600" />
+              <h3 className="text-xl font-black uppercase text-slate-900">Social Media Links</h3>
+            </div>
+            <p className="text-slate-500 text-xs font-medium mb-10 leading-relaxed">
+              Manage your social media links displayed in the website footer. Toggle each link on/off and edit the URLs.
+            </p>
+
+            <div className="space-y-6">
+              {socialLinks.map((sl, idx) => {
+                const platform = SOCIAL_PLATFORMS.find(p => p.key === sl.platform);
+                const PlatformIcon = platform?.icon;
+                return (
+                  <div key={sl.platform} className="flex items-center gap-4 p-4 bg-slate-50 rounded-3xl border border-slate-100">
+                    <div className={`w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm border border-slate-100 ${platform?.color || 'text-slate-500'}`}>
+                      {PlatformIcon && <PlatformIcon size={18} />}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">{sl.platform}</p>
+                      <input
+                        type="url"
+                        value={sl.url}
+                        onChange={(e) => {
+                          const updated = [...socialLinks];
+                          updated[idx].url = e.target.value;
+                          setSocialLinks(updated);
+                        }}
+                        placeholder={`https://${sl.platform.toLowerCase()}.com/your-profile`}
+                        className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-2xl text-xs font-medium outline-none focus:border-indigo-500 transition-all text-black placeholder:text-slate-400"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updated = [...socialLinks];
+                        updated[idx].enabled = !updated[idx].enabled;
+                        setSocialLinks(updated);
+                      }}
+                      className={`p-3 rounded-2xl border transition-all ${
+                        sl.enabled
+                          ? 'bg-emerald-50 border-emerald-200 text-emerald-600'
+                          : 'bg-slate-100 border-slate-200 text-slate-400'
+                      }`}
+                      title={sl.enabled ? 'Disable' : 'Enable'}
+                    >
+                      {sl.enabled ? <Eye size={16} /> : <EyeOff size={16} />}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-10 flex justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  localStorage.setItem('mentor_social_links', JSON.stringify(socialLinks));
+                  setSocialSaved(true);
+                  notifySuccess('Social media links saved!');
+                  setTimeout(() => setSocialSaved(false), 3000);
+                }}
+                className="px-12 py-5 bg-black text-white text-[10px] font-black uppercase tracking-[0.3em] rounded-full hover:bg-slate-800 transition-all disabled:opacity-50 active:scale-95 shadow-xl shadow-black/10"
+              >
+                {socialSaved ? 'Saved!' : 'Save Social Links'}
+              </button>
+            </div>
           </div>
         )}
 

@@ -274,66 +274,65 @@ const GalleryPage: React.FC = () => {
           </div>
         ) : (
           <motion.div 
-            layout
+            key={selectedCategory}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
           >
-            <AnimatePresence mode="popLayout">
-              {filteredItems.map((item) => (
-                <motion.div
-                  key={item.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ duration: 0.4 }}
-                  onClick={() => setSelectedItem(item)}
-                  className="group bg-white border border-slate-100 rounded-[36px] overflow-hidden shadow-sm hover:shadow-xl hover:border-slate-200 transition-all duration-500 cursor-pointer flex flex-col justify-between"
-                >
-                  <div className="relative aspect-[3/2] overflow-hidden bg-slate-100">
-                    <img 
-                      src={item.image} 
-                      alt={item.title} 
-                      className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105"
-                      referrerPolicy="no-referrer"
-                      loading="lazy"
-                    />
-                    <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md text-black px-3.5 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest border border-black/5">
-                      {item.category}
-                    </div>
-
-                    {isMentor && (
-                      <button 
-                        onClick={(e) => handleDeleteItem(item.id, e)}
-                        className="absolute top-4 right-4 bg-red-50 text-red-600 hover:bg-red-100 p-2.5 rounded-full border border-red-100/30 transition-all"
-                        title="Delete from Gallery"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    )}
+            {filteredItems.map((item, idx) => (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: idx * 0.05 }}
+                onClick={() => setSelectedItem(item)}
+                className="group bg-white border border-slate-100 rounded-[36px] overflow-hidden shadow-sm hover:shadow-xl hover:border-slate-200 transition-all duration-500 cursor-pointer flex flex-col justify-between"
+              >
+                <div className="relative aspect-[3/2] overflow-hidden bg-slate-100">
+                  <img 
+                    src={item.image} 
+                    alt={item.title} 
+                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105"
+                    referrerPolicy="no-referrer"
+                    loading="lazy"
+                  />
+                  <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md text-black px-3.5 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest border border-black/5">
+                    {item.category}
                   </div>
 
-                  <div className="p-6 md:p-8 space-y-4 flex-1 flex flex-col justify-between">
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-slate-400 text-[10px] font-black uppercase tracking-widest">
-                        <span className="flex items-center gap-1.5"><Calendar size={12} /> {item.date}</span>
-                        <span className="flex items-center gap-1.5"><MapPin size={12} /> {item.location}</span>
-                      </div>
-                      <h3 className="text-lg font-black uppercase tracking-tight text-slate-900 group-hover:text-indigo-600 transition-colors leading-snug">
-                        {item.title}
-                      </h3>
-                      <p className="text-slate-500 text-xs font-medium leading-relaxed line-clamp-2">
-                        {item.description}
-                      </p>
-                    </div>
+                  {isMentor && (
+                    <button 
+                      onClick={(e) => handleDeleteItem(item.id, e)}
+                      className="absolute top-4 right-4 bg-red-50 text-red-600 hover:bg-red-100 p-2.5 rounded-full border border-red-100/30 transition-all"
+                      title="Delete from Gallery"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
 
-                    <div className="pt-2 flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-slate-400 group-hover:text-black transition-colors">
-                      <span>View details</span>
-                      <span>→</span>
+                <div className="p-6 md:p-8 space-y-4 flex-1 flex flex-col justify-between">
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-slate-400 text-[10px] font-black uppercase tracking-widest">
+                      <span className="flex items-center gap-1.5"><Calendar size={12} /> {item.date}</span>
+                      <span className="flex items-center gap-1.5"><MapPin size={12} /> {item.location}</span>
                     </div>
+                    <h3 className="text-lg font-black uppercase tracking-tight text-slate-900 group-hover:text-indigo-600 transition-colors leading-snug">
+                      {item.title}
+                    </h3>
+                    <p className="text-slate-500 text-xs font-medium leading-relaxed line-clamp-2">
+                      {item.description}
+                    </p>
                   </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
+
+                  <div className="pt-2 flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-slate-400 group-hover:text-black transition-colors">
+                    <span>View details</span>
+                    <span>→</span>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
           </motion.div>
         )}
       </section>

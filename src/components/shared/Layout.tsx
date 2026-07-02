@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
+import {
   LayoutDashboard, 
   ShoppingBag, 
   Users, 
@@ -26,7 +26,8 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
-  Image as ImageIcon
+  Image as ImageIcon,
+  CalendarCheck
 } from 'lucide-react';
 import { UserRole } from '../../types';
 
@@ -96,6 +97,7 @@ const Layout: React.FC<LayoutProps> = ({ children, role, onLogout }) => {
     { label: 'Analytics', path: '/mentor?tab=analytics', icon: Activity, roles: ['mentor'] },
     { label: 'AI Insights', path: '/mentor?tab=ai', icon: Zap, roles: ['mentor'] },
     { label: 'Gallery', path: '/mentor?tab=gallery', icon: ImageIcon, roles: ['mentor'] },
+    { label: 'Bookings', path: '/mentor?tab=bookings', icon: CalendarCheck, roles: ['mentor'] },
   ].filter(item => item.roles.includes(role));
 
   const isActive = (path: string) => {

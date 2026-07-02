@@ -640,7 +640,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ currentRole = 'visitor' }) =>
             </ul>
 
             <div className="pt-4 mt-auto w-full">
-              <Link to="/booking" className="btn-normal w-full bg-slate-900 text-white hover:bg-black text-center justify-center flex">
+              <Link to="/book-call?type=intro" className="btn-normal w-full bg-slate-900 text-white hover:bg-black text-center justify-center flex">
                 Book Free Call
               </Link>
             </div>
@@ -681,7 +681,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ currentRole = 'visitor' }) =>
             </ul>
 
             <div className="pt-4 mt-auto w-full relative z-10">
-              <Link to="/booking" className="btn-normal w-full bg-white text-black hover:bg-slate-100 text-center justify-center flex">
+              <Link to="/book-call?type=rapid" className="btn-normal w-full bg-white text-black hover:bg-slate-100 text-center justify-center flex">
                 Schedule Response Call
               </Link>
             </div>

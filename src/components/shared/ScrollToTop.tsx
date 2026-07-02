@@ -1,24 +1,23 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
 const ScrollToTop = () => {
   const { pathname, search, hash } = useLocation();
-  const prevKey = useRef('');
-
   const locationKey = `${pathname}${search}${hash}`;
 
   useEffect(() => {
-    if (prevKey.current === locationKey) return;
-    prevKey.current = locationKey;
-
     const html = document.documentElement;
     const originalBehavior = html.style.scrollBehavior;
     html.style.scrollBehavior = 'auto';
 
-    const scroll = () => window.scrollTo(0, 0);
-    scroll();
-    requestAnimationFrame(scroll);
-    requestAnimationFrame(() => requestAnimationFrame(scroll));
+    const doScroll = () => {
+      window.scrollTo(0, 0);
+      const main = document.querySelector('main');
+      if (main) main.scrollTop = 0;
+    };
+
+    doScroll();
+    requestAnimationFrame(doScroll);
 
     setTimeout(() => { html.style.scrollBehavior = originalBehavior; }, 100);
   }, [locationKey]);

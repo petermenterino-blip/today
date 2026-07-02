@@ -12,6 +12,7 @@ import { OverviewTab } from './components/OverviewTab';
 import { MenteesTab } from './components/MenteesTab';
 import { TasksTab } from './components/TasksTab';
 import { ApplicationsTab } from './components/ApplicationsTab';
+import { VisitorBookingsTab } from './components/VisitorBookingsTab';
 import { useDashboard, MentorTab } from './hooks/useDashboard';
 import { tagService } from '../../services/tagService';
 import { notifySuccess } from '../../utils/toast';
@@ -193,6 +194,10 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
           refreshApps={d.refreshApps}
           updateAppStatus={d.updateAppStatus}
         />
+      )}
+
+      {d.activeTab === 'bookings' && (
+        <VisitorBookingsTab />
       )}
 
       {d.activeTab === 'messaging' && (

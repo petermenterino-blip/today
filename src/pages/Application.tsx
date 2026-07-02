@@ -1,8 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { applicationService } from '../services/applicationService';
 import { notifyError, notifySuccess } from '../utils/toast';
+
+const COUNTRY_CODES = [
+  { code: '+1', label: 'US +1' },
+  { code: '+1', label: 'CA +1' },
+  { code: '+44', label: 'UK +44' },
+  { code: '+61', label: 'AU +61' },
+  { code: '+91', label: 'IN +91' },
+  { code: '+86', label: 'CN +86' },
+  { code: '+49', label: 'DE +49' },
+  { code: '+33', label: 'FR +33' },
+  { code: '+81', label: 'JP +81' },
+  { code: '+7', label: 'RU +7' },
+  { code: '+55', label: 'BR +55' },
+  { code: '+39', label: 'IT +39' },
+  { code: '+34', label: 'ES +34' },
+  { code: '+82', label: 'KR +82' },
+  { code: '+52', label: 'MX +52' },
+  { code: '+971', label: 'AE +971' },
+  { code: '+65', label: 'SG +65' },
+  { code: '+972', label: 'IL +972' },
+  { code: '+353', label: 'IE +353' },
+  { code: '+31', label: 'NL +31' },
+  { code: '+46', label: 'SE +46' },
+  { code: '+47', label: 'NO +47' },
+  { code: '+45', label: 'DK +45' },
+  { code: '+358', label: 'FI +358' },
+  { code: '+64', label: 'NZ +64' },
+  { code: '+27', label: 'ZA +27' },
+];
 
 const ApplicationPage: React.FC = () => {
   const navigate = useNavigate();
@@ -13,6 +42,7 @@ const ApplicationPage: React.FC = () => {
   // Form Fields
   const [mentorType, setMentorType] = useState('');
   const [name, setName] = useState('');
+  const [countryCode, setCountryCode] = useState('+1');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [meetingPreference, setMeetingPreference] = useState<'Virtual' | 'In-Person' | 'Hybrid'>('Virtual');
@@ -20,11 +50,18 @@ const ApplicationPage: React.FC = () => {
   const [goals, setGoals] = useState('');
   const [seriousness, setSeriousness] = useState(5);
   const [linkedinUrl, setLinkedinUrl] = useState('');
+  const [portfolioUrl, setPortfolioUrl] = useState('');
   const [resumeUrl, setResumeUrl] = useState('');
+  const [messageToMentor, setMessageToMentor] = useState('');
   
   // File Uploader state
   const [uploadingResume, setUploadingResume] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+
+  const wordCount = useMemo(() => {
+    if (!goals.trim()) return 0;
+    return goals.trim().split(/\s+/).filter(w => w.length > 0).length;
+  }, [goals]);
 
   const totalSteps = 4;
 
@@ -47,6 +84,10 @@ const ApplicationPage: React.FC = () => {
       notifyError("Please fill in all identity fields.");
       return;
     }
+    if (step === 3 && wordCount < 200) {
+      notifyError("Please write at least 200 words describing your goals.");
+      return;
+    }
     setStep(prev => Math.min(prev + 1, totalSteps));
   };
   const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
@@ -59,9 +100,11 @@ const ApplicationPage: React.FC = () => {
         full_name: name,
         goal: goals,
         linkedin_url: linkedinUrl,
+        portfolio_url: portfolioUrl || undefined,
         resume_link: resumeUrl,
+        message_to_mentor: messageToMentor || undefined,
         mentor_type: mentorType,
-        phone: phone,
+        phone: `${countryCode} ${phone}`,
         meeting_preference: meetingPreference,
         frequency: frequency,
         seriousness: seriousness,
@@ -159,13 +202,22 @@ const ApplicationPage: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1 sm:space-y-2">
                   <label className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">3. Phone Number</label>
-                  <div className="relative">
+                  <div className="relative flex gap-2">
+                    <select
+                      value={countryCode}
+                      onChange={e => setCountryCode(e.target.value)}
+                      className="w-[110px] shrink-0 px-3 py-3 sm:py-4 md:py-5 bg-slate-50 border border-slate-100 rounded-xl sm:rounded-3xl text-sm font-medium outline-none focus:border-black transition-all appearance-none"
+                    >
+                      {COUNTRY_CODES.map(cc => (
+                        <option key={cc.code + cc.label} value={cc.code}>{cc.label}</option>
+                      ))}
+                    </select>
                     <input 
                       type="tel" 
                       value={phone} 
                       onChange={e => setPhone(e.target.value)}
                       className="w-full px-4 py-3 sm:py-4 md:px-5 md:py-5 bg-slate-50 border border-slate-100 rounded-xl sm:rounded-3xl text-sm font-medium outline-none focus:border-black transition-all" 
-                      placeholder="+1 (555) 000-0000" 
+                      placeholder="(555) 000-0000" 
                     />
                   </div>
                 </div>
@@ -245,8 +297,16 @@ const ApplicationPage: React.FC = () => {
                   value={goals}
                   onChange={e => setGoals(e.target.value)}
                   className="w-full p-5 sm:p-6 bg-slate-50 border border-slate-100 rounded-2xl sm:rounded-[32px] text-xs sm:text-sm font-medium outline-none focus:border-black transition-all min-h-[120px] sm:min-h-[160px] leading-relaxed" 
-                  placeholder="Be specific about the clarity or achievement you are chasing..."
+                  placeholder="Be specific about the clarity or achievement you are chasing... (minimum 200 words)"
                 ></textarea>
+                <div className="flex items-center justify-between px-1">
+                  <span className={`text-[9px] font-black uppercase tracking-widest ${wordCount >= 200 ? 'text-emerald-500' : 'text-slate-400'}`}>
+                    {wordCount >= 200 ? '✓ Minimum met' : `Minimum 200 words`}
+                  </span>
+                  <span className={`text-[9px] font-black uppercase tracking-widest ${wordCount >= 200 ? 'text-emerald-500' : 'text-amber-500'}`}>
+                    {wordCount} words
+                  </span>
+                </div>
               </div>
 
               <div className="space-y-3 sm:space-y-4">
@@ -283,6 +343,17 @@ const ApplicationPage: React.FC = () => {
                   onChange={e => setLinkedinUrl(e.target.value)}
                   className="w-full px-4 py-3 sm:py-4 md:px-5 md:py-5 bg-slate-50 border border-slate-100 rounded-xl sm:rounded-3xl text-sm font-medium outline-none focus:border-black transition-all" 
                   placeholder="https://linkedin.com/in/username" 
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Portfolio Website URL (Optional)</label>
+                <input 
+                  type="url" 
+                  value={portfolioUrl} 
+                  onChange={e => setPortfolioUrl(e.target.value)}
+                  className="w-full px-4 py-3 sm:py-4 md:px-5 md:py-5 bg-slate-50 border border-slate-100 rounded-xl sm:rounded-3xl text-sm font-medium outline-none focus:border-black transition-all" 
+                  placeholder="https://yourportfolio.com" 
                 />
               </div>
 
@@ -330,6 +401,16 @@ const ApplicationPage: React.FC = () => {
                     </div>
                   )}
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Anything you want to specify to mentor Peter? (Optional)</label>
+                <textarea 
+                  value={messageToMentor}
+                  onChange={e => setMessageToMentor(e.target.value)}
+                  className="w-full p-5 sm:p-6 bg-slate-50 border border-slate-100 rounded-2xl sm:rounded-[32px] text-xs sm:text-sm font-medium outline-none focus:border-black transition-all min-h-[100px] leading-relaxed" 
+                  placeholder="Share any additional context, specific challenges, or questions for Peter..."
+                ></textarea>
               </div>
 
               <p className="text-[9px] sm:text-[11px] font-black uppercase tracking-[0.1em] text-slate-600 leading-relaxed p-6 bg-slate-50 rounded-3xl border border-slate-100">

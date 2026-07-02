@@ -66,7 +66,8 @@ const AppContent: React.FC = () => {
             <Route path="/mentorship" element={<MentorshipPage />} />
             <Route path="/auth" element={user ? <Navigate to="/dashboard" /> : <AuthPage />} />
             <Route path="/pending-approval" element={<PendingApproval />} />
-            <Route path="/booking" element={<ProtectedRoute allowedRoles={['student','mentor']}><BookingPage onBook={async (b)=>{try { const m = await import('../services/bookingService'); await m.bookingService.insert(b); } catch(e) { console.error('Booking failed:', e); }}} currentUser={user} /></ProtectedRoute>} />
+            <Route path="/booking" element={<BookingPage />} />
+            <Route path="/book-call" element={<BookingPage />} />
             <Route path="/store" element={<ProtectedRoute allowedRoles={['student','mentor']}><StorePage /></ProtectedRoute>} />
             <Route path="/survey" element={<ProtectedRoute allowedRoles={['student','mentor']}><SurveyPage /></ProtectedRoute>} />
             <Route path="/privacy" element={<PrivacyPage />} />

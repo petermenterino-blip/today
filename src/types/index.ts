@@ -42,8 +42,10 @@ export interface Application {
   user_email: string;
   full_name: string;
   linkedin_url?: string;
+  portfolio_url?: string;
   resume_link?: string;
   goal: string;
+  message_to_mentor?: string;
   status: 'pending' | 'approved' | 'rejected';
   created_at: string;
   mentor_type?: string;

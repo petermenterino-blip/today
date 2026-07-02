@@ -46,29 +46,31 @@ function rowToApplication(row: any): Application {
   if (row.status === 'approved') mappedStatus = 'approved';
   if (row.status === 'rejected') mappedStatus = 'rejected';
 
-  return {
-    id: row.id,
-    user_id: row.user_id || undefined,
-    user_name: `${row.first_name || ''} ${row.last_name || ''}`.trim(),
-    user_email: row.email,
-    full_name: `${row.first_name || ''} ${row.last_name || ''}`.trim(),
-    linkedin_url: extras.linkedin_url || '',
-    resume_link: extras.resume_link || '',
-    goal: extras.goals || '',
-    status: mappedStatus,
-    created_at: row.created_at,
-    mentor_type: row.discipline,
-    phone: row.phone_number,
-    meeting_preference: extras.meeting_preference || 'Virtual',
-    frequency: extras.frequency || 'Weekly',
-    seriousness: extras.seriousness || 10,
-    location: extras.location || 'Remote',
-    focus_area: extras.focus_area || row.discipline || 'General',
-    program_id: extras.program_id || '1',
-    role_selected: 'student',
-    top_strength: extras.top_strength || '',
-    needs_focus: extras.needs_focus || '',
-  };
+    return {
+      id: row.id,
+      user_id: row.user_id || undefined,
+      user_name: `${row.first_name || ''} ${row.last_name || ''}`.trim(),
+      user_email: row.email,
+      full_name: `${row.first_name || ''} ${row.last_name || ''}`.trim(),
+      linkedin_url: extras.linkedin_url || '',
+      portfolio_url: extras.portfolio_url || '',
+      resume_link: extras.resume_link || '',
+      goal: extras.goals || '',
+      message_to_mentor: extras.message_to_mentor || '',
+      status: mappedStatus,
+      created_at: row.created_at,
+      mentor_type: row.discipline,
+      phone: row.phone_number,
+      meeting_preference: extras.meeting_preference || 'Virtual',
+      frequency: extras.frequency || 'Weekly',
+      seriousness: extras.seriousness || 10,
+      location: extras.location || 'Remote',
+      focus_area: extras.focus_area || row.discipline || 'General',
+      program_id: extras.program_id || '1',
+      role_selected: 'student',
+      top_strength: extras.top_strength || '',
+      needs_focus: extras.needs_focus || '',
+    };
 }
 
 export interface ApplicationDetails {
@@ -135,7 +137,9 @@ export const applicationService = {
     const extras: Record<string, any> = {};
     if (app.goal) extras.goals = app.goal;
     if (app.linkedin_url) extras.linkedin_url = app.linkedin_url;
+    if (app.portfolio_url) extras.portfolio_url = app.portfolio_url;
     if (app.resume_link) extras.resume_link = app.resume_link;
+    if (app.message_to_mentor) extras.message_to_mentor = app.message_to_mentor;
     if (app.meeting_preference) extras.meeting_preference = app.meeting_preference;
     if (app.frequency) extras.frequency = app.frequency;
     if (app.seriousness) extras.seriousness = app.seriousness;
@@ -165,11 +169,9 @@ export const applicationService = {
         role_selected: 'student',
         top_strength: app.top_strength || null,
         needs_focus: app.needs_focus || null,
-      })
-      .select()
-      .single();
+      });
     if (error) return { data: null, error: handleError(error).error };
-    return { data: rowToApplication(data), error: null };
+    return { data: rowToApplication((data ?? [{}])[0]), error: null };
   },
 
   async updateStatus(id: string, status: 'approved' | 'rejected'): Promise<ServiceResponse<void>> {

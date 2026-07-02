@@ -35,7 +35,7 @@ import { useEventManager } from './useEventManager';
 import { useProgramManager } from './useProgramManager';
 import { useAIAssistant } from './useAIAssistant';
 
-export type MentorTab = 'overview' | 'applications' | 'mentees' | 'programs' | 'sessions' | 'feedback' | 'resources' | 'events' | 'messaging' | 'analytics' | 'ai' | 'gallery';
+export type MentorTab = 'overview' | 'applications' | 'mentees' | 'programs' | 'sessions' | 'feedback' | 'resources' | 'events' | 'messaging' | 'analytics' | 'ai' | 'gallery' | 'bookings';
 
 interface UseDashboardProps {
   currentUser: User | null;
