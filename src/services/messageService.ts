@@ -1,5 +1,4 @@
 import { supabase } from '../lib/supabase';
-import type { ServiceResponse } from '../types';
 import type { Message, Conversation } from '../types/messaging';
 
 function fromDbConversation(row: any): Conversation {
@@ -21,23 +20,6 @@ function fromDbConversation(row: any): Conversation {
   };
 }
 
-function toDbConversation(data: Partial<Conversation>): Record<string, any> {
-  const db: Record<string, any> = {};
-  if (data.studentId !== undefined) db.student_id = data.studentId;
-  if (data.studentName !== undefined) db.student_name = data.studentName;
-  if (data.mentorId !== undefined) db.mentor_id = data.mentorId;
-  if (data.lastMessage !== undefined) db.last_message = data.lastMessage;
-  if (data.lastMessageTime !== undefined) db.last_message_time = data.lastMessageTime;
-  if (data.unreadCount !== undefined) db.unread_count = data.unreadCount;
-  if (data.pinned !== undefined) db.pinned = data.pinned;
-  if (data.archived !== undefined) db.archived = data.archived;
-  if (data.isGroup !== undefined) db.is_group = data.isGroup;
-  if (data.name !== undefined) db.name = data.name;
-  if (data.adminId !== undefined) db.admin_id = data.adminId;
-  if (data.description !== undefined) db.description = data.description;
-  return db;
-}
-
 function fromDbMessage(row: any): Message {
   return {
     id: row.id,
@@ -50,6 +32,10 @@ function fromDbMessage(row: any): Message {
     type: row.type,
     audioUrl: row.audio_url,
     duration: row.duration,
+    fileName: row.file_name,
+    fileUrl: row.file_url,
+    fileSize: row.file_size,
+    fileType: row.file_type,
   };
 }
 
@@ -62,11 +48,15 @@ function toDbMessage(data: Partial<Message>): Record<string, any> {
   if (data.type !== undefined) db.type = data.type;
   if (data.audioUrl !== undefined) db.audio_url = data.audioUrl;
   if (data.duration !== undefined) db.duration = data.duration;
+  if (data.fileName !== undefined) db.file_name = data.fileName;
+  if (data.fileUrl !== undefined) db.file_url = data.fileUrl;
+  if (data.fileSize !== undefined) db.file_size = data.fileSize;
+  if (data.fileType !== undefined) db.file_type = data.fileType;
   return db;
 }
 
 export const messageService = {
-  async getConversations(userId: string, role: 'student' | 'mentor'): Promise<Conversation[]> {
+  async getConversations(userId: string, _role: 'student' | 'mentor'): Promise<Conversation[]> {
     const { data: participants, error: partError } = await supabase
       .from('conversation_participants')
       .select('conversation_id')
@@ -81,6 +71,7 @@ export const messageService = {
       .select('*')
       .in('id', convIds)
       .is('deleted_at', null)
+      .order('pinned', { ascending: false })
       .order('last_message_time', { ascending: false });
 
     if (error) return [];
@@ -92,6 +83,7 @@ export const messageService = {
       .from('conversations')
       .select('*')
       .is('deleted_at', null)
+      .order('pinned', { ascending: false })
       .order('last_message_time', { ascending: false });
 
     if (error) return [];
@@ -134,11 +126,14 @@ export const messageService = {
 
     if (error) return null;
 
-    // Update conversation last message
+    const lastMsgText = msg.type === 'voice' ? 'Voice message'
+      : msg.type === 'file' ? (msg.fileName || 'File attachment')
+      : msg.content;
+
     await supabase
       .from('conversations')
       .update({
-        last_message: msg.type === 'voice' ? 'Voice message' : msg.content,
+        last_message: lastMsgText,
         last_message_time: new Date().toISOString(),
       })
       .eq('id', msg.conversationId);
@@ -186,7 +181,6 @@ export const messageService = {
   },
 
   async createConversation(studentId: string, studentName: string, mentorId: string): Promise<Conversation | null> {
-    // Check for existing
     const { data: existing } = await supabase
       .from('conversations')
       .select('*')
@@ -211,7 +205,6 @@ export const messageService = {
 
     if (error || !data) return null;
 
-    // Add participants
     await supabase.from('conversation_participants').insert([
       { conversation_id: data.id, user_id: studentId },
       { conversation_id: data.id, user_id: mentorId },
@@ -247,7 +240,6 @@ export const messageService = {
       }))
     );
 
-    // Send system message
     await supabase.from('messages').insert({
       conversation_id: data.id,
       sender_id: mentorId,

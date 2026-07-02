@@ -1,17 +1,30 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MessageSquare } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 import { messageService } from '../../services/messageService';
+import { storageService } from '../../services/storageService';
 import { studentService } from '../../services/studentService';
 import { useRealtime } from '../../hooks/useRealtime';
 import { Message, Conversation } from '../../types/messaging';
-import { StudentProfile } from '../../types';
+import { StudentProfile, Application } from '../../types';
 import { ConversationList } from './ConversationList';
 import { ConversationHeader } from './ConversationHeader';
 import { MessageThread } from './MessageThread';
 import { ComposeBar } from './ComposeBar';
 import { ContactInfoPanel } from './ContactInfoPanel';
+
+const MAX_FILE_SIZE = 25 * 1024 * 1024;
+const ALLOWED_FILE_TYPES = [
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/msword',
+  'text/plain',
+  'image/png',
+  'image/jpeg',
+  'application/zip',
+];
 
 interface WhatsAppMessagingProps {
   role: 'student' | 'mentor';
@@ -19,17 +32,34 @@ interface WhatsAppMessagingProps {
   currentUserName?: string;
 }
 
+function sortConversations(list: Conversation[]): Conversation[] {
+  return [...list].sort((a, b) => {
+    if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+    const aTime = a.lastMessageTime ? new Date(a.lastMessageTime).getTime() : 0;
+    const bTime = b.lastMessageTime ? new Date(b.lastMessageTime).getTime() : 0;
+    return bTime - aTime;
+  });
+}
+
 const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUserId, currentUserName }) => {
   const location = useLocation();
+  const queryClient = useQueryClient();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
   const [showGroupInfo, setShowGroupInfo] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [mutedConversations] = useState<string[]>([]);
+  const [allStudents, setAllStudents] = useState<StudentProfile[]>([]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  const { data: messages = [] } = useQuery({
+    queryKey: ['messages', selectedConversation?.id],
+    queryFn: () => messageService.getMessages(selectedConversation!.id),
+    enabled: !!selectedConversation,
+    staleTime: 1000 * 60, // 1 minute
+  });
 
   const [avatarPreviews] = useState<Record<string, string>>(() => {
     const stored: Record<string, string> = {};
@@ -53,57 +83,49 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
     }
   }, [toast]);
 
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const studentIdParam = params.get('studentId');
-
-    if (studentIdParam) {
-      messageService.getConversations(currentUserId, role).then(allConvos => {
-        const targetConvo = allConvos.find(c => c.studentId === studentIdParam);
-        if (targetConvo && targetConvo.id !== selectedConversation?.id) {
-          setSelectedConversation(targetConvo);
-          messageService.getMessages(targetConvo.id).then(setMessages);
-          messageService.markAsRead(targetConvo.id);
-          setShowGroupInfo(false);
-        }
-      });
-    }
-  }, [location.search]);
-
-  const [allStudents, setAllStudents] = useState<StudentProfile[]>([]);
-
-  useEffect(() => {
-    studentService.getAll().then(students => setAllStudents(students.filter(s => s.status === 'active')));
-  }, []);
-
-  const loadData = useCallback(async () => {
+  const navigateToStudent = useCallback(async (studentId: string) => {
     const allConvos = await messageService.getConversations(currentUserId, role);
     setConversations(allConvos);
+    const targetConvo = allConvos.find(c => c.studentId === studentId);
+    if (targetConvo && targetConvo.id !== selectedConversation?.id) {
+      setSelectedConversation(targetConvo);
+      await messageService.markAsRead(targetConvo.id);
+      setShowGroupInfo(false);
+    }
+  }, [currentUserId, role, selectedConversation?.id]);
 
+  useEffect(() => {
     const params = new URLSearchParams(location.search);
     const studentIdParam = params.get('studentId');
-
     if (studentIdParam) {
-      const targetConvo = allConvos.find(c => c.studentId === studentIdParam);
-      if (targetConvo && targetConvo.id !== selectedConversation?.id) {
-        setSelectedConversation(targetConvo);
-        const msgs = await messageService.getMessages(targetConvo.id);
-        setMessages(msgs);
-        await messageService.markAsRead(targetConvo.id);
-        setShowGroupInfo(false);
-        return;
-      }
+      navigateToStudent(studentIdParam);
     }
+  }, [location.search, navigateToStudent]);
 
-    if (selectedConversation) {
-      const updatedConvo = allConvos.find(c => c.id === selectedConversation.id);
-      if (updatedConvo) {
-        setSelectedConversation(updatedConvo);
+  useEffect(() => {
+    const loadContacts = async () => {
+      const [students, apps] = await Promise.all([
+        studentService.getAll(),
+        supabase.from('applications').select('user_id').in('status', ['approved', 'invited']),
+      ]);
+      const rawStudents: any[] = students;
+      const approvedUserIds = new Set((apps.data || []).map((a: any) => a.user_id));
+      const combined: StudentProfile[] = rawStudents
+        .filter((s: any) => approvedUserIds.has(s.id) || approvedUserIds.has(s.user_id))
+        .map((s: any) => ({
+          user_id: s.id, id: s.id, name: s.name || '', email: s.email || '',
+          status: s.status || 'active', linkedin_url: '', resume_link: '', bio: '', specialization: '', current_status: '', tags: s.tags || [],
+        }));
+      const existingIds = new Set(combined.map(s => s.id));
+      for (const a of (apps.data || [])) {
+        if (!existingIds.has(a.user_id)) {
+          combined.push({ user_id: a.user_id, id: a.user_id, name: '', email: '', status: 'active' as const, linkedin_url: '', resume_link: '', bio: '', specialization: '', current_status: '' });
+        }
       }
-      const msgs = await messageService.getMessages(selectedConversation.id);
-      setMessages(msgs);
-    }
-  }, [currentUserId, role, selectedConversation?.id, location.search]);
+      setAllStudents(combined);
+    };
+    loadContacts();
+  }, []);
 
   useEffect(() => {
     if (role === 'student') {
@@ -117,51 +139,56 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
             .then(({ data: enrollment }) => {
               const mentorId = (enrollment as any)?.program?.mentor_id;
               if (mentorId) {
-                messageService.createConversation(currentUserId, 'Mentor', mentorId);
+                messageService.createConversation(currentUserId, currentUserName || 'Student', mentorId).then(() => {
+                  messageService.getConversations(currentUserId, role).then(setConversations);
+                });
               }
             });
         }
       });
     }
-  }, [role, currentUserId]);
+  }, [role, currentUserId, currentUserName]);
 
-  // Initial load
+  const loadConversations = useCallback(() => {
+      messageService.getConversations(currentUserId, role).then(setConversations);
+  }, [currentUserId, role]);
+
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    loadConversations();
+  }, [loadConversations]);
 
-  // Real-time subscriptions replace polling
   useRealtime([
     {
       table: 'messages',
       event: 'INSERT',
       callback: (payload: any) => {
         const row = payload.new as any;
-        const convoId = row.conversation_id;
-        if (convoId === selectedConversation?.id) {
-          const newMsg: Message = {
-            id: row.id,
-            senderId: row.sender_id,
-            conversationId: row.conversation_id,
-            content: row.content,
-            type: row.type,
-            status: row.status,
-            timestamp: row.created_at,
-            audioUrl: row.audio_url,
-            duration: row.duration,
-          };
-          setMessages(prev => [...prev, newMsg]);
-        }
-        loadData();
+        if (row.sender_id === currentUserId) return;
+
+        queryClient.invalidateQueries({ queryKey: ['messages', row.conversation_id] });
+
+        setConversations(prev => {
+          const updated = prev.map(c => {
+            if (c.id !== row.conversation_id) return c;
+            const lastMsg = row.type === 'voice' ? 'Voice message'
+              : row.type === 'file' ? (row.file_name || 'File attachment')
+              : row.content;
+            return {
+              ...c,
+              lastMessage: lastMsg,
+              lastMessageTime: row.created_at,
+              unreadCount: row.conversation_id === selectedConversation?.id ? 0 : (c.unreadCount || 0) + 1,
+            };
+          });
+          return sortConversations(updated);
+        });
       },
     },
     {
       table: 'messages',
       event: 'UPDATE',
-      callback: () => {
-        if (selectedConversation) {
-          messageService.getMessages(selectedConversation.id).then(setMessages);
-        }
+      callback: (payload: any) => {
+        queryClient.invalidateQueries({ queryKey: ['messages', payload.new.conversation_id] });
       },
     },
   ]);
@@ -170,12 +197,9 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
 
   useEffect(() => {
     if (!selectedConversation) return;
-
     const isSameConversation = prevConversationIdRef.current === selectedConversation.id;
     prevConversationIdRef.current = selectedConversation.id;
-
     const scrollBehavior = isSameConversation ? 'smooth' : 'auto';
-
     const timer = setTimeout(() => {
       if (chatContainerRef.current) {
         chatContainerRef.current.scrollTo({
@@ -189,32 +213,34 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
         });
       }
     }, 50);
-
     return () => clearTimeout(timer);
   }, [messages, selectedConversation?.id]);
 
   const handleSelectConversation = async (c: Conversation) => {
     setSelectedConversation(c);
-    const msgs = await messageService.getMessages(c.id);
-    setMessages(msgs);
     await messageService.markAsRead(c.id);
+    setConversations(prev => prev.map(x => x.id === c.id ? { ...x, unreadCount: 0 } : x));
     setShowGroupInfo(false);
   };
 
   const handleSendMessage = async (content: string) => {
     if (!content.trim() || !selectedConversation) return;
+
     await messageService.sendMessage({
       senderId: currentUserId,
       senderName: currentUserName || (role === 'mentor' ? 'Mentor' : 'Student'),
       conversationId: selectedConversation.id,
       content: content.trim(),
-      type: 'text'
+      type: 'text',
     });
-    await loadData();
+
+    queryClient.invalidateQueries({ queryKey: ['messages', selectedConversation.id] });
+    loadConversations();
   };
 
   const handleSendVoiceMessage = async (audioUrl: string, duration: number) => {
     if (!selectedConversation) return;
+
     await messageService.sendMessage({
       senderId: currentUserId,
       senderName: currentUserName || (role === 'mentor' ? 'Mentor' : 'Student'),
@@ -222,22 +248,48 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
       content: audioUrl,
       type: 'voice',
       audioUrl,
-      duration
+      duration,
     });
-    await loadData();
+
+    queryClient.invalidateQueries({ queryKey: ['messages', selectedConversation.id] });
+    loadConversations();
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !selectedConversation) return;
-    await messageService.sendMessage({
-      senderId: currentUserId,
-      senderName: currentUserName || (role === 'mentor' ? 'Mentor' : 'Student'),
-      conversationId: selectedConversation.id,
-      content: `Attached File: ${file.name}`,
-      type: 'file'
-    });
-    await loadData();
+
+    if (file.size > MAX_FILE_SIZE) {
+      setToast({ message: 'File too large. Max 25MB.', type: 'error' });
+      return;
+    }
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+      setToast({ message: 'Unsupported file type. Allowed: PDF, DOCX, DOC, TXT, PNG, JPG, ZIP.', type: 'error' });
+      return;
+    }
+
+    try {
+      setToast({ message: 'Uploading file...', type: 'info' });
+      const fileUrl = await storageService.uploadMessageAttachment(currentUserId, file);
+
+      await messageService.sendMessage({
+        senderId: currentUserId,
+        senderName: currentUserName || (role === 'mentor' ? 'Mentor' : 'Student'),
+        conversationId: selectedConversation.id,
+        content: file.name,
+        type: 'file',
+        fileName: file.name,
+        fileUrl,
+        fileSize: file.size,
+        fileType: file.type,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['messages', selectedConversation.id] });
+      loadConversations();
+      setToast({ message: 'File sent!', type: 'success' });
+    } catch {
+      setToast({ message: 'File upload failed.', type: 'error' });
+    }
   };
 
   const handleAddParticipant = async (studentId: string) => {
@@ -254,10 +306,10 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
       senderId: currentUserId,
       senderName: 'System',
       content: `${studentInfo?.name || 'A student'} was added to the group.`,
-      type: 'system'
+      type: 'system',
     });
 
-    await loadData();
+    queryClient.invalidateQueries({ queryKey: ['messages', selectedConversation.id] });
   };
 
   const handleRemoveParticipant = async (studentId: string) => {
@@ -272,10 +324,10 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
       senderId: currentUserId,
       senderName: 'System',
       content: `${studentInfo?.name || 'A student'} was removed from the group.`,
-      type: 'system'
+      type: 'system',
     });
 
-    await loadData();
+    queryClient.invalidateQueries({ queryKey: ['messages', selectedConversation.id] });
   };
 
   const handleHeaderClick = () => {
@@ -283,17 +335,27 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
   };
 
   const handlePinConversation = async (id: string, pinned: boolean) => {
+    setConversations(prev => sortConversations(prev.map(c =>
+      c.id === id ? { ...c, pinned } : c
+    )));
     await messageService.pinConversation(id, pinned);
-    await loadData();
+    loadConversations();
   };
 
   const handleArchiveConversation = async (id: string, archived: boolean) => {
+    setConversations(prev => sortConversations(prev.map(c =>
+      c.id === id ? { ...c, archived } : c
+    )));
     await messageService.archiveConversation(id, archived);
-    await loadData();
+    loadConversations();
   };
 
   const handleCreateConversation = (c: Conversation) => {
     handleSelectConversation(c);
+    setConversations(prev => {
+      if (prev.some(x => x.id === c.id)) return prev;
+      return sortConversations([...prev, c]);
+    });
   };
 
   return (

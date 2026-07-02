@@ -37,31 +37,38 @@ export const ConversationList = React.memo<ConversationListProps>(({
   const [showArchivedOnly, setShowArchivedOnly] = useState(false);
   const [showNewChatModal, setShowNewChatModal] = useState(false);
 
-  const filteredConversations = useMemo(() => conversations.filter(c => {
-    const isArchived = !!c.archived;
-    if (showArchivedOnly) {
-      if (!isArchived) return false;
-    } else {
-      if (isArchived) return false;
-    }
-    const name = c.isGroup ? (c.name || 'Group') : (role === 'mentor' ? c.studentName : 'Mentor');
-    return (name || '').toLowerCase().includes(searchQuery.toLowerCase());
-  }), [conversations, showArchivedOnly, searchQuery, role]);
+  const activeConversations = useMemo(() => conversations.filter(c => !c.archived), [conversations]);
+  const archivedConversations = useMemo(() => conversations.filter(c => c.archived), [conversations]);
+
+  const filteredConversations = useMemo(() => {
+    const source = showArchivedOnly ? archivedConversations : activeConversations;
+    return source.filter(c => {
+      const name = c.isGroup ? (c.name || 'Group') : (role === 'mentor' ? c.studentName : 'Mentor');
+      return (name || '').toLowerCase().includes(searchQuery.toLowerCase());
+    });
+  }, [activeConversations, archivedConversations, showArchivedOnly, searchQuery, role]);
+
+  const contactsWithoutConversation = useMemo(() => {
+    if (role !== 'mentor') return [];
+    return allStudents.filter(s => {
+      const studentId = s.id || s.user_id;
+      return !conversations.some(c => !c.isGroup && (c.studentId === studentId));
+    });
+  }, [allStudents, conversations, role]);
 
   return (
     <div className="w-full md:w-[350px] lg:w-[400px] bg-white border-r border-[#d1d7db] flex flex-col">
-      {/* Sidebar Header */}
       <div className="h-[60px] bg-[#f0f2f5] px-4 flex items-center justify-between border-b border-[#d1d7db] shrink-0">
         <h2 className="text-[19px] font-bold text-[#111b21] select-none">Chats</h2>
         <div className="flex items-center gap-3.5 text-[#54656f]">
-          <button 
+          <button
             onClick={() => setShowArchivedOnly(!showArchivedOnly)}
             className={`p-1 hover:bg-slate-200 rounded-full transition-colors ${showArchivedOnly ? 'text-[#00a884]' : ''}`}
             title={showArchivedOnly ? "Show Active Chats" : "Show Archived Chats"}
           >
             <Archive size={20} className={showArchivedOnly ? "fill-[#00a884]/20" : ""} />
           </button>
-          <button 
+          <button
             onClick={() => setShowNewChatModal(!showNewChatModal)}
             className="p-1 hover:bg-slate-200 rounded-full transition-colors"
             title="New Chat"
@@ -71,13 +78,12 @@ export const ConversationList = React.memo<ConversationListProps>(({
         </div>
       </div>
 
-      {/* Search Bar */}
       <div className="p-2 bg-white border-b border-[#f2f2f2]">
         <div className="bg-[#f0f2f5] rounded-lg flex items-center px-3 py-1.5 gap-3">
           <Search size={16} className="text-[#54656f]" />
-          <input 
-            type="text" 
-            placeholder={showArchivedOnly ? "Search archived chats" : "Search or start new chat"} 
+          <input
+            type="text"
+            placeholder={showArchivedOnly ? "Search archived chats" : "Search or start new chat"}
             className="bg-transparent border-none outline-none w-full text-sm placeholder-[#54656f]"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -85,7 +91,6 @@ export const ConversationList = React.memo<ConversationListProps>(({
         </div>
       </div>
 
-      {/* Chat List */}
       <div className="flex-1 overflow-y-auto bg-white">
         {showNewChatModal && (
           <div className="p-4 bg-slate-50 border-b border-emerald-100 animate-in fade-in slide-in-from-top-2">
@@ -94,14 +99,14 @@ export const ConversationList = React.memo<ConversationListProps>(({
               <button onClick={() => setShowNewChatModal(false)} className="text-slate-400 hover:text-slate-600" aria-label="Close"><X size={16} /></button>
             </div>
             <div className="max-h-[200px] overflow-y-auto space-y-1">
-                  {role === 'mentor' ? (
+              {role === 'mentor' ? (
                 allStudents
-                  .filter(s => !conversations.some(c => !c.isGroup && c.studentId === s.id))
+                  .filter(s => !conversations.some(c => !c.isGroup && c.studentId === (s.id || s.user_id)))
                   .map(s => (
                     <button
                       key={s.id}
                       onClick={async () => {
-                        const newC = await messageService.createConversation(s.id, s.name || '', currentUserId);
+                        const newC = await messageService.createConversation(s.id || s.user_id, s.name || '', currentUserId);
                         if (newC) onCreateConversation(newC);
                         setShowNewChatModal(false);
                       }}
@@ -110,7 +115,7 @@ export const ConversationList = React.memo<ConversationListProps>(({
                       <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-700 text-[10px]">
                         {s.name?.charAt(0)}
                       </div>
-                      {s.name}
+                      {s.name || 'Unnamed Student'}
                     </button>
                   ))
               ) : (
@@ -123,7 +128,7 @@ export const ConversationList = React.memo<ConversationListProps>(({
                       .maybeSingle();
                     const mentorId = (enrollment as any)?.program?.mentor_id;
                     if (mentorId) {
-                      const newC = await messageService.createConversation(currentUserId, 'Mentor', mentorId);
+                      const newC = await messageService.createConversation(currentUserId, currentUserName || 'Student', mentorId);
                       if (newC) onCreateConversation(newC);
                     }
                     setShowNewChatModal(false);
@@ -136,78 +141,116 @@ export const ConversationList = React.memo<ConversationListProps>(({
                   Your Mentor
                 </button>
               )}
-              {role === 'mentor' && allStudents.filter(s => !conversations.some(c => !c.isGroup && c.studentId === s.id)).length === 0 && (
-                <p className="text-[10px] text-slate-400 py-2">All active students already have open chats!</p>
+              {role === 'mentor' && allStudents.filter(s => !conversations.some(c => !c.isGroup && c.studentId === (s.id || s.user_id))).length === 0 && (
+                <p className="text-[10px] text-slate-400 py-2">All students already have open chats!</p>
               )}
             </div>
           </div>
         )}
-        {filteredConversations.length === 0 ? (
+
+        {filteredConversations.length === 0 && !showArchivedOnly && contactsWithoutConversation.length === 0 ? (
           <EmptyState
             icon={<MessageSquare size={32} />}
             title="No Conversations"
             description="No conversations match your current filter. Start a new chat or adjust your search."
           />
-        ) : filteredConversations.map(c => {
-          const displayName = c.isGroup ? (c.name || 'Community') : (role === 'mentor' ? c.studentName : 'Mentor');
-          const isSelected = selectedConversationId === c.id;
-          const isUnread = c.unreadCount > 0;
-          return (
-            <div 
-              key={c.id + '-' + c.studentId} 
-              onClick={() => onSelectConversation(c)}
-              className={`flex items-center px-3 py-3 gap-3 cursor-pointer hover:bg-[#f5f6f6] transition-colors group relative ${isSelected ? 'bg-[#f0f2f5]' : ''}`}
-            >
-              <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center shrink-0 text-indigo-700 font-bold">
-                {c.isGroup ? <Users size={20} /> : (displayName || '').charAt(0)}
-              </div>
-              <div className="flex-1 min-w-0 border-b border-[#f2f2f2] pb-3 pt-1">
-                <div className="flex justify-between items-baseline mb-0.5">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <h4 className="text-[17px] font-normal text-[#111b21] truncate">{displayName}</h4>
-                    {c.pinned && <Pin size={12} className="text-indigo-600 shrink-0 rotate-45 fill-indigo-600" />}
-                    {mutedConversations.includes(c.id) && <BellOff size={12} className="text-slate-400 shrink-0" />}
+        ) : (
+          <>
+            {filteredConversations.map(c => {
+              const displayName = c.isGroup ? (c.name || 'Community') : (role === 'mentor' ? c.studentName : 'Mentor');
+              const isSelected = selectedConversationId === c.id;
+              const isUnread = c.unreadCount > 0;
+              return (
+                <div
+                  key={c.id}
+                  onClick={() => onSelectConversation(c)}
+                  className={`flex items-center px-3 py-3 gap-3 cursor-pointer hover:bg-[#f5f6f6] transition-colors group relative ${isSelected ? 'bg-[#f0f2f5]' : ''}`}
+                >
+                  <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center shrink-0 text-indigo-700 font-bold">
+                    {c.isGroup ? <Users size={20} /> : (displayName || '').charAt(0)}
                   </div>
-                  <span className={`text-xs ${isUnread ? 'text-[#25d366] font-medium' : 'text-[#667781]'}`}>
-                    {new Date(c.lastMessageTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center relative">
-                  <p className="text-sm text-[#667781] truncate pr-14">{c.lastMessage || 'No messages yet'}</p>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    {isUnread && (
-                      <span className="w-5 h-5 bg-[#25d366] text-white rounded-full flex items-center justify-center text-[10px] font-bold">
-                        {c.unreadCount}
+                  <div className="flex-1 min-w-0 border-b border-[#f2f2f2] pb-3 pt-1">
+                    <div className="flex justify-between items-baseline mb-0.5">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <h4 className="text-[17px] font-normal text-[#111b21] truncate">{displayName}</h4>
+                        {c.pinned && <Pin size={12} className="text-indigo-600 shrink-0 rotate-45 fill-indigo-600" />}
+                        {mutedConversations.includes(c.id) && <BellOff size={12} className="text-slate-400 shrink-0" />}
+                      </div>
+                      <span className={`text-xs ${isUnread ? 'text-[#25d366] font-medium' : 'text-[#667781]'}`}>
+                        {c.lastMessageTime ? new Date(c.lastMessageTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                       </span>
-                    )}
-                    <div className="absolute right-0 top-0.5 hidden group-hover:flex bg-[#f5f6f6] pl-2 items-center gap-1.5 text-slate-400 z-10">
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onPinConversation(c.id, !c.pinned);
-                        }}
-                        className="hover:text-indigo-600 p-0.5"
-                        title={c.pinned ? "Unpin Chat" : "Pin Chat"}
-                      >
-                        <Pin size={14} className={c.pinned ? "fill-indigo-600 text-indigo-600" : ""} />
-                      </button>
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onArchiveConversation(c.id, !c.archived);
-                        }}
-                        className="hover:text-indigo-600 p-0.5"
-                        title={c.archived ? "Unarchive Chat" : "Archive Chat"}
-                      >
-                        <Archive size={14} className={c.archived ? "fill-slate-400 text-slate-400" : ""} />
-                      </button>
+                    </div>
+                    <div className="flex justify-between items-center relative">
+                      <p className="text-sm text-[#667781] truncate pr-14">{c.lastMessage || 'No messages yet'}</p>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {isUnread && (
+                          <span className="w-5 h-5 bg-[#25d366] text-white rounded-full flex items-center justify-center text-[10px] font-bold">
+                            {c.unreadCount}
+                          </span>
+                        )}
+                        <div className="absolute right-0 top-0.5 hidden group-hover:flex bg-[#f5f6f6] pl-2 items-center gap-1.5 text-slate-400 z-10">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onPinConversation(c.id, !c.pinned);
+                            }}
+                            className="hover:text-indigo-600 p-0.5"
+                            title={c.pinned ? "Unpin Chat" : "Pin Chat"}
+                          >
+                            <Pin size={14} className={c.pinned ? "fill-indigo-600 text-indigo-600" : ""} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onArchiveConversation(c.id, !c.archived);
+                            }}
+                            className="hover:text-indigo-600 p-0.5"
+                            title={c.archived ? "Unarchive Chat" : "Archive Chat"}
+                          >
+                            <Archive size={14} className={c.archived ? "fill-slate-400 text-slate-400" : ""} />
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
+              );
+            })}
+
+            {!showArchivedOnly && role === 'mentor' && contactsWithoutConversation.length > 0 && (
+              <div className="border-t border-[#f2f2f2] pt-2 pb-1 px-3">
+                <div className="flex items-center gap-2 px-1 py-2">
+                  <div className="h-px flex-1 bg-[#e9edef]" />
+                  <span className="text-[11px] font-bold text-[#667781] uppercase tracking-wider shrink-0">
+                    Available Contacts ({contactsWithoutConversation.length})
+                  </span>
+                  <div className="h-px flex-1 bg-[#e9edef]" />
+                </div>
+                {contactsWithoutConversation.map(s => (
+                  <div
+                    key={s.id}
+                    onClick={async () => {
+                      const newC = await messageService.createConversation(s.id || s.user_id, s.name || '', currentUserId);
+                      if (newC) onCreateConversation(newC);
+                    }}
+                    className="flex items-center px-3 py-2.5 gap-3 cursor-pointer hover:bg-[#f5f6f6] transition-colors rounded-lg group"
+                  >
+                    <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center shrink-0 text-emerald-700 font-bold text-sm">
+                      {(s.name || '?').charAt(0)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-[15px] font-medium text-[#111b21] truncate">{s.name || 'Unnamed Student'}</h4>
+                      <p className="text-xs text-emerald-600 font-medium">Click to start chatting</p>
+                    </div>
+                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                      + Chat
+                    </span>
+                  </div>
+                ))}
               </div>
-            </div>
-          );
-        })}
+            )}
+          </>
+        )}
       </div>
     </div>
   );

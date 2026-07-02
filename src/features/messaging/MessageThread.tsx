@@ -11,6 +11,10 @@ interface Message {
   timestamp: string;
   audioUrl?: string;
   duration?: number;
+  fileName?: string;
+  fileUrl?: string;
+  fileSize?: number;
+  fileType?: string;
 }
 
 interface MessageThreadProps {
@@ -19,6 +23,23 @@ interface MessageThreadProps {
   isGroup: boolean;
   chatContainerRef: React.RefObject<HTMLDivElement | null>;
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
+}
+
+function formatFileSize(bytes?: number): string {
+  if (!bytes) return '';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+function getFileIcon(fileType?: string): string {
+  if (!fileType) return '📎';
+  if (fileType.startsWith('image/')) return '🖼️';
+  if (fileType.includes('pdf')) return '📄';
+  if (fileType.includes('word') || fileType.includes('document')) return '📝';
+  if (fileType.includes('zip')) return '📦';
+  if (fileType === 'text/plain') return '📃';
+  return '📎';
 }
 
 export const MessageThread = React.memo<MessageThreadProps>(({
@@ -58,13 +79,13 @@ export const MessageThread = React.memo<MessageThreadProps>(({
           const showTail = !isPrevSameSender;
 
           return (
-            <div 
-              key={m.id} 
+            <div
+              key={m.id}
               className={`flex ${isMine ? 'justify-end' : 'justify-start'} w-full relative ${
                 isPrevSameSender ? 'mt-[3px]' : 'mt-[12px]'
               }`}
             >
-              <div 
+              <div
                 className={`relative w-fit min-w-[80px] max-w-[60%] shadow-[0_1px_0.5px_rgba(0,0,0,0.13)] text-[14.2px] leading-[19px] flex flex-col group transition-all duration-150 hover:shadow-[0_2px_4px_rgba(0,0,0,0.15)]
                   ${isMine ? 'bg-[#d9fdd3] text-[#111b21]' : 'bg-white text-[#111b21]'}
                   ${showTail ? (isMine ? 'rounded-[8px] rounded-tr-none' : 'rounded-[8px] rounded-tl-none') : 'rounded-[8px]'}
@@ -83,11 +104,36 @@ export const MessageThread = React.memo<MessageThreadProps>(({
                     {m.senderName || 'Participant'}
                   </span>
                 )}
-                
+
                 {m.type === 'voice' ? (
                   <VoiceMessagePlayer audioUrl={m.audioUrl || m.content} duration={m.duration} />
+                ) : m.type === 'file' && m.fileUrl ? (
+                  <div className="pl-1 pr-2 py-1">
+                    <a
+                      href={m.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      download={m.fileName}
+                      className="flex items-start gap-3 p-2.5 rounded-lg bg-black/[0.04] hover:bg-black/[0.08] transition-colors no-underline group/file"
+                    >
+                      <span className="text-2xl shrink-0 mt-0.5">{getFileIcon(m.fileType)}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[13px] font-semibold text-[#111b21] truncate group-hover/file:underline">
+                          {m.fileName || m.content}
+                        </p>
+                        <p className="text-[11px] text-[#667781] mt-0.5">
+                          {formatFileSize(m.fileSize)}
+                          {m.fileType && ` · ${m.fileType.split('/').pop()?.toUpperCase() || ''}`}
+                        </p>
+                        <p className="text-[11px] text-indigo-600 font-medium mt-1 flex items-center gap-1">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                          Download
+                        </p>
+                      </div>
+                    </a>
+                  </div>
                 ) : (
-                  <div 
+                  <div
                     className="block whitespace-pre-wrap break-words text-[#111b21] pl-1 text-[14.2px] leading-[19px]"
                     style={{ overflowWrap: 'anywhere' }}
                   >

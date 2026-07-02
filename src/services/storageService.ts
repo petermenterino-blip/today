@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase';
 
-type BucketName = 'profile-avatars' | 'student-documents' | 'mentor-resources' | 'gallery-images';
+type BucketName = 'profile-avatars' | 'student-documents' | 'mentor-resources' | 'gallery-images' | 'message-attachments';
 
 class StorageService {
   private getPath(bucket: BucketName, userId: string, fileName: string): string {
@@ -34,6 +34,10 @@ class StorageService {
 
   async uploadGalleryImage(userId: string, file: File): Promise<string> {
     return this.upload('gallery-images', userId, file);
+  }
+
+  async uploadMessageAttachment(userId: string, file: File): Promise<string> {
+    return this.upload('message-attachments', userId, file);
   }
 
   async delete(bucket: BucketName, url: string): Promise<void> {

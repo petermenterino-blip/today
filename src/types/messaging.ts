@@ -9,6 +9,10 @@ export interface Message {
   type: "text" | "image" | "file" | "voice" | "system";
   audioUrl?: string;
   duration?: number;
+  fileName?: string;
+  fileUrl?: string;
+  fileSize?: number;
+  fileType?: string;
 }
 
 export interface Conversation {
