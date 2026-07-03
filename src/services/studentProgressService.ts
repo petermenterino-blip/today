@@ -27,20 +27,34 @@ function fromDb(row: any): StudentProgress {
 }
 
 let progressCache: StudentProgress[] = [];
+let progressCacheMap = new Map<string, StudentProgress>();
 
 export const studentProgressService = {
   async initCache(): Promise<void> {
-    const { data, error } = await supabase
-      .from('student_progress')
-      .select('*');
-    if (!error && data) {
-      progressCache = data.map(fromDb);
+    const records = await this.getProgressBatch();
+    progressCache = records;
+    progressCacheMap = new Map();
+    records.forEach(r => {
+      progressCacheMap.set(`${r.userId}-${r.programId}`, r);
+    });
+  },
+
+  async getProgressBatch(userIds?: string[], programIds?: string[]): Promise<StudentProgress[]> {
+    let query = supabase.from('student_progress').select('*');
+    if (userIds && userIds.length > 0) {
+      query = query.in('user_id', userIds);
     }
+    if (programIds && programIds.length > 0) {
+      query = query.in('program_id', programIds);
+    }
+    const { data, error } = await query;
+    if (error || !data) return [];
+    return data.map(fromDb);
   },
 
   // Synchronous version for backward compat with monolithic components
   calculateProgramProgress(userId: string, programId: string): number {
-    const record = progressCache.find(p => p.userId === userId && p.programId === programId);
+    const record = progressCacheMap.get(`${userId}-${programId}`) || progressCache.find(p => p.userId === userId && p.programId === programId);
     if (!record) return 0;
     const lessonIds = Object.keys(record.lessons);
     if (lessonIds.length === 0) return 0;
@@ -59,7 +73,13 @@ export const studentProgressService = {
       .maybeSingle();
 
     if (error || !data) return null;
-    return fromDb(data);
+    const record = fromDb(data);
+    const key = `${userId}-${programId}`;
+    progressCacheMap.set(key, record);
+    const idx = progressCache.findIndex(p => p.userId === userId && p.programId === programId);
+    if (idx >= 0) progressCache[idx] = record;
+    else progressCache.push(record);
+    return record;
   },
 
   async startProgram(userId: string, programId: string): Promise<ServiceResponse<StudentProgress>> {
