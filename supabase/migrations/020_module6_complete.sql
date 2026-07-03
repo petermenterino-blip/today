@@ -126,4 +126,4 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.shared_files;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.student_timeline_events;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.tags;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.student_tags;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.student_profiles;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.profiles;
