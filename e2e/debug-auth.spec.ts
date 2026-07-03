@@ -34,7 +34,7 @@ test.describe('Auth Debug', () => {
       localStorage.setItem('mentorino_seed_version', 'v4');
     }, STORAGE_KEY);
 
-    await page.route((url) => url.hostname.includes('supabase.co'), async (route) => {
+    await page.route((url) => url.hostname.includes('supabase.co') || url.pathname.includes('/rest/v1/'), async (route) => {
       const url = route.request().url();
       if (url.includes('/rest/v1/profiles')) {
         await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([{ id: 'mock-student-1', email: 'student@mentorino.com', name: 'Test Student', role: 'student', application_status: 'approved', created_at: '2025-01-01T00:00:00Z' }]) });
@@ -74,7 +74,7 @@ test.describe('Auth Debug', () => {
       });
     });
 
-    await page.route((url) => url.hostname.includes('supabase.co'), async (route) => {
+    await page.route((url) => url.hostname.includes('supabase.co') || url.pathname.includes('/rest/v1/'), async (route) => {
       const url = route.request().url();
       if (url.includes('/rest/v1/profiles')) {
         await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([{ id: 'mock-student-1', email: 'student@mentorino.com', name: 'Test Student', role: 'student', application_status: 'approved', created_at: '2025-01-01T00:00:00Z' }]) });

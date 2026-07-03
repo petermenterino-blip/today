@@ -6,7 +6,7 @@ async function setupStudentPage(page: Page) {
   await setupAuthMock(page);
 
   // Mock all Supabase API endpoints with student dashboard data
-  await page.route((url) => url.hostname.includes('supabase.co'), async (route) => {
+  await page.route((url) => url.hostname.includes('supabase.co') || url.pathname.includes('/rest/v1/'), async (route) => {
     const url = route.request().url();
 
     // Auth endpoints

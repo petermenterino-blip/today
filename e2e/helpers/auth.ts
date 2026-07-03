@@ -61,7 +61,7 @@ export async function setupAuthMock(page: Page) {
  * Call this in `test.beforeEach` after setting up specific endpoint mocks.
  */
 export async function setupSupabaseMocks(page: Page, customMocks?: (url: string, route: any) => boolean | Promise<boolean>) {
-  await page.route((url) => url.hostname.includes('supabase.co'), async (route) => {
+  await page.route((url) => url.hostname.includes('supabase.co') || url.pathname.includes('/rest/v1/'), async (route) => {
     const url = route.request().url();
 
     if (customMocks) {
