@@ -5,6 +5,7 @@ import { useGoals } from '../../../hooks/useGoals';
 import { tagService } from '../../../services/tagService';
 import { studentService } from '../../../services/studentService';
 import { applicationService } from '../../../services/applicationService';
+import { useRealtime } from '../../../hooks/useRealtime';
 import { notifySuccess, notifyError } from '../../../utils/toast';
 import type { User, StudentProfile, StudentTag } from '../../../types';
 import type { Goal } from '../../../interfaces';
@@ -41,9 +42,14 @@ export function useMentees(currentUser: User | null) {
   });
   const activeStudentsCount = studentProfiles.filter(p => p.status === 'active' || p.current_status === 'Active').length;
 
+  useRealtime([
+    { table: 'student_profiles', callback: () => { studentService.getAll().then(setStudentProfiles); } },
+    { table: 'tags', callback: () => { tagService.getAll().then(setAllTags); } },
+  ]);
+
   useEffect(() => {
-    tagService.getAll().then(setAllTags);
     studentService.getAll().then(setStudentProfiles);
+    tagService.getAll().then(setAllTags);
   }, []);
 
   useEffect(() => {

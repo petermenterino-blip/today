@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { studentService } from "../../services/studentService";
 import { programService } from "../../services/programService";
 import { useDatabaseSync } from "../../hooks/useDatabaseSync";
+import { useRealtime } from "../../hooks/useRealtime";
 import { studentProgressService } from "../../services/studentProgressService";
 import StudentProgramView from "./StudentProgramView";
 import { applicationService } from "../../services/applicationService";
@@ -105,6 +106,11 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
     loading: tasksLoading,
     refreshUser: refreshUserTasks,
   } = useTasks();
+
+  useRealtime([
+    { table: 'student_profiles', callback: () => { studentService.getAll().then(setStudentProfiles); } },
+    { table: 'programs', callback: () => { programService.fetchAll().then(({ data }) => { if (data) setPrograms(data); }); } },
+  ]);
 
   const refreshProfilesAndPrograms = useCallback(async () => {
     const { data: progData } = await programService.fetchAll();

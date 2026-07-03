@@ -1,42 +1,36 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { notificationStorage } from '../services/notificationStorage';
+import { useRealtimeData } from './useRealtimeData';
 import { Notification as NotificationType } from '../interfaces';
 
 export const useNotifications = () => {
-  const [notifications, setNotifications] = useState<NotificationType[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  const load = useCallback(async () => {
-    const all = await notificationStorage.getAll();
-    setNotifications(all);
-    setLoading(false);
-  }, []);
+  useRealtimeData([{ table: 'notifications', queryKey: ['notifications'] }]);
 
-  useEffect(() => {
-    load();
-
-    const handler = (e: StorageEvent) => {
-      if (e.key === 'notifications_sync') load();
-    };
-    window.addEventListener('storage', handler);
-    return () => window.removeEventListener('storage', handler);
-  }, [load]);
+  const { data: notifications = [], isLoading: loading } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: () => notificationStorage.getAll(),
+    staleTime: 5 * 60 * 1000,
+  });
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const markAsRead = async (id: string) => {
     await notificationStorage.update(id, { read: true });
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    queryClient.invalidateQueries({ queryKey: ['notifications'] });
   };
 
   const markAllAsRead = async () => {
-    await Promise.all(notifications.filter(n => !n.read).map(n => notificationStorage.update(n.id, { read: true })));
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    await Promise.all(
+      notifications.filter(n => !n.read).map(n => notificationStorage.update(n.id, { read: true }))
+    );
+    queryClient.invalidateQueries({ queryKey: ['notifications'] });
   };
 
   const deleteNotification = async (id: string) => {
     await notificationStorage.delete(id);
-    setNotifications(prev => prev.filter(n => n.id !== id));
+    queryClient.invalidateQueries({ queryKey: ['notifications'] });
   };
 
   return {
@@ -46,6 +40,6 @@ export const useNotifications = () => {
     markAsRead,
     markAllAsRead,
     deleteNotification,
-    refresh: load,
+    refresh: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
   };
 };

@@ -28,6 +28,7 @@ import { notificationStorage } from '../../../services/notificationStorage';
 import { customFormService } from '../../../services/customFormService';
 import { notifySuccess, notifyError } from '../../../utils/toast';
 import { useDatabaseSync } from '../../../hooks/useDatabaseSync';
+import { useRealtime } from '../../../hooks/useRealtime';
 import { useMentees } from './useMentees';
 import { useFeedback } from './useFeedback';
 import { useApplicationReview } from './useApplicationReview';
@@ -254,6 +255,13 @@ export function useDashboard({ currentUser }: UseDashboardProps) {
 
   const match = location.pathname.match(/\/mentor\/events\/([^/]+)/);
   const selectedEventId = match ? match[1] : (new URLSearchParams(location.search).get('eventId') || null);
+
+  // ── Realtime subscriptions for locally-managed state ──
+  useRealtime([
+    { table: 'form_submissions', callback: () => { customFormService.getAllSubmissions().then(setFormSubmissions); } },
+    { table: 'conversations', callback: () => { messageService.getConversations(currentUser?.id || '', 'mentor').then(setConversations); } },
+    { table: 'messages', callback: () => { messageService.getConversations(currentUser?.id || '', 'mentor').then(setConversations); } },
+  ]);
 
   // ── Initial load & sync ──
   useEffect(() => {

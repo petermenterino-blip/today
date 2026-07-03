@@ -1,9 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ResourceLink } from '../types';
 import { resourceService } from '../services/resourceService';
+import { useRealtimeData } from './useRealtimeData';
 
 export const useResources = () => {
   const queryClient = useQueryClient();
+
+  useRealtimeData([{ table: 'resources', queryKey: ['resources'] }]);
 
   const { data: resources = [], isLoading: loading } = useQuery({
     queryKey: ['resources'],
