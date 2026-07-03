@@ -24,6 +24,18 @@ const ALLOWED_FILE_TYPES = [
   'image/png',
   'image/jpeg',
   'application/zip',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'audio/mpeg',
+  'audio/mp3',
+  'audio/wav',
+  'audio/ogg',
+  'audio/mp4',
+  'video/mp4',
+  'video/webm',
+  'video/ogg',
 ];
 
 interface WhatsAppMessagingProps {
@@ -237,33 +249,67 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
   const handleSendMessage = async (content: string) => {
     if (!content.trim() || !selectedConversation) return;
 
-    await messageService.sendMessage({
+    const tempId = `temp_${Date.now()}`;
+    const optimisticMessage: Message = {
+      id: tempId,
       senderId: currentUserId,
       senderName: currentUserName || (role === 'mentor' ? 'Mentor' : 'Student'),
       conversationId: selectedConversation.id,
       content: content.trim(),
       type: 'text',
-    });
+      status: 'sent',
+      timestamp: new Date().toISOString(),
+    };
 
-    queryClient.invalidateQueries({ queryKey: ['messages', selectedConversation.id] });
-    loadConversations();
+    queryClient.setQueryData<Message[]>(['messages', selectedConversation.id], (old = []) => [...old, optimisticMessage]);
+
+    try {
+      await messageService.sendMessage({
+        senderId: currentUserId,
+        senderName: currentUserName || (role === 'mentor' ? 'Mentor' : 'Student'),
+        conversationId: selectedConversation.id,
+        content: content.trim(),
+        type: 'text',
+      });
+    } finally {
+      queryClient.invalidateQueries({ queryKey: ['messages', selectedConversation.id] });
+      loadConversations();
+    }
   };
 
   const handleSendVoiceMessage = async (audioUrl: string, duration: number) => {
     if (!selectedConversation) return;
 
-    await messageService.sendMessage({
+    const tempId = `temp_${Date.now()}`;
+    const optimisticMessage: Message = {
+      id: tempId,
       senderId: currentUserId,
       senderName: currentUserName || (role === 'mentor' ? 'Mentor' : 'Student'),
       conversationId: selectedConversation.id,
       content: audioUrl,
       type: 'voice',
+      status: 'sent',
       audioUrl,
       duration,
-    });
+      timestamp: new Date().toISOString(),
+    };
 
-    queryClient.invalidateQueries({ queryKey: ['messages', selectedConversation.id] });
-    loadConversations();
+    queryClient.setQueryData<Message[]>(['messages', selectedConversation.id], (old = []) => [...old, optimisticMessage]);
+
+    try {
+      await messageService.sendMessage({
+        senderId: currentUserId,
+        senderName: currentUserName || (role === 'mentor' ? 'Mentor' : 'Student'),
+        conversationId: selectedConversation.id,
+        content: audioUrl,
+        type: 'voice',
+        audioUrl,
+        duration,
+      });
+    } finally {
+      queryClient.invalidateQueries({ queryKey: ['messages', selectedConversation.id] });
+      loadConversations();
+    }
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -275,12 +321,30 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
       return;
     }
     if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-      setToast({ message: 'Unsupported file type. Allowed: PDF, DOCX, DOC, TXT, PNG, JPG, ZIP.', type: 'error' });
+      setToast({ message: 'Unsupported file type. Allowed: PDF, DOCX, DOC, TXT, PNG, JPG, ZIP, PPT, PPTX, XLS, XLSX, audio, video.', type: 'error' });
       return;
     }
 
     try {
       setToast({ message: 'Uploading file...', type: 'info' });
+
+      const tempId = `temp_${Date.now()}`;
+      const optimisticMessage: Message = {
+        id: tempId,
+        senderId: currentUserId,
+        senderName: currentUserName || (role === 'mentor' ? 'Mentor' : 'Student'),
+        conversationId: selectedConversation.id,
+        content: file.name,
+        type: 'file',
+        status: 'sent',
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        timestamp: new Date().toISOString(),
+      };
+
+      queryClient.setQueryData<Message[]>(['messages', selectedConversation.id], (old = []) => [...old, optimisticMessage]);
+
       const fileUrl = await storageService.uploadMessageAttachment(currentUserId, file);
 
       await messageService.sendMessage({
@@ -299,6 +363,7 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
       loadConversations();
       setToast({ message: 'File sent!', type: 'success' });
     } catch {
+      queryClient.invalidateQueries({ queryKey: ['messages', selectedConversation.id] });
       setToast({ message: 'File upload failed.', type: 'error' });
     }
   };

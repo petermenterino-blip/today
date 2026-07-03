@@ -48,14 +48,6 @@ export const ConversationList = React.memo<ConversationListProps>(({
     });
   }, [activeConversations, archivedConversations, showArchivedOnly, searchQuery, role]);
 
-  const contactsWithoutConversation = useMemo(() => {
-    if (role !== 'mentor') return [];
-    return allStudents.filter(s => {
-      const studentId = s.id || s.user_id;
-      return !conversations.some(c => !c.isGroup && (c.studentId === studentId));
-    });
-  }, [allStudents, conversations, role]);
-
   return (
     <div className="w-full md:w-[350px] lg:w-[400px] bg-white border-r border-[#d1d7db] flex flex-col">
       <div className="h-[60px] bg-[#f0f2f5] px-4 flex items-center justify-between border-b border-[#d1d7db] shrink-0">
@@ -148,7 +140,7 @@ export const ConversationList = React.memo<ConversationListProps>(({
           </div>
         )}
 
-        {filteredConversations.length === 0 && !showArchivedOnly && contactsWithoutConversation.length === 0 ? (
+        {filteredConversations.length === 0 && !showArchivedOnly ? (
           <EmptyState
             icon={<MessageSquare size={32} />}
             title="No Conversations"
@@ -216,39 +208,6 @@ export const ConversationList = React.memo<ConversationListProps>(({
                 </div>
               );
             })}
-
-            {!showArchivedOnly && role === 'mentor' && contactsWithoutConversation.length > 0 && (
-              <div className="border-t border-[#f2f2f2] pt-2 pb-1 px-3">
-                <div className="flex items-center gap-2 px-1 py-2">
-                  <div className="h-px flex-1 bg-[#e9edef]" />
-                  <span className="text-[11px] font-bold text-[#667781] uppercase tracking-wider shrink-0">
-                    Available Contacts ({contactsWithoutConversation.length})
-                  </span>
-                  <div className="h-px flex-1 bg-[#e9edef]" />
-                </div>
-                {contactsWithoutConversation.map(s => (
-                  <div
-                    key={s.id}
-                    onClick={async () => {
-                      const newC = await messageService.createConversation(s.id || s.user_id, s.name || '', currentUserId);
-                      if (newC) onCreateConversation(newC);
-                    }}
-                    className="flex items-center px-3 py-2.5 gap-3 cursor-pointer hover:bg-[#f5f6f6] transition-colors rounded-lg group"
-                  >
-                    <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center shrink-0 text-emerald-700 font-bold text-sm">
-                      {(s.name || '?').charAt(0)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-[15px] font-medium text-[#111b21] truncate">{s.name || 'Unnamed Student'}</h4>
-                      <p className="text-xs text-emerald-600 font-medium">Click to start chatting</p>
-                    </div>
-                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                      + Chat
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
           </>
         )}
       </div>

@@ -321,7 +321,7 @@ export const ComposeBar: React.FC<ComposeBarProps> = ({ onSendMessage, onSendVoi
               </svg>
             </div>
             <label className="cursor-pointer flex items-center h-full">
-              <input type="file" className="hidden" onChange={onFileUpload} accept=".pdf,.docx,.doc,.txt,.png,.jpg,.jpeg,.zip,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,text/plain,image/png,image/jpeg,application/zip" />
+              <input type="file" className="hidden" onChange={onFileUpload} accept=".pdf,.docx,.doc,.txt,.png,.jpg,.jpeg,.zip,.ppt,.pptx,.xls,.xlsx,.mp3,.wav,.ogg,.mp4,.webm,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,text/plain,image/png,image/jpeg,application/zip,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/mp4,video/mp4,video/webm,video/ogg" />
               <Paperclip size={22} className="hover:text-[#00a884] transition-colors" />
             </label>
           </div>

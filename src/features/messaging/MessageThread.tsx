@@ -39,7 +39,28 @@ function getFileIcon(fileType?: string): string {
   if (fileType.includes('word') || fileType.includes('document')) return '📝';
   if (fileType.includes('zip')) return '📦';
   if (fileType === 'text/plain') return '📃';
+  if (fileType.includes('powerpoint') || fileType.includes('presentation')) return '📊';
+  if (fileType.includes('excel') || fileType.includes('spreadsheet')) return '📈';
+  if (fileType.startsWith('audio/')) return '🎵';
+  if (fileType.startsWith('video/')) return '🎬';
   return '📎';
+}
+
+function renderTextWithLinks(text: string) {
+  const urlRegex = /(https?:\/\/[^\s<)]+)/g;
+  const parts = text.split(urlRegex);
+  return parts.map((part, i) => {
+    if (part.match(urlRegex)) {
+      return (
+        <a key={i} href={part} target="_blank" rel="noopener noreferrer"
+           className="text-indigo-600 hover:underline font-medium"
+           onClick={(e) => e.stopPropagation()}>
+          {part}
+        </a>
+      );
+    }
+    return part;
+  });
 }
 
 export const MessageThread = React.memo<MessageThreadProps>(({
@@ -137,7 +158,7 @@ export const MessageThread = React.memo<MessageThreadProps>(({
                     className="block whitespace-pre-wrap break-words text-[#111b21] pl-1 text-[14.2px] leading-[19px]"
                     style={{ overflowWrap: 'anywhere' }}
                   >
-                    {m.content}
+                    {renderTextWithLinks(m.content)}
                   </div>
                 )}
 
