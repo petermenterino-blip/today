@@ -130,6 +130,12 @@ export const applicationService = {
   },
 
   async submitApplication(app: Omit<Application, 'id' | 'created_at' | 'status'>): Promise<ServiceResponse<Application>> {
+    if (app.goal) {
+      const wordCount = app.goal.trim().split(/\s+/).filter(w => w.length > 0).length;
+      if (wordCount < 50) {
+        return { data: null, error: 'Please write at least 50 words describing your goals.' };
+      }
+    }
     const nameParts = (app.full_name || '').trim().split(/\s+/);
     const first_name = nameParts[0] || '';
     const last_name = nameParts.slice(1).join(' ') || 'Applicant';
@@ -202,7 +208,7 @@ export const applicationService = {
 
   async uploadDocument(file: File, userId?: string): Promise<ServiceResponse<string>> {
     try {
-      const path = userId || `applicant_${file.name.replace(/[^a-zA-Z0-9]/g, '_')}`;
+      const path = userId || 'applications';
       const url = await storageService.uploadStudentDocument(path, file);
       return { data: url, error: null };
     } catch (err: any) {

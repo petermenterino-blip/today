@@ -84,8 +84,8 @@ const ApplicationPage: React.FC = () => {
       notifyError("Please fill in all identity fields.");
       return;
     }
-    if (step === 3 && wordCount < 200) {
-      notifyError("Please write at least 200 words describing your goals.");
+    if (step === 3 && wordCount < 50) {
+      notifyError("Please write at least 50 words describing your goals.");
       return;
     }
     setStep(prev => Math.min(prev + 1, totalSteps));
@@ -298,13 +298,13 @@ const ApplicationPage: React.FC = () => {
                   value={goals}
                   onChange={e => setGoals(e.target.value)}
                   className="w-full p-5 sm:p-6 bg-slate-50 border border-slate-100 rounded-2xl sm:rounded-[32px] text-xs sm:text-sm font-medium outline-none focus:border-black transition-all min-h-[120px] sm:min-h-[160px] leading-relaxed" 
-                  placeholder="Be specific about the clarity or achievement you are chasing... (minimum 200 words)"
+                  placeholder="Be specific about the clarity or achievement you are chasing... (minimum 50 words)"
                 ></textarea>
                 <div className="flex items-center justify-between px-1">
-                  <span className={`text-[9px] font-black uppercase tracking-widest ${wordCount >= 200 ? 'text-emerald-500' : 'text-slate-400'}`}>
-                    {wordCount >= 200 ? '✓ Minimum met' : `Minimum 200 words`}
+                  <span className={`text-[9px] font-black uppercase tracking-widest ${wordCount >= 50 ? 'text-emerald-500' : 'text-slate-400'}`}>
+                    {wordCount >= 50 ? '✓ Minimum met' : `Minimum 50 words`}
                   </span>
-                  <span className={`text-[9px] font-black uppercase tracking-widest ${wordCount >= 200 ? 'text-emerald-500' : 'text-amber-500'}`}>
+                  <span className={`text-[9px] font-black uppercase tracking-widest ${wordCount >= 50 ? 'text-emerald-500' : 'text-amber-500'}`}>
                     {wordCount} words
                   </span>
                 </div>

@@ -234,7 +234,30 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               </div>
             </div>
 
-            <div className="mt-8 pt-6 border-t border-white/10 flex flex-wrap gap-3 items-center relative z-10">
+            <button
+              onClick={() => handleTabChange('applications')}
+              className="w-full mt-6 group relative overflow-hidden bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-5 text-left transition-all hover:from-purple-700 hover:to-indigo-700 active:scale-[0.99] shadow-lg shadow-purple-600/20"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-xl pointer-events-none"></div>
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2 blur-xl pointer-events-none"></div>
+              <div className="relative z-10 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
+                    <Users className="text-white" size={24} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-white/70 uppercase tracking-widest">New Applications</p>
+                    <p className="text-3xl font-black text-white mt-0.5">{pendingApplications.length}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-white/80 group-hover:text-white transition-colors">
+                  <span className="text-[10px] font-black uppercase tracking-widest">Review</span>
+                  <ChevronRight size={16} />
+                </div>
+              </div>
+            </button>
+
+            <div className="mt-6 pt-6 border-t border-white/10 flex flex-wrap gap-3 items-center relative z-10">
               <button onClick={() => handleTabChange('applications')} className="px-5 py-2.5 bg-white text-brand-charcoal hover:bg-slate-100 font-bold rounded-2xl text-[11px] transition-all shadow-md active:scale-95 flex items-center gap-1.5 text-left">Review Applications</button>
               <button onClick={() => handleTabChange('sessions')} className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl text-[11px] transition-all shadow-md active:scale-95 flex items-center gap-1.5 text-left">Start Session</button>
               <button onClick={() => handleTabChange('messaging')} className="px-5 py-2.5 bg-white/10 hover:bg-white/15 text-white font-bold rounded-2xl text-[11px] transition-all active:scale-95 flex items-center gap-1.5 border border-white/5 text-left">Message Students</button>
@@ -314,8 +337,8 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                       {activity.name.slice(0, 2).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{activity.name}</p>
-                      <p className="text-xs text-slate-500 truncate mt-0.5">{activity.activity}</p>
+                      <p className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition-colors break-words">{activity.name}</p>
+                      <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{activity.activity}</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-[10px] text-slate-400 font-medium">{formatRelativeTime(activity.timestamp)}</span>

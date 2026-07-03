@@ -378,7 +378,17 @@ export const ApplicationsTab: React.FC<ApplicationsTabProps> = ({
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-slate-900">Applications</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-slate-900">Applications</h1>
+            {pendingCount > 0 && (
+              <span className="relative flex">
+                <span className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex items-center justify-center h-5 min-w-[20px] px-1.5 bg-red-500 text-white text-[9px] font-black rounded-full">
+                  {pendingCount > 99 ? '99+' : pendingCount}
+                </span>
+              </span>
+            )}
+          </div>
           <p className="text-xs text-slate-500 mt-1 font-medium">
             {totalCount} total &middot; {pendingCount} pending review
           </p>

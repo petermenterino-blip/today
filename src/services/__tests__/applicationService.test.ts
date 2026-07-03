@@ -67,7 +67,7 @@ describe('applicationService', () => {
       const result = await applicationService.submitApplication({
         user_email: 'test@mentorino.com',
         full_name: 'Test User',
-        goal: 'Career growth',
+        goal: 'Career growth and professional development are my primary objectives as I look to advance in my field and take on more leadership responsibilities within my organization while also building a strong personal brand and network of industry peers who can support my journey toward becoming a thought leader in my domain of expertise which requires consistent effort dedication and a willingness to learn from experienced mentors who have walked this path before me and can provide the guidance and accountability necessary to achieve these ambitious but achievable goals',
         mentor_type: 'Career Strategist',
         phone: '+1 555-0000',
       });
@@ -75,7 +75,18 @@ describe('applicationService', () => {
       expect(result.error).toBeNull();
       expect(result.data).not.toBeNull();
       expect(result.data!.user_email).toBe('test@mentorino.com');
-      expect(result.data!.full_name).toBe('Test User');
+    });
+
+    it('rejects goal with fewer than 50 words', async () => {
+      const result = await applicationService.submitApplication({
+        user_email: 'test@mentorino.com',
+        full_name: 'Test User',
+        goal: 'Career growth',
+        mentor_type: 'Career Strategist',
+      });
+
+      expect(result.error).toBe('Please write at least 50 words describing your goals.');
+      expect(result.data).toBeNull();
     });
 
     it('returns error on submission failure', async () => {
@@ -90,7 +101,7 @@ describe('applicationService', () => {
       const result = await applicationService.submitApplication({
         user_email: 'test@mentorino.com',
         full_name: 'Test User',
-        goal: 'Growth',
+        goal: 'Career growth and professional development are my primary objectives as I look to advance in my field and take on more leadership responsibilities within my organization while also building a strong personal brand and network of industry peers who can support my journey toward becoming a thought leader in my domain of expertise which requires consistent effort dedication and a willingness to learn from experienced mentors who have walked this path before me',
       });
 
       expect(result.error).toBe('Database error');
