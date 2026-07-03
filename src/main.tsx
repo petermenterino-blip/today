@@ -9,8 +9,14 @@ import { seedDatabase } from './utils/seedData';
 import { initSentry } from './lib/sentry';
 import ErrorBoundary from './components/shared/ErrorBoundary';
 import OfflineBanner from './components/shared/OfflineBanner';
+import { idleRecovery } from './lib/idleRecovery';
+import { logger } from './lib/logger';
 
 initSentry();
+
+idleRecovery.mount();
+logger.info('App', 'Application starting');
+
 if (import.meta.env.DEV) {
   seedDatabase().catch(() => {});
 }

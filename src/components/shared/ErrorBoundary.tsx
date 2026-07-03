@@ -1,30 +1,75 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
 
 type EBProps = { children: ReactNode; fallback?: ReactNode };
-type EBState = { hasError: boolean; error: Error | null };
+type EBState = { hasError: boolean; error: Error | null; isRecoverable: boolean };
+
+function isRecoverableError(error: Error): boolean {
+  const msg = error?.message || '';
+  if (msg.includes('Failed to fetch')) return true;
+  if (msg.includes('NetworkError')) return true;
+  if (msg.includes('network')) return true;
+  if (msg.includes('ERR_CONNECTION')) return true;
+  if (msg.includes('timeout')) return true;
+  if (msg.includes('timed out')) return true;
+  if (msg.includes('JWT') || msg.includes('jwt')) return true;
+  if (msg.includes('token')) return true;
+  if (msg.includes('load metadata')) return true;
+  if (msg.includes('auth')) return true;
+  if (msg.includes('session')) return true;
+  if (msg.includes('refresh')) return true;
+  if (msg.includes('realtime')) return true;
+  if (msg.includes('channel')) return true;
+  if (msg.includes('Cannot read properties of null')) return true;
+  if (msg.includes('Cannot read properties of undefined')) return true;
+  if (msg.includes('is not a function')) return true;
+  return false;
+}
 
 export default class ErrorBoundary extends Component<EBProps, EBState> {
   declare props: EBProps;
   declare state: EBState;
+  private recoveryTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(props: EBProps) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, isRecoverable: false };
   }
 
-  static getDerivedStateFromError(error: Error): EBState {
-    return { hasError: true, error };
+  static getDerivedStateFromError(error: Error): Partial<EBState> {
+    return {
+      hasError: true,
+      error,
+      isRecoverable: isRecoverableError(error),
+    };
   }
 
-  componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error('ErrorBoundary caught:', error, info);
+  componentDidCatch(error: Error, _info: ErrorInfo) {
+    console.error('ErrorBoundary caught:', error, _info);
   }
+
+  componentWillUnmount() {
+    if (this.recoveryTimer) {
+      clearTimeout(this.recoveryTimer);
+    }
+  }
+
+  handleRetry = () => {
+    try {
+      this.recoveryTimer = setTimeout(() => {
+        (this as any).setState({ hasError: false, error: null, isRecoverable: false });
+      }, 0);
+    } catch {}
+  };
 
   render() {
-    const { hasError } = this.state;
-    const { children, fallback } = this.props;
-    if (hasError) {
-      if (fallback) return fallback;
+    if (this.state.hasError) {
+      if (this.state.isRecoverable) {
+        try {
+          this.handleRetry();
+        } catch {}
+        return this.props.children;
+      }
+      if (this.props.fallback) return this.props.fallback;
       return (
         <div className="min-h-[60vh] flex items-center justify-center p-8">
           <div className="bg-white p-12 rounded-[48px] shadow-2xl shadow-black/5 border border-slate-100 text-center max-w-md">
@@ -35,16 +80,30 @@ export default class ErrorBoundary extends Component<EBProps, EBState> {
             <p className="text-slate-500 text-sm font-medium leading-relaxed mb-6">
               An unexpected error occurred. Please try refreshing the page.
             </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="w-full py-4 bg-black text-white text-[10px] font-black uppercase tracking-[0.3em] rounded-full hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-black/10"
-            >
-              Refresh Page
-            </button>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={this.handleRetry}
+                className="w-full py-4 bg-slate-900 text-white text-[10px] font-black uppercase tracking-[0.3em] rounded-full hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-black/10"
+              >
+                Try Again
+              </button>
+              <button
+                onClick={() => window.location.reload()}
+                className="w-full py-4 bg-white text-slate-900 border border-slate-200 text-[10px] font-black uppercase tracking-[0.3em] rounded-full hover:bg-slate-50 active:scale-95 transition-all"
+              >
+                Refresh Page
+              </button>
+            </div>
+            {this.state.error && (
+              <details className="mt-6 text-left">
+                <summary className="text-[10px] text-slate-400 font-bold cursor-pointer hover:text-slate-600">Error details</summary>
+                <pre className="mt-2 text-[10px] text-slate-500 bg-slate-50 p-3 rounded-2xl overflow-auto max-h-[200px]">{this.state.error.message}</pre>
+              </details>
+            )}
           </div>
         </div>
       );
     }
-    return children;
+    return this.props.children;
   }
 }

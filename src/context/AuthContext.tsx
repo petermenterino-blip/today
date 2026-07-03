@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback, Rea
 import { User, UserRole } from '../types';
 import { authService, UserProfileDetails } from '../services/authService';
 import { interpretError } from '../lib/errorHandler';
+import { logger } from '../lib/logger';
+import { idleRecovery } from '../lib/idleRecovery';
 
 interface AuthContextType {
   user: (User & { profile?: UserProfileDetails }) | null;
@@ -14,6 +16,7 @@ interface AuthContextType {
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (password: string) => Promise<void>;
   clearError: () => void;
+  refreshSession: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -25,6 +28,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [authError, setAuthError] = useState<string | null>(null);
 
   const clearError = useCallback(() => setAuthError(null), []);
+
+  const refreshSession = useCallback(async () => {
+    try {
+      logger.info('AuthContext', 'Refreshing auth session');
+      const profileRes = await authService.getCurrentUser();
+      if (profileRes.data) {
+        setUser(profileRes.data);
+        setRole(profileRes.data.role);
+        logger.info('AuthContext', 'Session refreshed successfully', { role: profileRes.data.role });
+      }
+    } catch (err: any) {
+      logger.warn('AuthContext', 'Session refresh failed, continuing with existing session', {
+        error: err?.message,
+      });
+      setAuthError(interpretError(err?.message || 'Connection failed. Please check your internet.'));
+    }
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -42,7 +62,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       } catch (err: any) {
         if (mounted) {
-          console.error('Failed to initialize session:', err);
+          logger.error('AuthContext', 'Failed to initialize session', { error: err?.message });
           setAuthError(interpretError(err?.message || 'Connection failed. Please check your internet.'));
         }
       } finally {
@@ -65,13 +85,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     const handleProfileChange = async () => {
-      const { data } = await authService.getCurrentUser();
-      if (data && mounted) {
-        setUser(data);
-        setRole(data.role);
+      try {
+        const { data } = await authService.getCurrentUser();
+        if (data && mounted) {
+          setUser(data);
+          setRole(data.role);
+        }
+      } catch {
+        logger.warn('AuthContext', 'Profile change handler failed');
       }
     };
     window.addEventListener('user-profile-changed', handleProfileChange);
+
+    idleRecovery.configure({
+      onSessionValidate: async () => {
+        logger.info('AuthContext', 'Validating session after idle');
+        await initializeSession();
+      },
+    });
+
     return () => {
       mounted = false;
       window.removeEventListener('user-profile-changed', handleProfileChange);
@@ -136,7 +168,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, role, authLoading, authError, login, signup, logout, forgotPassword, resetPassword, clearError }}>
+    <AuthContext.Provider value={{ user, role, authLoading, authError, login, signup, logout, forgotPassword, resetPassword, clearError, refreshSession }}>
       {children}
     </AuthContext.Provider>
   );

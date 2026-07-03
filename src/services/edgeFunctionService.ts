@@ -29,7 +29,8 @@ export const edgeFunctionService = {
       return data?.result || ''
     } catch (err: any) {
       if (isNetworkError(err)) return 'AI features are unavailable offline.'
-      throw err
+      console.warn('[EdgeFunction] gemini error:', err?.message || err)
+      return "I'm sorry, I'm experiencing some technical difficulties. Please try again."
     }
   },
 
@@ -46,7 +47,8 @@ export const edgeFunctionService = {
       return result || { success: false }
     } catch (err: any) {
       if (isNetworkError(err)) return { success: false }
-      throw err
+      console.warn('[EdgeFunction] sendEmail error:', err?.message || err)
+      return { success: false }
     }
   },
 
@@ -59,7 +61,8 @@ export const edgeFunctionService = {
       return data || { success: false, task }
     } catch (err: any) {
       if (isNetworkError(err)) return { success: false, task }
-      throw err
+      console.warn('[EdgeFunction] scheduled task error:', err?.message || err)
+      return { success: false, task }
     }
   },
 }
