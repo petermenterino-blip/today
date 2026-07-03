@@ -21,23 +21,18 @@ async function setupStudentPage(page: Page) {
       return;
     }
 
-    // Goals
-    if (url.includes('/rest/v1/goals')) {
+    // Goals (with goal_milestones join — the real query does select('*, goal_milestones(*)'))
+    if (url.includes('/rest/v1/goals') && !url.includes('/rest/v1/goal_milestones')) {
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([
-        { id: 'goal-1', student_id: 'mock-student-1', title: 'Complete Resume', description: 'Update resume', progress_percentage: 100, status: 'completed', target_date: null, notes: null, created_at: '2025-06-01T00:00:00Z', updated_at: '2025-06-15T00:00:00Z' },
-        { id: 'goal-2', student_id: 'mock-student-1', title: 'Conduct Informational Interviews', description: 'Reach out to PMs in target industries', progress_percentage: 40, status: 'in_progress', target_date: '2025-07-15T00:00:00Z', notes: 'Contact at least 5 PMs', created_at: '2025-06-05T00:00:00Z', updated_at: '2025-06-18T00:00:00Z' },
-      ]) });
-      return;
-    }
-
-    // Goal milestones (joined with goals)
-    if (url.includes('/rest/v1/goal_milestones')) {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([
-        { id: 'gm-1', goal_id: 'goal-1', title: 'Draft resume', completed: true, created_at: '2025-06-01T00:00:00Z' },
-        { id: 'gm-2', goal_id: 'goal-1', title: 'Review with mentor', completed: false, created_at: '2025-06-05T00:00:00Z' },
-        { id: 'gm-3', goal_id: 'goal-2', title: 'Identify target companies', completed: true, created_at: '2025-06-05T00:00:00Z' },
-        { id: 'gm-4', goal_id: 'goal-2', title: 'Prepare outreach message', completed: false, created_at: '2025-06-10T00:00:00Z' },
-        { id: 'gm-5', goal_id: 'goal-2', title: 'Send first 5 messages', completed: false, created_at: '2025-06-15T00:00:00Z' },
+        { id: 'goal-1', student_id: 'mock-student-1', title: 'Complete Resume', description: 'Update resume', progress_percentage: 100, status: 'completed', target_date: null, notes: null, created_at: '2025-06-01T00:00:00Z', updated_at: '2025-06-15T00:00:00Z', goal_milestones: [
+          { id: 'gm-1', goal_id: 'goal-1', title: 'Draft resume', completed: true, created_at: '2025-06-01T00:00:00Z' },
+          { id: 'gm-2', goal_id: 'goal-1', title: 'Review with mentor', completed: false, created_at: '2025-06-05T00:00:00Z' },
+        ] },
+        { id: 'goal-2', student_id: 'mock-student-1', title: 'Conduct Informational Interviews', description: 'Reach out to PMs in target industries', progress_percentage: 40, status: 'in_progress', target_date: '2025-07-15T00:00:00Z', notes: 'Contact at least 5 PMs', created_at: '2025-06-05T00:00:00Z', updated_at: '2025-06-18T00:00:00Z', goal_milestones: [
+          { id: 'gm-3', goal_id: 'goal-2', title: 'Identify target companies', completed: true, created_at: '2025-06-05T00:00:00Z' },
+          { id: 'gm-4', goal_id: 'goal-2', title: 'Prepare outreach message', completed: false, created_at: '2025-06-10T00:00:00Z' },
+          { id: 'gm-5', goal_id: 'goal-2', title: 'Send first 5 messages', completed: false, created_at: '2025-06-15T00:00:00Z' },
+        ] },
       ]) });
       return;
     }
@@ -51,11 +46,11 @@ async function setupStudentPage(page: Page) {
       return;
     }
 
-    // Tasks
+    // Tasks (with student:profiles join — the real query does select('*, student:profiles!tasks_student_id_fkey(name)'))
     if (url.includes('/rest/v1/tasks')) {
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([
-        { id: 'task-1', student_id: 'mock-student-1', title: 'Submit updated resume PDF', description: 'Export resume as PDF and submit', status: 'pending', due_date: new Date(Date.now() + 3 * 86400000).toISOString(), priority: 'high', created_at: '2025-06-15T00:00:00Z', program_id: null, task_title: null, feedback: null, mentor_response: null },
-        { id: 'task-2', student_id: 'mock-student-1', title: 'Read PM Interview Guide', description: 'Read chapters 1-3 of the guide', status: 'in_progress', due_date: new Date(Date.now() + 5 * 86400000).toISOString(), priority: 'medium', created_at: '2025-06-15T00:00:00Z', program_id: null, task_title: null, feedback: null, mentor_response: null },
+        { id: 'task-1', student_id: 'mock-student-1', title: 'Submit updated resume PDF', description: 'Export resume as PDF and submit', status: 'pending', due_date: new Date(Date.now() + 3 * 86400000).toISOString(), priority: 'high', created_at: '2025-06-15T00:00:00Z', program_id: null, student: { name: 'Test Student' }, feedback: null, mentor_response: null },
+        { id: 'task-2', student_id: 'mock-student-1', title: 'Read PM Interview Guide', description: 'Read chapters 1-3 of the guide', status: 'in_progress', due_date: new Date(Date.now() + 5 * 86400000).toISOString(), priority: 'medium', created_at: '2025-06-15T00:00:00Z', program_id: null, student: { name: 'Test Student' }, feedback: null, mentor_response: null },
       ]) });
       return;
     }
@@ -85,17 +80,19 @@ async function setupStudentPage(page: Page) {
       return;
     }
 
-    // Events
-    if (url.includes('/rest/v1/events')) {
+    // Applications (the real query does select('*', { count: 'exact' }))
+    if (url.includes('/rest/v1/applications')) {
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([
-        { id: 'event-1', title: 'Networking Mixer', description: 'Connect with industry professionals', date: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0], time: '18:00', location: 'Virtual', meeting_link: 'https://zoom.us/j/123', capacity: 50, attendees: [], category: 'Networking', status: 'published', created_at: '2025-06-01T00:00:00Z' },
+        { id: 'app-1', user_id: 'mock-student-1', email: 'student@mentorino.com', first_name: 'Test', last_name: 'Student', phone_number: null, discipline: 'Career Development', reason_for_applying: JSON.stringify({ program_id: 'prog-1', meeting_preference: 'Virtual', frequency: 'Weekly', seriousness: 10, location: 'Remote', goals: 'Become a product manager' }), status: 'approved', created_at: '2025-06-01T00:00:00Z', updated_at: '2025-06-15T00:00:00Z' },
       ]) });
       return;
     }
 
-    // Event attendees
-    if (url.includes('/rest/v1/event_attendees')) {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
+    // Events (with event_attendees join — the real query does select('*, event_attendees(user_id)'))
+    if (url.includes('/rest/v1/events')) {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([
+        { id: 'event-1', title: 'Networking Mixer', description: 'Connect with industry professionals', date: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0], time: '18:00', location: 'Virtual', meeting_link: 'https://zoom.us/j/123', capacity: 50, event_attendees: [], category: 'Networking', status: 'published', created_at: '2025-06-01T00:00:00Z' },
+      ]) });
       return;
     }
 
