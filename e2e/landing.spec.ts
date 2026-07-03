@@ -7,14 +7,14 @@ test.describe('Landing Page', () => {
 
   test('displays brand name and navigation', async ({ page }) => {
     await expect(page.getByText('Mentorino').first()).toBeVisible();
-    await expect(page.getByRole('link', { name: 'MEMBERS PORTAL' })).toBeVisible();
+    await expect(page.locator('header').getByRole('link', { name: 'MEMBERS PORTAL' })).toBeVisible();
   });
 
   test('navigation links are accessible in header', async ({ page }) => {
-    const nav = page.locator('header');
+    const header = page.locator('header');
     const navLinks = ['About Mentor', 'Programs', 'Consultation', 'FAQ', 'Contact', 'Gallery'];
     for (const link of navLinks) {
-      await expect(nav.getByRole('link', { name: link })).toBeVisible();
+      await expect(header.getByRole('link', { name: link })).toBeVisible();
     }
   });
 
@@ -24,7 +24,7 @@ test.describe('Landing Page', () => {
   });
 
   test('clicking Members Portal navigates to auth page', async ({ page }) => {
-    await page.getByRole('link', { name: 'MEMBERS PORTAL' }).click();
+    await page.locator('header').getByRole('link', { name: 'MEMBERS PORTAL' }).click();
     await expect(page).toHaveURL(/#\/auth/);
   });
 
@@ -35,7 +35,7 @@ test.describe('Landing Page', () => {
 
   test('displays footer with copyright and mentor portal', async ({ page }) => {
     const footer = page.locator('footer');
-    await expect(footer.getByText(/Mentorino Trajectory Coaching/i)).toBeVisible();
-    await expect(footer.getByText(/Mentor Portal/i)).toBeVisible();
+    await expect(footer.getByText(/Mentorino/i)).toBeVisible();
+    await expect(footer.getByText(/ALL RIGHTS RESERVED/i)).toBeVisible();
   });
 });

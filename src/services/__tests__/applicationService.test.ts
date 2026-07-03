@@ -56,12 +56,11 @@ describe('applicationService', () => {
 
   describe('submitApplication', () => {
     it('submits an application successfully', async () => {
-      const insertSingleMock = vi.fn().mockResolvedValue({
-        data: mockRow(),
-        error: null,
-      });
       mockFrom.mockReturnValue({
-        insert: vi.fn(() => ({ select: vi.fn(() => ({ single: insertSingleMock })) })),
+        insert: vi.fn().mockResolvedValue({
+          data: [mockRow()],
+          error: null,
+        }),
         select: vi.fn(),
       });
 
@@ -80,12 +79,11 @@ describe('applicationService', () => {
     });
 
     it('returns error on submission failure', async () => {
-      const insertSingleMock = vi.fn().mockResolvedValue({
-        data: null,
-        error: { message: 'Database error' },
-      });
       mockFrom.mockReturnValue({
-        insert: vi.fn(() => ({ select: vi.fn(() => ({ single: insertSingleMock })) })),
+        insert: vi.fn().mockResolvedValue({
+          data: null,
+          error: { message: 'Database error' },
+        }),
         select: vi.fn(),
       });
 
