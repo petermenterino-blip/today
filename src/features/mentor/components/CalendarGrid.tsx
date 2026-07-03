@@ -70,7 +70,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                 onCreateDate(cell.date);
               }}
               title={isPast ? "Cannot schedule in the past" : "+ Schedule Session"}
-              className={`min-h-[120px] p-3 rounded-3xl border transition-all relative flex flex-col justify-between cursor-pointer group ${
+              className={`min-h-[80px] p-2 rounded-3xl border transition-all relative flex flex-col justify-between cursor-pointer group ${
                 isSelected
                   ? 'bg-indigo-50/40 border-indigo-500 shadow-md ring-2 ring-indigo-500/10'
                   : cell.isToday
@@ -82,15 +82,15 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                       : 'bg-slate-100/30 border-slate-100/50 opacity-40'
               }`}
             >
-              <div className="flex justify-between items-start mb-1 pointer-events-none">
-                <span className={`text-[10px] font-black ${cell.isToday ? 'text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-md' : 'text-slate-400'}`}>
+              <div className="flex justify-between items-start mb-0.5 pointer-events-none">
+                <span className={`text-[9px] font-black ${cell.isToday ? 'text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-md' : 'text-slate-400'}`}>
                   {cell.dayNumber}
                 </span>
                 {daySessions.length > 0 && (
-                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{daySessions.length} Sess</span>
+                  <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest">{daySessions.length}</span>
                 )}
               </div>
-              <div className="space-y-1.5 z-10 flex-1 overflow-hidden mt-1 mb-6">
+              <div className="space-y-0.5 z-10 flex-1 overflow-hidden mt-0.5 mb-4">
                 {daySessions.slice(0, 3).map((s) => (
                   <div
                     key={s.id}
@@ -100,7 +100,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                       e.stopPropagation();
                       onSessionClick(s);
                     }}
-                    className="group/event relative px-2.5 py-1.5 rounded-xl text-[9px] font-bold border truncate transition-all flex items-center gap-1.5 shadow-sm"
+                    className="group/event relative px-1.5 py-1 rounded-lg text-[8px] font-bold border truncate transition-all flex items-center gap-1 shadow-sm"
                     style={getSessionStyle(s.sessionType, s.status, activeTags).style}
                   >
                     <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: getSessionStyle(s.sessionType, s.status, activeTags).indicator }} />

@@ -28,6 +28,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [buffer, setBuffer] = useState(settings.bufferBetweenSessions);
   const [autoMeet, setAutoMeet] = useState(settings.autoMeetLink);
   const [autoZoom, setAutoZoom] = useState(settings.autoZoomLink);
+  const [autoRecording, setAutoRecording] = useState(settings.autoRecording ?? false);
+  const [weekendAvailable, setWeekendAvailable] = useState(settings.weekendAvailable ?? false);
   const [sync, setSync] = useState(settings.calendarSync);
   const [tags, setTags] = useState<CalendarTag[]>(settings.calendarTags || DEFAULT_TAGS);
 
@@ -48,6 +50,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       setBuffer(settings.bufferBetweenSessions);
       setAutoMeet(settings.autoMeetLink);
       setAutoZoom(settings.autoZoomLink);
+      setAutoRecording(settings.autoRecording ?? false);
+      setWeekendAvailable(settings.weekendAvailable ?? false);
       setSync(settings.calendarSync);
       setTags(settings.calendarTags || DEFAULT_TAGS);
     }
@@ -65,6 +69,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       bufferBetweenSessions: buffer,
       autoMeetLink: autoMeet,
       autoZoomLink: autoZoom,
+      autoRecording,
+      weekendAvailable,
       calendarSync: sync,
       calendarTags: tags,
     });
@@ -358,6 +364,28 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
 
             <div className="space-y-3 pt-3 border-t border-slate-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="block text-[10px] font-black uppercase tracking-widest text-slate-700">Weekend Availability</span>
+                  <span className="text-[8px] text-slate-400 font-bold uppercase tracking-wide">Allow scheduling on Saturday & Sunday</span>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" checked={weekendAvailable} onChange={(e) => setWeekendAvailable(e.target.checked)} className="sr-only peer" />
+                  <div className="w-10 h-5.5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-[18px] after:w-[18px] after:transition-all peer-checked:bg-indigo-600"></div>
+                </label>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="block text-[10px] font-black uppercase tracking-widest text-slate-700">Auto-Record Sessions</span>
+                  <span className="text-[8px] text-slate-400 font-bold uppercase tracking-wide">Enable auto-recording for all sessions</span>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" checked={autoRecording} onChange={(e) => setAutoRecording(e.target.checked)} className="sr-only peer" />
+                  <div className="w-10 h-5.5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-[18px] after:w-[18px] after:transition-all peer-checked:bg-indigo-600"></div>
+                </label>
+              </div>
+
               <div className="flex items-center justify-between">
                 <div>
                   <span className="block text-[10px] font-black uppercase tracking-widest text-slate-700">Auto Generate Meet Link</span>

@@ -24,17 +24,28 @@ export const useSessions = (userId?: string, role?: 'student' | 'mentor') => {
   }).sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
 
   const addSession = useMutation({
-    mutationFn: (session: Omit<Session, 'id'>) => sessionService.insert(session),
+    mutationFn: async (session: Omit<Session, 'id'>) => {
+      const { data, error } = await sessionService.insert(session);
+      if (error) throw new Error(error);
+      return data!;
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sessions'] })
   });
 
   const updateSession = useMutation({
-    mutationFn: ({ id, updates }: { id: string, updates: Partial<Session> }) => sessionService.update(id, updates),
+    mutationFn: async ({ id, updates }: { id: string, updates: Partial<Session> }) => {
+      const { data, error } = await sessionService.update(id, updates);
+      if (error) throw new Error(error);
+      return data!;
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sessions'] })
   });
 
   const deleteSession = useMutation({
-    mutationFn: (id: string) => sessionService.delete(id),
+    mutationFn: async (id: string) => {
+      const { error } = await sessionService.delete(id);
+      if (error) throw new Error(error);
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sessions'] })
   });
 

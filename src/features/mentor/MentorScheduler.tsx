@@ -317,8 +317,8 @@ export const MentorScheduler: React.FC<MentorSchedulerProps> = ({
       finalTitle = `${formSessionType} Session with ${studentName}`;
     }
 
-    const sessionPayload: Omit<Session, 'id' | 'createdAt' | 'updatedAt'> & Partial<Session> = {
-      mentorId: currentUser?.id || 'mentor-1',
+    const sessionPayload: Omit<Session, 'id' | 'createdAt' | 'updatedAt'> = {
+      mentorId: currentUser!.id,
       studentId: formStudentId,
       programId: formProgramId,
       title: finalTitle,
@@ -341,7 +341,7 @@ export const MentorScheduler: React.FC<MentorSchedulerProps> = ({
 
     try {
       if (editingSession) {
-        updateSession(editingSession.id, sessionPayload);
+        await updateSession(editingSession.id, sessionPayload);
         notifySuccess("Session updated successfully.");
         await notificationStorage.create({
           userId: formStudentId,
@@ -350,7 +350,7 @@ export const MentorScheduler: React.FC<MentorSchedulerProps> = ({
           read: false, type: 'system', link: '/sessions',
         });
       } else {
-        addSession(sessionPayload);
+        await addSession(sessionPayload);
         notifySuccess("Session scheduled successfully.");
         await notificationStorage.create({
           userId: formStudentId,
@@ -406,7 +406,7 @@ export const MentorScheduler: React.FC<MentorSchedulerProps> = ({
       return;
     }
     try {
-      updateSession(sessionToMove.id, { startTime: newStart.toISOString(), endTime: newEnd.toISOString() });
+      await updateSession(sessionToMove.id, { startTime: newStart.toISOString(), endTime: newEnd.toISOString() });
       notifySuccess(`Rescheduled "${sessionToMove.title}" to ${newStart.toLocaleString()}`);
       await notificationStorage.create({
         userId: sessionToMove.studentId,
@@ -420,7 +420,7 @@ export const MentorScheduler: React.FC<MentorSchedulerProps> = ({
     }
   };
 
-  const handleAdjustDuration = (session: Session, adjustmentMin: number) => {
+  const handleAdjustDuration = async (session: Session, adjustmentMin: number) => {
     const start = new Date(session.startTime);
     const currentEnd = new Date(session.endTime);
     const newEnd = new Date(currentEnd.getTime() + adjustmentMin * 60 * 1000);
@@ -430,7 +430,7 @@ export const MentorScheduler: React.FC<MentorSchedulerProps> = ({
     }
     const durationMin = Math.round((newEnd.getTime() - start.getTime()) / (60 * 1000));
     try {
-      updateSession(session.id, { endTime: newEnd.toISOString(), duration: `${durationMin} min` });
+      await updateSession(session.id, { endTime: newEnd.toISOString(), duration: `${durationMin} min` });
       notifySuccess(`Updated "${session.title}" duration to ${durationMin} minutes.`);
       refreshSessions();
     } catch (e: any) {
@@ -440,7 +440,7 @@ export const MentorScheduler: React.FC<MentorSchedulerProps> = ({
 
   const handleCancelSession = async (session: Session) => {
     try {
-      updateSession(session.id, { status: 'cancelled', attendanceStatus: 'missed' });
+      await updateSession(session.id, { status: 'cancelled', attendanceStatus: 'missed' });
       notifySuccess(`Cancelled session "${session.title}".`);
       await notificationStorage.create({
         userId: session.studentId,
@@ -457,7 +457,7 @@ export const MentorScheduler: React.FC<MentorSchedulerProps> = ({
 
   const handleDeleteSession = async (session: Session) => {
     try {
-      deleteSession(session.id);
+      await deleteSession(session.id);
       notifySuccess(`Deleted session "${session.title}".`);
       await notificationStorage.create({
         userId: session.studentId,
@@ -470,6 +470,31 @@ export const MentorScheduler: React.FC<MentorSchedulerProps> = ({
     } catch (e: any) {
       notifyError(`Deletion failed: ${e.message}`);
     }
+  };
+
+  const handleMarkCompleted = async (session: Session) => {
+    try {
+      await updateSession(session.id, { attendanceStatus: 'attended', status: 'completed' });
+      notifySuccess(`"${session.title}" marked as completed.`);
+      refreshSessions();
+    } catch (e: any) {
+      notifyError(`Failed to mark completed: ${e.message}`);
+    }
+  };
+
+  const handleMarkNoShow = async (session: Session) => {
+    try {
+      await updateSession(session.id, { attendanceStatus: 'missed' });
+      notifySuccess(`"${session.title}" marked as no-show.`);
+      refreshSessions();
+    } catch (e: any) {
+      notifyError(`Failed to mark no-show: ${e.message}`);
+    }
+  };
+
+  const handleRescheduleRequest = (session: Session) => {
+    openEditModal(session);
+    setSelectedSession(null);
   };
 
   const handleDuplicateSession = (session: Session) => {
@@ -593,8 +618,11 @@ export const MentorScheduler: React.FC<MentorSchedulerProps> = ({
           getProgramForSession={getProgramForSession}
           onSessionClick={(session) => setSelectedSession(session)}
           onCreateClick={() => openCreateModal()}
+          onEdit={(session) => openEditModal(session)}
+          onDelete={(session) => setConfirmDelete(session)}
           settings={settings}
           onSaveSettings={saveSettings}
+          tags={activeTags}
         />
       </div>
 
@@ -918,6 +946,9 @@ export const MentorScheduler: React.FC<MentorSchedulerProps> = ({
         onDuplicate={handleDuplicateSession}
         onCancel={(session) => setConfirmCancel(session)}
         onDelete={(session) => setConfirmDelete(session)}
+        onMarkCompleted={handleMarkCompleted}
+        onMarkNoShow={handleMarkNoShow}
+        onReschedule={handleRescheduleRequest}
         getStudentForSession={getStudentForSession}
         getProgramForSession={getProgramForSession}
         tags={activeTags}
@@ -975,7 +1006,7 @@ export const MentorScheduler: React.FC<MentorSchedulerProps> = ({
           const durationMs = currentEnd.getTime() - currentStart.getTime();
           const newStart = new Date(currentStart);
           const newEnd = new Date(newStart.getTime() + durationMs);
-          updateSession(sessionToMove.id, { startTime: newStart.toISOString(), endTime: newEnd.toISOString() });
+          updateSession(sessionToMove.id, { startTime: newStart.toISOString(), endTime: newEnd.toISOString() }).catch(() => {});
           notifySuccess(`Rescheduled "${sessionToMove.title}"`);
           notificationStorage.create({
             userId: sessionToMove.studentId,

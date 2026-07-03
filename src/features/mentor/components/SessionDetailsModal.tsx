@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Clock, Video, User, BookOpen, Info, X, Edit2, Copy, Trash2, FileText, ExternalLink,
+  CheckCircle, XCircle, Calendar,
 } from 'lucide-react';
 import { Session, StudentProfile } from '../../../interfaces';
 import { Program } from '../../../types';
@@ -16,6 +17,9 @@ interface SessionDetailsModalProps {
   onDuplicate: (session: Session) => void;
   onCancel: (session: Session) => void;
   onDelete: (session: Session) => void;
+  onMarkCompleted?: (session: Session) => void;
+  onMarkNoShow?: (session: Session) => void;
+  onReschedule?: (session: Session) => void;
   getStudentForSession: (id: string) => StudentProfile | undefined;
   getProgramForSession: (id?: string) => Program | undefined;
   tags: CalendarTag[];
@@ -28,6 +32,9 @@ export const SessionDetailsModal: React.FC<SessionDetailsModalProps> = ({
   onDuplicate,
   onCancel,
   onDelete,
+  onMarkCompleted,
+  onMarkNoShow,
+  onReschedule,
   getStudentForSession,
   getProgramForSession,
   tags,
@@ -45,6 +52,41 @@ export const SessionDetailsModal: React.FC<SessionDetailsModalProps> = ({
 
   const student = getStudentForSession(session.studentId);
   const program = getProgramForSession(session.programId);
+
+  const exportICS = useCallback(() => {
+    const start = new Date(session.startTime);
+    const end = new Date(session.endTime);
+    const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    const ics = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Mentorino//Sessions//EN',
+      'BEGIN:VEVENT',
+      `DTSTART:${fmt(start)}`,
+      `DTEND:${fmt(end)}`,
+      `SUMMARY:${session.title}`,
+      `DESCRIPTION:${session.description || session.notes || ''}`,
+      `LOCATION:${session.meetingUrl || session.meetingType || ''}`,
+      `UID:${session.id}@mentorino`,
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ].join('\r\n');
+    const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${session.title.replace(/\s+/g, '_')}.ics`;
+    a.click();
+    URL.revokeObjectURL(url);
+    notifySuccess('Calendar file (.ics) downloaded.');
+  }, [session]);
+
+  const copyMeetingLink = useCallback(() => {
+    if (session.meetingUrl) {
+      navigator.clipboard.writeText(session.meetingUrl);
+      notifySuccess('Meeting URL copied to clipboard.');
+    }
+  }, [session]);
 
   return (
     <AnimatePresence>
@@ -243,39 +285,75 @@ export const SessionDetailsModal: React.FC<SessionDetailsModalProps> = ({
             )}
           </div>
 
-          <div className="px-8 py-5 bg-slate-50 border-t border-slate-100 flex flex-wrap items-center gap-3 justify-between">
-            <div className="flex items-center gap-2">
+          <div className="px-8 py-5 bg-slate-50 border-t border-slate-100 flex flex-wrap items-center gap-2 justify-between">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <button
                 onClick={() => onEdit(session)}
-                className="p-3 bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 rounded-2xl transition-all flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest"
+                className="p-2.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 rounded-xl transition-all flex items-center gap-1 text-[9px] font-black uppercase tracking-widest"
                 title="Edit Session Details"
               >
-                <Edit2 size={13} /> Edit
+                <Edit2 size={11} /> Edit
               </button>
               <button
                 onClick={() => onDuplicate(session)}
-                className="p-3 bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 rounded-2xl transition-all flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest"
+                className="p-2.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 rounded-xl transition-all flex items-center gap-1 text-[9px] font-black uppercase tracking-widest"
                 title="Duplicate Session for Next Week"
               >
-                <Copy size={13} /> Duplicate
+                <Copy size={11} /> Dup
               </button>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {session.status !== 'cancelled' && (
+              {onReschedule && (
                 <button
-                  onClick={() => onCancel(session)}
-                  className="px-4 py-3 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 rounded-2xl transition-all text-[10px] font-black uppercase tracking-widest"
+                  onClick={() => onReschedule(session)}
+                  className="p-2.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 rounded-xl transition-all flex items-center gap-1 text-[9px] font-black uppercase tracking-widest"
+                  title="Reschedule Session"
                 >
-                  Cancel Session
+                  <Clock size={11} /> Time
                 </button>
               )}
               <button
+                onClick={exportICS}
+                className="p-2.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 rounded-xl transition-all flex items-center gap-1 text-[9px] font-black uppercase tracking-widest"
+                title="Export .ics calendar file"
+              >
+                <Calendar size={11} /> .ics
+              </button>
+            </div>
+
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {session.status === 'scheduled' && (
+                <>
+                  {onMarkCompleted && (
+                    <button
+                      onClick={() => onMarkCompleted(session)}
+                      className="p-2.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 rounded-xl transition-all flex items-center gap-1 text-[9px] font-black uppercase tracking-widest"
+                      title="Mark as Completed"
+                    >
+                      <CheckCircle size={11} /> Done
+                    </button>
+                  )}
+                  {onMarkNoShow && (
+                    <button
+                      onClick={() => onMarkNoShow(session)}
+                      className="p-2.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 rounded-xl transition-all flex items-center gap-1 text-[9px] font-black uppercase tracking-widest"
+                      title="Mark as No Show"
+                    >
+                      <XCircle size={11} /> No-Show
+                    </button>
+                  )}
+                  <button
+                    onClick={() => onCancel(session)}
+                    className="px-3 py-2.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 rounded-xl transition-all text-[9px] font-black uppercase tracking-widest"
+                  >
+                    Cancel
+                  </button>
+                </>
+              )}
+              <button
                 onClick={() => onDelete(session)}
-                className="p-3 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl transition-all"
+                className="p-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl transition-all"
                 title="Delete Permanently"
               >
-                <Trash2 size={14} />
+                <Trash2 size={12} />
               </button>
             </div>
           </div>

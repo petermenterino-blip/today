@@ -91,6 +91,6 @@ export function useProgramManager(currentUser: User | null) {
     newPrereqInput, setNewPrereqInput,
     handleEditProgramClick,
     handleSaveProgramEdit,
-    addProgram, deleteProgram,
+    addProgram, deleteProgram, updateProgram,
   };
 }

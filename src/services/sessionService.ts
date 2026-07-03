@@ -4,15 +4,6 @@ import { ServiceResponse } from '../types';
 import { notify } from './notificationService';
 import { handleError } from '../lib/serviceHelper';
 
-const SESSION_COLS = [
-  'id', 'mentor_id', 'student_id', 'title', 'description',
-  'start_time', 'end_time', 'meeting_url', 'recording_url',
-  'attendance_status', 'notes', 'created_at', 'updated_at',
-  'program_id', 'duration', 'timezone', 'meeting_type',
-  'session_type', 'recurring_session', 'reminder_time',
-  'attached_files', 'internal_notes', 'status',
-] as const;
-
 const CAMEL_TO_SNAKE: Record<string, string> = {
   mentorId: 'mentor_id',
   studentId: 'student_id',
@@ -21,8 +12,6 @@ const CAMEL_TO_SNAKE: Record<string, string> = {
   meetingUrl: 'meeting_url',
   recordingUrl: 'recording_url',
   attendanceStatus: 'attendance_status',
-  createdAt: 'created_at',
-  updatedAt: 'updated_at',
   programId: 'program_id',
   meetingType: 'meeting_type',
   sessionType: 'session_type',
@@ -68,8 +57,6 @@ export const sessionService = {
 
   async insert(session: Omit<Session, 'id'>): Promise<ServiceResponse<Session>> {
     const row = sessionToRow(session);
-    row.created_at = new Date().toISOString();
-    row.updated_at = row.created_at;
     const { data, error } = await supabase
       .from('sessions')
       .insert(row)
@@ -83,7 +70,6 @@ export const sessionService = {
 
   async update(id: string, session: Partial<Session>): Promise<ServiceResponse<Session>> {
     const row = sessionToRow(session);
-    row.updated_at = new Date().toISOString();
     const { data, error } = await supabase
       .from('sessions')
       .update(row)

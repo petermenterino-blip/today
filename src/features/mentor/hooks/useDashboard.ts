@@ -85,7 +85,17 @@ export function useDashboard({ currentUser }: UseDashboardProps) {
   const { bookings, loading: bookingsLoading, addBooking } = useBookings();
   const { sessions, loading: sessionsLoading, addSession, updateSession, deleteSession, refresh: refreshSessions } = useSessions(currentUser?.id, 'mentor');
   const { events: rawEvents, loading: eventsLoading } = useEvents();
-  const { programs: rawPrograms, loading: programsLoading } = usePrograms();
+  const {
+    programs: rawPrograms,
+    loading: programsLoading,
+    duplicateProgram,
+    archiveProgram,
+    unarchiveProgram,
+    useEnrollments,
+    enrollStudent,
+    unenrollStudent,
+    updateEnrollmentStatus,
+  } = usePrograms();
   const { resources, loading: resourcesLoading, addResource, deleteResource } = useResources();
   const { goals, loading: goalsLoading } = useGoals();
   const { journals, refresh: refreshJournals } = useJournals();
@@ -182,7 +192,7 @@ export function useDashboard({ currentUser }: UseDashboardProps) {
     newPrereqInput, setNewPrereqInput,
     handleEditProgramClick,
     handleSaveProgramEdit,
-    addProgram, deleteProgram,
+    addProgram, deleteProgram, updateProgram,
   } = programDomain;
 
   // ── AI Assistant ──
@@ -645,7 +655,14 @@ export function useDashboard({ currentUser }: UseDashboardProps) {
     newPrereqInput, setNewPrereqInput,
     handleEditProgramClick,
     handleSaveProgramEdit,
-    addProgram, deleteProgram,
+    addProgram, deleteProgram, updateProgram,
+    duplicateProgram,
+    archiveProgram,
+    unarchiveProgram,
+    useEnrollments,
+    enrollStudent,
+    unenrollStudent,
+    updateEnrollmentStatus,
 
     // AI Assistant
     chatHistory, setChatHistory,

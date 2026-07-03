@@ -17,6 +17,8 @@ export interface SchedulerSettings {
   bufferBetweenSessions: number;
   autoMeetLink: boolean;
   autoZoomLink: boolean;
+  autoRecording: boolean;
+  weekendAvailable: boolean;
   calendarSync: boolean;
   calendarTags: CalendarTag[];
 }
@@ -39,6 +41,8 @@ export const DEFAULT_SETTINGS: SchedulerSettings = {
   bufferBetweenSessions: 10,
   autoMeetLink: true,
   autoZoomLink: false,
+  autoRecording: false,
+  weekendAvailable: false,
   calendarSync: true,
   calendarTags: DEFAULT_TAGS,
 };

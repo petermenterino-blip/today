@@ -15,6 +15,7 @@ import { ApplicationsTab } from './components/ApplicationsTab';
 import { VisitorBookingsTab } from './components/VisitorBookingsTab';
 import GrowthAuditTab from './components/GrowthAuditTab';
 import { ProgramProgressTab } from './components/ProgramProgressTab';
+import { ProgramsManager } from './components/ProgramsManager';
 import { useDashboard, MentorTab } from './hooks/useDashboard';
 import { tagService } from '../../services/tagService';
 import { notifySuccess } from '../../utils/toast';
@@ -241,28 +242,19 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
       )}
 
       {d.activeTab === 'programs' && (
-        <div className="space-y-6 animate-in fade-in duration-500">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-slate-900">Programs</h1>
-            <p className="text-xs text-slate-500 mt-1 font-medium">Mentorship program templates and curricula</p>
-          </div>
-          {d.programs.length === 0 ? (
-            <div className="bg-white p-12 rounded-[32px] border border-slate-100 shadow-sm text-center">
-              <p className="text-sm text-slate-400 font-medium">No programs created yet.</p>
-              <p className="text-[10px] text-slate-300 mt-2 font-bold uppercase tracking-widest">Use the Overview tab to design your first program.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {d.programs.map((prg: any) => (
-                <div key={prg.id} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-md transition-all">
-                  <h3 className="text-sm font-black uppercase tracking-tight text-slate-900">{prg.title}</h3>
-                  <p className="text-[10px] text-slate-500 mt-1 font-medium">{prg.modules?.length || 0} modules</p>
-                  <p className="text-xs text-slate-600 mt-2 line-clamp-2">{prg.description}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <ProgramsManager
+          programs={d.programs}
+          currentUser={d.currentUser}
+          addProgram={d.addProgram}
+          deleteProgram={d.deleteProgram}
+          updateProgram={d.updateProgram}
+          duplicateProgram={d.duplicateProgram}
+          archiveProgram={d.archiveProgram}
+          useEnrollments={d.useEnrollments}
+          enrollStudent={d.enrollStudent}
+          unenrollStudent={d.unenrollStudent}
+          updateEnrollmentStatus={d.updateEnrollmentStatus}
+        />
       )}
 
       {d.activeTab === 'sessions' && (
