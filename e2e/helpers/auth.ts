@@ -47,10 +47,7 @@ const MOCK_AUTH_MODULE = `
  */
 export async function setupAuthMock(page: Page) {
   // Intercept authService module and replace with mock
-  await page.route((url) => {
-    const u = typeof url === 'string' ? url : url.toString();
-    return u.includes('/src/services/authService.ts');
-  }, async (route) => {
+  await page.route(/\/src\/services\/authService\.(ts|js)/, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/javascript',
