@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCallback } from 'react';
 import { applicationService } from '../services/applicationService';
 import { Application } from '../types';
 import { useRealtimeData } from './useRealtimeData';
@@ -17,7 +18,7 @@ export const useApplications = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const refresh = async (params?: { search?: string; status?: string; discipline?: string; sortBy?: string; sortOrder?: string; page?: number; limit?: number }) => {
+  const refresh = useCallback(async (params?: { search?: string; status?: string; discipline?: string; sortBy?: string; sortOrder?: string; page?: number; limit?: number }) => {
     await queryClient.invalidateQueries({ queryKey: ['applications'] });
     if (params) {
       const { data } = await applicationService.fetchAll(params);
@@ -25,7 +26,7 @@ export const useApplications = () => {
         queryClient.setQueryData(['applications'], data.data || []);
       }
     }
-  };
+  }, [queryClient]);
 
   const addApplication = useMutation({
     mutationFn: (app: Omit<Application, 'id' | 'created_at' | 'status'>) => applicationService.submitApplication(app),

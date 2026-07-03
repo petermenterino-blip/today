@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCallback } from 'react';
 import { taskService } from '../services/taskService';
 import { TaskActivity } from '../types';
 import { useRealtimeData } from './useRealtimeData';
@@ -44,9 +45,13 @@ export const useTasks = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tasks'] })
   });
 
-  const fetchUserTasks = async (userId: string) => {
+  const fetchUserTasks = useCallback(async (userId: string) => {
     queryClient.invalidateQueries({ queryKey: ['tasks'] });
-  };
+  }, [queryClient]);
+
+  const refresh = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['tasks'] });
+  }, [queryClient]);
 
   return {
     taskActivities,
@@ -57,7 +62,7 @@ export const useTasks = () => {
     updateTask: (id: string, updates: Partial<TaskActivity>) =>
       updateTask.mutateAsync({ id, updates }),
     deleteTask: deleteTask.mutateAsync,
-    refresh: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
-    refreshUser: fetchUserTasks
+    refresh,
+    refreshUser: fetchUserTasks,
   };
 };

@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCallback } from 'react';
 import { Booking } from '../types';
 import { bookingService } from '../services/bookingService';
 import { useRealtimeData } from './useRealtimeData';
@@ -24,11 +25,15 @@ export const useBookings = () => {
     onError: (err) => console.error('Booking insert failed:', err),
   });
 
+  const refresh = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['bookings'] });
+  }, [queryClient]);
+
   return { 
     bookings, 
     loading, 
     error,
     addBooking: addBooking.mutateAsync,
-    refresh: () => queryClient.invalidateQueries({ queryKey: ['bookings'] })
+    refresh,
   };
 };

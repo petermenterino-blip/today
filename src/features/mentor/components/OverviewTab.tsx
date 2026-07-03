@@ -236,21 +236,19 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
             <button
               onClick={() => handleTabChange('applications')}
-              className="w-full mt-6 group relative overflow-hidden bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-5 text-left transition-all hover:from-purple-700 hover:to-indigo-700 active:scale-[0.99] shadow-lg shadow-purple-600/20"
+              className="w-full mt-6 group relative overflow-hidden bg-white rounded-2xl p-5 text-left transition-all hover:bg-slate-50 active:scale-[0.99] shadow-lg"
             >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-xl pointer-events-none"></div>
-              <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2 blur-xl pointer-events-none"></div>
               <div className="relative z-10 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
-                    <Users className="text-white" size={24} />
+                  <div className="w-12 h-12 bg-indigo-100 rounded-2xl flex items-center justify-center">
+                    <Users className="text-indigo-600" size={24} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-white/70 uppercase tracking-widest">New Applications</p>
-                    <p className="text-3xl font-black text-white mt-0.5">{pendingApplications.length}</p>
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">New Applications</p>
+                    <p className="text-3xl font-black text-slate-900 mt-0.5">{pendingApplications.length}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 text-white/80 group-hover:text-white transition-colors">
+                <div className="flex items-center gap-2 text-slate-400 group-hover:text-slate-600 transition-colors">
                   <span className="text-[10px] font-black uppercase tracking-widest">Review</span>
                   <ChevronRight size={16} />
                 </div>

@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCallback } from 'react';
 import { NetworkEvent } from '../types';
 import { eventService } from '../services/eventService';
 import { useRealtimeData } from './useRealtimeData';
@@ -45,6 +46,10 @@ export const useEvents = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['events'] })
   });
 
+  const refresh = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['events'] });
+  }, [queryClient]);
+
   return { 
     events, 
     loading, 
@@ -52,6 +57,6 @@ export const useEvents = () => {
     deleteEvent: deleteEvent.mutateAsync, 
     attendEvent: (eventId: string, userId: string) => attendEvent.mutateAsync({ eventId, userId }),
     updateEvent: (id: string, updates: Partial<NetworkEvent>) => updateEvent.mutateAsync({ id, updates }),
-    refresh: () => queryClient.invalidateQueries({ queryKey: ['events'] })
+    refresh,
   };
 };
