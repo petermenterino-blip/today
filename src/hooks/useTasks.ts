@@ -1,9 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { taskService } from '../services/taskService';
 import { TaskActivity } from '../types';
+import { useRealtimeData } from './useRealtimeData';
 
 export const useTasks = () => {
   const queryClient = useQueryClient();
+
+  useRealtimeData([{ table: 'tasks', queryKey: ['tasks'] }]);
 
   const { data: taskActivities = [], isLoading: loading } = useQuery({
     queryKey: ['tasks'],

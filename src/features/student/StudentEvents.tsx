@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Calendar, MapPin, Clock3, Users } from 'lucide-react';
 import { NetworkEvent } from '../../types';
-import { notifySuccess } from '../../utils/toast';
+import { eventRsvpService } from '../../services/eventRsvpService';
+import { notifySuccess, notifyError } from '../../utils/toast';
 
 interface StudentEventsProps {
   events: NetworkEvent[];
@@ -12,13 +13,31 @@ interface StudentEventsProps {
 }
 
 const StudentEvents: React.FC<StudentEventsProps> = ({ events, loading, currentUserId, onAttend }) => {
-  const handleAttend = async (e: React.MouseEvent, eventId: string) => {
+  const [pendingEvents, setPendingEvents] = useState<Set<string>>(new Set());
+
+  const handleToggle = async (e: React.MouseEvent, event: NetworkEvent) => {
     e.stopPropagation();
+    if (pendingEvents.has(event.id)) return;
+
+    setPendingEvents(prev => new Set(prev).add(event.id));
+
     try {
-      await onAttend(eventId, currentUserId);
-      notifySuccess('You are now registered for this event!');
+      const isAttending = event.attendees?.includes(currentUserId);
+      if (isAttending) {
+        await eventRsvpService.unregister(event.id, currentUserId);
+        notifySuccess('You have been unregistered from this event');
+      } else {
+        await onAttend(event.id, currentUserId);
+        notifySuccess('You are now registered for this event!');
+      }
     } catch {
-      // Error handling delegated to parent
+      notifyError('Something went wrong. Please try again.');
+    } finally {
+      setPendingEvents(prev => {
+        const next = new Set(prev);
+        next.delete(event.id);
+        return next;
+      });
     }
   };
 
@@ -46,6 +65,7 @@ const StudentEvents: React.FC<StudentEventsProps> = ({ events, loading, currentU
     <div className="space-y-4">
       {events.map((event, i) => {
         const isAttending = event.attendees?.includes(currentUserId);
+        const isLoading = pendingEvents.has(event.id);
         return (
           <motion.div
             key={event.id}
@@ -54,7 +74,7 @@ const StudentEvents: React.FC<StudentEventsProps> = ({ events, loading, currentU
             transition={{ delay: i * 0.05 }}
             className="relative overflow-hidden bg-white p-6 rounded-[32px] border border-slate-100 hover:shadow-lg transition-all group"
           >
-            <div className="absolute left-0 top-0 w-2 h-full bg-indigo-500"></div>
+            <div className={`absolute left-0 top-0 w-2 h-full ${isAttending ? 'bg-emerald-500' : 'bg-indigo-500'}`}></div>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pl-4">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-2">
@@ -87,15 +107,15 @@ const StudentEvents: React.FC<StudentEventsProps> = ({ events, loading, currentU
                 </div>
               </div>
               <button
-                onClick={(e) => handleAttend(e, event.id)}
-                disabled={isAttending}
+                onClick={(e) => handleToggle(e, event)}
+                disabled={isLoading}
                 className={`btn-compact text-[10px] shrink-0 ${
                   isAttending
-                    ? 'bg-emerald-50 text-emerald-600 cursor-default'
+                    ? 'bg-red-50 text-red-600 hover:bg-red-100'
                     : 'bg-brand-charcoal text-white hover:bg-indigo-600'
-                } transition-colors shadow-md`}
+                } transition-colors shadow-md disabled:opacity-50`}
               >
-                {isAttending ? 'Registered' : 'Attend'}
+                {isLoading ? '...' : isAttending ? 'Unregister' : 'Attend'}
               </button>
             </div>
           </motion.div>

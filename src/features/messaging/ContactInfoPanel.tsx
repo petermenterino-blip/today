@@ -287,7 +287,7 @@ export const ContactInfoPanel: React.FC<ContactInfoPanelProps> = ({
                     {role === 'student' ? 'Mentor ID' : 'Student ID'}
                   </p>
                   <p className="font-mono text-slate-700 font-semibold mt-0.5" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
-                    {role === 'student' ? 'mentor-1' : (selectedConversation.studentId || 'student-1')}
+                    {role === 'student' ? (selectedConversation.mentorId || 'Mentor') : (selectedConversation.studentId || 'Student')}
                   </p>
                 </div>
 

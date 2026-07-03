@@ -1,15 +1,19 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Search, Users, Settings, MessageSquare, ChevronRight, ArrowLeft,
   Activity, TrendingUp, Video, Globe, CalendarDays, ClipboardList,
   Plus, CheckCircle2, XCircle, Clock, X, FileSearch, MoreVertical,
   Trash, FileText, Zap, ExternalLink, Layout, Tag, History, File,
-  CheckCircle, Sparkles as SparkleIcon
+  CheckCircle, Sparkles as SparkleIcon, Eye, Award, Target, Edit2
 } from 'lucide-react';
 import { tagService } from '../../../services/tagService';
-import { notifySuccess } from '../../../utils/toast';
-import type { StudentTag, TaskActivity, StudentProfile } from '../../../types';
+import { customFormService } from '../../../services/customFormService';
+import { notifySuccess, notifyError } from '../../../utils/toast';
+import type { StudentTag, TaskActivity, StudentProfile, CustomForm, FormSubmission } from '../../../types';
+import type { Goal } from '../../../interfaces';
+import FormBuilderModal from './FormBuilderModal';
+import IssueCredentialModal from './IssueCredentialModal';
 
 interface MenteesTabProps {
   selectedMenteeId: string | null;
@@ -50,6 +54,13 @@ interface MenteesTabProps {
   handleScheduleSession: (userId: string) => void;
   setActiveTab: (tab: string) => void;
   setIsSchedulingSession: (v: boolean) => void;
+  formSubmissions: FormSubmission[];
+  isCreatingForm: boolean;
+  setIsCreatingForm: (v: boolean) => void;
+  menteeGoals: Goal[];
+  handleAddGoal: (title: string, description?: string) => Promise<void>;
+  handleUpdateGoal: (id: string, updates: Partial<Goal>) => Promise<void>;
+  handleDeleteGoal: (id: string) => Promise<void>;
 }
 
 const menteeSubTabs = [
@@ -86,7 +97,38 @@ export const MenteesTab: React.FC<MenteesTabProps> = ({
   handleScheduleSession,
   setActiveTab,
   setIsSchedulingSession,
+  formSubmissions,
+  isCreatingForm,
+  setIsCreatingForm,
+  menteeGoals,
+  handleAddGoal,
+  handleUpdateGoal,
+  handleDeleteGoal,
 }) => {
+  const [formsList, setFormsList] = useState<CustomForm[]>([]);
+  const [formsLoading, setFormsLoading] = useState(false);
+  const [selectedFormSubmissions, setSelectedFormSubmissions] = useState<FormSubmission[] | null>(null);
+  const [showCredentialModal, setShowCredentialModal] = useState(false);
+
+  useEffect(() => {
+    setFormsLoading(true);
+    customFormService.getAllForms()
+      .then(f => setFormsList(f as any))
+      .catch(() => {})
+      .finally(() => setFormsLoading(false));
+  }, [isCreatingForm]);
+
+  const refreshForms = () => {
+    customFormService.getAllForms()
+      .then(f => setFormsList(f as any))
+      .catch(() => {});
+  };
+
+  const handleViewSubmissions = (formId: string) => {
+    customFormService.getSubmissionsByFormId(formId)
+      .then(s => setSelectedFormSubmissions(s as any))
+      .catch(() => notifyError('Failed to load submissions'));
+  };
   return (
     <div className="space-y-6">
       {!selectedMenteeId ? (
@@ -235,6 +277,13 @@ export const MenteesTab: React.FC<MenteesTabProps> = ({
                     title="Message Student"
                   >
                     <MessageSquare size={16} />
+                  </button>
+                  <button
+                    onClick={() => setShowCredentialModal(true)}
+                    className="p-2 bg-white border border-slate-100 rounded-full text-slate-400 hover:text-amber-600 transition-colors shadow-sm"
+                    title="Issue Credential"
+                  >
+                    <Award size={16} />
                   </button>
                 </div>
               </div>
@@ -385,27 +434,52 @@ export const MenteesTab: React.FC<MenteesTabProps> = ({
                         </div>
 
                         <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm space-y-6">
-                          <h3 className="text-lg font-black uppercase tracking-tighter">Recent Growth Activity</h3>
-                          <div className="space-y-4">
-                            {[
-                              { event: 'Session Completed', time: 'Yesterday', icon: Video, color: 'text-emerald-500' },
-                              { event: 'Responded to Task', time: '2 days ago', icon: CheckCircle, color: 'text-indigo-500' },
-                              { event: 'Portfolio Updated', time: '4 days ago', icon: Globe, color: 'text-blue-500' },
-                            ].map((activity, i) => (
-                              <div key={i} className="flex items-center justify-between p-4 hover:bg-slate-50 rounded-2xl transition-colors">
-                                <div className="flex items-center gap-4">
-                                  <div className={`w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center ${activity.color}`}>
-                                    <activity.icon size={18} />
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-lg font-black uppercase tracking-tighter">Goals</h3>
+                          </div>
+                          {menteeGoals.length === 0 ? (
+                            <div className="p-6 bg-slate-50 rounded-[24px] text-center">
+                              <Target size={24} className="mx-auto text-slate-300 mb-2" />
+                              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">No goals set yet.</p>
+                            </div>
+                          ) : (
+                            <div className="space-y-3">
+                              {menteeGoals.map(g => (
+                                <div key={g.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-[20px] border border-slate-100 group hover:border-indigo-100 transition-all">
+                                  <div className="flex items-center gap-3">
+                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                                      g.status === 'completed' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'
+                                    }`}>
+                                      <Target size={14} />
+                                    </div>
+                                    <div>
+                                      <p className="text-sm font-bold">{g.title}</p>
+                                      {g.description && <p className="text-[9px] text-slate-400 font-medium">{g.description}</p>}
+                                    </div>
                                   </div>
-                                  <div>
-                                    <p className="text-sm font-bold">{activity.event}</p>
-                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{activity.time}</p>
+                                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    {g.status !== 'completed' && (
+                                      <button
+                                        onClick={() => handleUpdateGoal(g.id, { status: 'completed' })}
+                                        className="p-1.5 bg-emerald-100 text-emerald-600 rounded-lg hover:bg-emerald-200"
+                                        title="Mark completed"
+                                      >
+                                        <CheckCircle2 size={12} />
+                                      </button>
+                                    )}
+                                    <button
+                                      onClick={() => handleDeleteGoal(g.id)}
+                                      className="p-1.5 bg-rose-50 text-rose-500 rounded-lg hover:bg-rose-100"
+                                      title="Delete goal"
+                                    >
+                                      <X size={12} />
+                                    </button>
                                   </div>
                                 </div>
-                                <ChevronRight size={14} className="text-slate-200" />
-                              </div>
-                            ))}
-                          </div>
+                              ))}
+                            </div>
+                          )}
+                          <AddGoalForm onAdd={handleAddGoal} />
                         </div>
                       </div>
                     )}
@@ -615,46 +689,109 @@ export const MenteesTab: React.FC<MenteesTabProps> = ({
                             <h3 className="text-xl font-black uppercase tracking-tighter">Custom Intake & Data</h3>
                             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">View form responses and assessments</p>
                           </div>
-                          <button className="flex items-center gap-2 px-6 py-3 border border-slate-200 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all">
-                            <Plus size={14} /> Send New Form
+                          <button onClick={() => setIsCreatingForm(true)} className="flex items-center gap-2 px-6 py-3 bg-black text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-md">
+                            <Plus size={14} /> Create Form
                           </button>
                         </div>
 
-                        <div className="space-y-4">
-                          {[
-                            { title: 'Skills Self-Assessment', date: 'Oct 01, 2023', score: '8.5/10', status: 'completed' },
-                            { title: 'Project Milestone Survey', date: 'Oct 15, 2023', score: 'N/A', status: 'pending' },
-                          ].map((form, i) => (
-                            <div key={i} className="flex items-center justify-between p-6 bg-slate-50 border border-slate-100 rounded-[24px] hover:border-indigo-100 transition-all">
-                              <div className="flex items-center gap-4">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${form.status === 'completed' ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-200 text-slate-400'}`}>
-                                  <FileText size={18} />
-                                </div>
-                                <div>
-                                  <p className="font-bold text-sm">{form.title}</p>
-                                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">{form.date}</p>
-                                </div>
+                        {selectedFormSubmissions !== null ? (
+                          <div className="space-y-4">
+                            <button
+                              onClick={() => setSelectedFormSubmissions(null)}
+                              className="text-[10px] font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
+                            >
+                              <ArrowLeft size={14} /> Back to all forms
+                            </button>
+                            {selectedFormSubmissions.length === 0 ? (
+                              <div className="p-8 bg-slate-50 rounded-[24px] text-center">
+                                <p className="text-xs text-slate-400 font-medium">No submissions for this form yet.</p>
                               </div>
-                              <div className="flex items-center gap-4">
-                                {form.score !== 'N/A' && (
-                                  <div className="text-right mr-4">
-                                    <p className="text-xs font-black">{form.score}</p>
-                                    <p className="text-[8px] font-bold uppercase tracking-widest text-slate-400">Score</p>
+                            ) : (
+                              selectedFormSubmissions.map((sub, i) => (
+                                <div key={sub.id || i} className="p-6 bg-slate-50 border border-slate-100 rounded-[24px] space-y-3">
+                                  <div className="flex items-center justify-between">
+                                    <p className="font-bold text-sm">{sub.user_name}</p>
+                                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                                      {new Date(sub.submitted_at).toLocaleDateString()}
+                                    </span>
                                   </div>
-                                )}
-                                <button className={`px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${
-                                  form.status === 'completed'
-                                  ? 'bg-indigo-600 text-white hover:bg-indigo-700'
-                                  : 'bg-slate-200 text-slate-500 cursor-not-allowed'
-                                }`}>
-                                  {form.status === 'completed' ? 'View Report' : 'Awaiting Response'}
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+                                  {Object.entries(sub.responses || {}).map(([key, val]) => (
+                                    <div key={key} className="text-xs">
+                                      <span className="font-bold text-slate-500">{key}: </span>
+                                      <span className="text-slate-700">{String(val)}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        ) : formsLoading ? (
+                          <div className="flex items-center justify-center py-12">
+                            <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                          </div>
+                        ) : formsList.length === 0 ? (
+                          <div className="p-12 bg-slate-50 rounded-[24px] text-center">
+                            <p className="text-sm text-slate-400 font-medium">No custom forms created yet.</p>
+                            <p className="text-[10px] text-slate-300 mt-1 font-bold uppercase tracking-widest">Click "Create Form" to build your first assessment form.</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            {formsList.map((form) => {
+                              const submissions = formSubmissions.filter(s => s.form_id === form.id);
+                              const studentSubmissions = submissions.filter(s => s.user_id === (selectedMenteeId || ''));
+                              return (
+                                <div key={form.id} className="flex items-center justify-between p-6 bg-slate-50 border border-slate-100 rounded-[24px] hover:border-indigo-100 transition-all">
+                                  <div className="flex items-center gap-4">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${studentSubmissions.length > 0 ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-200 text-slate-400'}`}>
+                                      <FileText size={18} />
+                                    </div>
+                                    <div>
+                                      <p className="font-bold text-sm">{form.title}</p>
+                                      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                                        {form.description || new Date(form.created_at).toLocaleDateString()}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-4">
+                                    <div className="text-right mr-4">
+                                      <p className="text-xs font-black">{submissions.length}</p>
+                                      <p className="text-[8px] font-bold uppercase tracking-widest text-slate-400">Responses</p>
+                                    </div>
+                                    {submissions.length > 0 ? (
+                                      <button
+                                        onClick={() => handleViewSubmissions(form.id)}
+                                        className="px-5 py-2 bg-indigo-600 text-white rounded-full text-[9px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all flex items-center gap-1"
+                                      >
+                                        <Eye size={12} /> View
+                                      </button>
+                                    ) : (
+                                      <span className="px-5 py-2 bg-slate-200 text-slate-500 rounded-full text-[9px] font-black uppercase tracking-widest">
+                                        Awaiting
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                     )}
+
+                    <FormBuilderModal
+                      isOpen={isCreatingForm}
+                      onClose={() => setIsCreatingForm(false)}
+                      onCreated={refreshForms}
+                    />
+
+                    <IssueCredentialModal
+                      isOpen={showCredentialModal}
+                      onClose={() => setShowCredentialModal(false)}
+                      studentId={mentee.user_id}
+                      studentName={mentee.full_name}
+                      mentorName="Mentor"
+                      onIssued={() => {}}
+                    />
 
                     {/* HISTORY/GROWTH LOG SUBTAB */}
                     {menteeSubTab === 'history' && (
@@ -797,3 +934,64 @@ export const MenteesTab: React.FC<MenteesTabProps> = ({
     </div>
   );
 };
+
+function AddGoalForm({ onAdd }: { onAdd: (title: string, description?: string) => Promise<void> }) {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!title.trim()) return;
+    await onAdd(title.trim(), description.trim() || undefined);
+    setTitle('');
+    setDescription('');
+    setIsOpen(false);
+  };
+
+  if (!isOpen) {
+    return (
+      <button
+        onClick={() => setIsOpen(true)}
+        className="flex items-center gap-2 p-3 w-full bg-slate-50 rounded-[20px] border border-dashed border-slate-200 text-slate-400 hover:border-indigo-200 hover:text-indigo-500 hover:bg-indigo-50/30 transition-all group"
+      >
+        <Plus size={14} />
+        <span className="text-[10px] font-black uppercase tracking-widest">Add Goal</span>
+      </button>
+    );
+  }
+
+  return (
+    <div className="p-5 bg-slate-50 rounded-[24px] border border-slate-100 space-y-3">
+      <input
+        type="text"
+        placeholder="Goal title..."
+        value={title}
+        onChange={e => setTitle(e.target.value)}
+        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-medium outline-none focus:border-indigo-400 transition-all"
+        autoFocus
+      />
+      <textarea
+        placeholder="Description (optional)"
+        value={description}
+        onChange={e => setDescription(e.target.value)}
+        rows={2}
+        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-medium outline-none focus:border-indigo-400 transition-all resize-none"
+      />
+      <div className="flex gap-2">
+        <button
+          onClick={handleSubmit}
+          disabled={!title.trim()}
+          className="flex-1 py-3 bg-black text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-slate-800 transition-all disabled:opacity-50"
+        >
+          Save
+        </button>
+        <button
+          onClick={() => setIsOpen(false)}
+          className="py-3 px-5 bg-white border border-slate-200 text-slate-400 text-[10px] font-black uppercase tracking-widest rounded-2xl hover:border-slate-300 transition-all"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}

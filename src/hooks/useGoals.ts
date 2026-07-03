@@ -1,10 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { goalStorage } from '../services/goalStorage';
 import { Goal } from '../interfaces';
+import { useRealtimeData } from './useRealtimeData';
 
 export const useGoals = (studentId?: string) => {
   const queryClient = useQueryClient();
   const queryKey = ['goals', studentId];
+
+  useRealtimeData([{ table: 'goals', queryKey: ['goals'], filter: studentId ? { column: 'student_id', value: studentId } : undefined }]);
 
   const { data: goals = [], isLoading: loading } = useQuery({
     queryKey,

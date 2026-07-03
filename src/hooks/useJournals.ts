@@ -1,10 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { journalStorage } from '../services/journalStorage';
 import { JournalEntry } from '../interfaces';
+import { useRealtimeData } from './useRealtimeData';
 
 export const useJournals = (studentId?: string) => {
   const queryClient = useQueryClient();
   const queryKey = ['journals', studentId];
+
+  useRealtimeData([{ table: 'journals', queryKey: ['journals'], filter: studentId ? { column: 'student_id', value: studentId } : undefined }]);
 
   const { data: journals = [], isLoading: loading } = useQuery({
     queryKey,

@@ -35,7 +35,7 @@ import { useEventManager } from './useEventManager';
 import { useProgramManager } from './useProgramManager';
 import { useAIAssistant } from './useAIAssistant';
 
-export type MentorTab = 'overview' | 'applications' | 'mentees' | 'programs' | 'sessions' | 'feedback' | 'resources' | 'events' | 'messaging' | 'analytics' | 'ai' | 'gallery' | 'bookings';
+export type MentorTab = 'overview' | 'applications' | 'mentees' | 'programs' | 'sessions' | 'feedback' | 'resources' | 'events' | 'messaging' | 'analytics' | 'ai' | 'gallery' | 'bookings' | 'growth-audit' | 'program-progress';
 
 interface UseDashboardProps {
   currentUser: User | null;
@@ -115,6 +115,8 @@ export function useDashboard({ currentUser }: UseDashboardProps) {
     mentees, filteredMentees,
     taskActivities, addTask,
     handleAddTag, toggleMenteeTag, handleUpdateNotes, handleSaveStrengthFocus,
+    menteeGoals,
+    handleAddGoal, handleUpdateGoal, handleDeleteGoal,
   } = menteeDomain;
 
   const {
@@ -574,6 +576,8 @@ export function useDashboard({ currentUser }: UseDashboardProps) {
     mentees, filteredMentees,
     taskActivities, addTask,
     handleAddTag, toggleMenteeTag, handleUpdateNotes, handleSaveStrengthFocus,
+    menteeGoals,
+    handleAddGoal, handleUpdateGoal, handleDeleteGoal,
 
     // Feedback
     selectedTask, setSelectedTask,

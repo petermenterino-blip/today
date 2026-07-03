@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useApplications } from '../../../hooks/useApplications';
 import { useTasks } from '../../../hooks/useTasks';
+import { useGoals } from '../../../hooks/useGoals';
 import { tagService } from '../../../services/tagService';
 import { studentService } from '../../../services/studentService';
 import { applicationService } from '../../../services/applicationService';
 import { notifySuccess, notifyError } from '../../../utils/toast';
 import type { User, StudentProfile, StudentTag } from '../../../types';
+import type { Goal } from '../../../interfaces';
 
 export function useMentees(currentUser: User | null) {
   const { applications, refresh: refreshApps } = useApplications();
   const { taskActivities, addTask } = useTasks();
+  const { goals, addGoal, updateGoal, deleteGoal } = useGoals();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [studentProfiles, setStudentProfiles] = useState<StudentProfile[]>([]);
@@ -99,6 +102,43 @@ export function useMentees(currentUser: User | null) {
     }
   };
 
+  const menteeGoals = goals.filter(g => g.studentId === selectedMenteeId);
+
+  const handleAddGoal = async (title: string, description?: string) => {
+    if (!selectedMenteeId) return;
+    try {
+      await addGoal({
+        studentId: selectedMenteeId,
+        title,
+        description: description || '',
+        status: 'not_started',
+        progressPercentage: 0,
+        milestones: [],
+      });
+      notifySuccess('Goal added');
+    } catch {
+      notifyError('Failed to add goal');
+    }
+  };
+
+  const handleUpdateGoal = async (id: string, updates: Partial<Goal>) => {
+    try {
+      await updateGoal(id, updates);
+      notifySuccess('Goal updated');
+    } catch {
+      notifyError('Failed to update goal');
+    }
+  };
+
+  const handleDeleteGoal = async (id: string) => {
+    try {
+      await deleteGoal(id);
+      notifySuccess('Goal deleted');
+    } catch {
+      notifyError('Failed to delete goal');
+    }
+  };
+
   return {
     searchQuery, setSearchQuery,
     studentProfiles, setStudentProfiles,
@@ -119,6 +159,8 @@ export function useMentees(currentUser: User | null) {
     newTagColor, setNewTagColor,
     mentees, filteredMentees, activeStudentsCount,
     taskActivities, addTask,
+    menteeGoals,
     handleAddTag, toggleMenteeTag, handleUpdateNotes, handleSaveStrengthFocus,
+    handleAddGoal, handleUpdateGoal, handleDeleteGoal,
   };
 }

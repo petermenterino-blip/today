@@ -239,6 +239,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               <button onClick={() => handleTabChange('sessions')} className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl text-[11px] transition-all shadow-md active:scale-95 flex items-center gap-1.5 text-left">Start Session</button>
               <button onClick={() => handleTabChange('messaging')} className="px-5 py-2.5 bg-white/10 hover:bg-white/15 text-white font-bold rounded-2xl text-[11px] transition-all active:scale-95 flex items-center gap-1.5 border border-white/5 text-left">Message Students</button>
               <button onClick={() => handleTabChange('events')} className="px-5 py-2.5 bg-white/10 hover:bg-white/15 text-white font-bold rounded-2xl text-[11px] transition-all active:scale-95 flex items-center gap-1.5 border border-white/5 text-left">View Calendar</button>
+              <button onClick={() => handleTabChange('growth-audit')} className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-2xl text-[11px] transition-all shadow-md active:scale-95 flex items-center gap-1.5 text-left">Growth Audit</button>
             </div>
           </div>
 

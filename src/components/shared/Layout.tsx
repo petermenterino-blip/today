@@ -27,9 +27,12 @@ import {
   ChevronRight,
   LogOut,
   Image as ImageIcon,
-  CalendarCheck
+  CalendarCheck,
+  Bell,
+  TrendingUp
 } from 'lucide-react';
 import { UserRole } from '../../types';
+import NotificationDropdown from '../NotificationDropdown';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -84,6 +87,7 @@ const Layout: React.FC<LayoutProps> = ({ children, role, onLogout }) => {
     { label: 'Messages', path: '/student/messages', icon: MessageCircle, roles: ['student'] },
     { label: 'Resources', path: '/student/resources', icon: LayoutDashboard, roles: ['student'] },
     { label: 'Events', path: '/student/events', icon: CalendarDays, roles: ['student'] },
+    { label: 'Profile', path: '/student/profile', icon: User, roles: ['student'] },
     { label: 'Settings', path: '/settings', icon: Settings, roles: ['student'] },
     { label: 'Overview', path: '/mentor', icon: LayoutDashboard, roles: ['mentor'] },
     { label: 'Messaging', path: '/mentor?tab=messaging', icon: Send, roles: ['mentor'] },
@@ -91,6 +95,7 @@ const Layout: React.FC<LayoutProps> = ({ children, role, onLogout }) => {
     { label: 'Applications', path: '/mentor?tab=applications', icon: ClipboardList, roles: ['mentor'] },
     { label: 'Sessions', path: '/mentor?tab=sessions', icon: Calendar, roles: ['mentor'] },
     { label: 'Programs', path: '/mentor?tab=programs', icon: BookOpen, roles: ['mentor'] },
+    { label: 'Progress', path: '/mentor?tab=program-progress', icon: TrendingUp, roles: ['mentor'] },
     { label: 'Reviews', path: '/mentor?tab=feedback', icon: MessageCircle, roles: ['mentor'] },
     { label: 'Resources', path: '/mentor?tab=resources', icon: LayoutDashboard, roles: ['mentor'] },
     { label: 'Events', path: '/mentor?tab=events', icon: CalendarDays, roles: ['mentor'] },
@@ -268,17 +273,20 @@ const Layout: React.FC<LayoutProps> = ({ children, role, onLogout }) => {
                   <span className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white text-xs font-bold shrink-0">M</span>
                   <span className="font-black text-sm tracking-widest uppercase shrink-0 transition-opacity duration-150">MENTORINO</span>
                 </Link>
-                <button 
-                  onClick={() => {
-                    const nextState = !isCollapsed;
-                    setIsCollapsed(nextState);
-                    localStorage.setItem('sidebar-collapsed', String(nextState));
-                  }} 
-                  className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-50 rounded-lg border border-slate-100 transition-colors"
-                  title="Collapse sidebar"
-                >
-                  <ChevronLeft size={16} />
-                </button>
+                <div className="flex items-center gap-1">
+                  <NotificationDropdown />
+                  <button 
+                    onClick={() => {
+                      const nextState = !isCollapsed;
+                      setIsCollapsed(nextState);
+                      localStorage.setItem('sidebar-collapsed', String(nextState));
+                    }} 
+                    className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-50 rounded-lg border border-slate-100 transition-colors"
+                    title="Collapse sidebar"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                </div>
               </>
             ) : (
               <div className="flex flex-col items-center gap-2 transition-all duration-250">

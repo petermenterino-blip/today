@@ -29,6 +29,7 @@ function actionItemToRow(item: Partial<ActionItem>): Record<string, any> {
   return row;
 }
 
+/** @deprecated Use taskService instead. Will be removed in a future version. */
 export const taskStorage = {
   async getAll(): Promise<ActionItem[]> {
     const result = await safeQuery(

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { useActionItems } from '../../hooks/useActionItems';
-import { ActionItem } from '../../interfaces';
+import { useTasks } from '../../hooks/useTasks';
 import { 
   Plus, 
   CheckCircle2, 
@@ -181,22 +180,24 @@ const getTaskIconConfig = (title: string, description: string) => {
 };
 
 const StudentTasks: React.FC<StudentTasksProps> = ({ studentId, isApproved }) => {
-  const { tasks, addTask, updateTask, loading } = useActionItems(studentId, 'student');
+  const { taskActivities, addTask, updateTask, loading } = useTasks();
   const [view, setView] = useState<'list' | 'new'>(isApproved ? 'list' : 'list');
   const [showSecondApp, setShowSecondApp] = useState(isApproved);
 
-  const pendingTasks = tasks.filter(t => t.status !== 'completed');
-  const completedTasks = tasks.filter(t => t.status === 'completed');
+  const userTasks = taskActivities.filter(t => t.user_id === studentId);
+  const pendingTasks = userTasks.filter(t => t.status !== 'completed');
+  const completedTasks = userTasks.filter(t => t.status === 'completed');
 
   const handleTaskSubmit = async (activity: any) => {
     try {
-      addTask({
-        studentId,
-        mentorId: 'mentor-1',
-        title: activity.task_name || 'New Task',
+      await addTask({
+        user_id: studentId,
+        mentor_id: 'mentor-1',
+        user_name: 'Student',
+        task_title: activity.task_name || 'New Task',
         description: activity.activity_type,
         status: 'pending',
-        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+        due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
       });
       notifySuccess('Task submitted successfully!');
       setView('list');
@@ -207,13 +208,14 @@ const StudentTasks: React.FC<StudentTasksProps> = ({ studentId, isApproved }) =>
 
   const handleSecondAppSubmit = async (data: any) => {
     try {
-      addTask({
-        studentId,
-        mentorId: 'mentor-1',
-        title: '2nd Application Submission',
+      await addTask({
+        user_id: studentId,
+        mentor_id: 'mentor-1',
+        user_name: 'Student',
+        task_title: '2nd Application Submission',
         description: JSON.stringify(data),
         status: 'submitted',
-        dueDate: new Date().toISOString()
+        due_date: new Date().toISOString()
       });
       notifySuccess('2nd application submitted for audit!');
       setShowSecondApp(false);
@@ -263,32 +265,32 @@ const StudentTasks: React.FC<StudentTasksProps> = ({ studentId, isApproved }) =>
           <div className="space-y-8">
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                {pendingTasks.map((task, i) => {
-                  const { Icon, bgColor, iconColor } = getTaskIconConfig(task.title || '', task.description || '');
-                  return (
-                    <motion.div 
-                       key={task.id} 
-                       initial={{ opacity: 0, y: 20 }}
-                       animate={{ opacity: 1, y: 0 }}
-                       transition={{ delay: i * 0.1 }}
-                       className="bg-white p-6 rounded-[32px] border border-slate-100 space-y-4 hover:shadow-lg transition-all group relative overflow-hidden"
-                    >
-                       <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-50 rounded-bl-[40px] -mr-4 -mt-4 transition-transform duration-500 group-hover:scale-110 pointer-events-none"></div>
-                       <div className="relative z-10 flex justify-between items-start">
-                         <div className={`w-14 h-14 ${bgColor} rounded-full flex items-center justify-center shadow-sm shrink-0`}>
-                           <Icon size={24} className={iconColor} />
-                         </div>
-                       </div>
-                       <div className="relative z-10">
-                         <h4 className="font-bold text-lg text-brand-charcoal mb-1">{task.title}</h4>
-                         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-relaxed line-clamp-2">{task.description}</p>
-                       </div>
-                       <div className="relative z-10 pt-4 flex justify-between items-center border-t border-slate-100 text-[10px] uppercase font-bold tracking-widest text-slate-400">
-                         <span>Due: {new Date(task.dueDate!).toLocaleDateString()}</span>
-                         <button onClick={() => markCompleted(task.id)} className="text-emerald-600 hover:brightness-75 transition-all flex items-center gap-1">
-                            <CheckCircle2 size={14} /> Finish
-                         </button>
-                       </div>
-                    </motion.div>
+                   const { Icon, bgColor, iconColor } = getTaskIconConfig(task.task_title || task.description || '', task.description || '');
+                   return (
+                     <motion.div 
+                        key={task.id} 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.1 }}
+                        className="bg-white p-6 rounded-[32px] border border-slate-100 space-y-4 hover:shadow-lg transition-all group relative overflow-hidden"
+                     >
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-50 rounded-bl-[40px] -mr-4 -mt-4 transition-transform duration-500 group-hover:scale-110 pointer-events-none"></div>
+                        <div className="relative z-10 flex justify-between items-start">
+                          <div className={`w-14 h-14 ${bgColor} rounded-full flex items-center justify-center shadow-sm shrink-0`}>
+                            <Icon size={24} className={iconColor} />
+                          </div>
+                        </div>
+                        <div className="relative z-10">
+                          <h4 className="font-bold text-lg text-brand-charcoal mb-1">{task.task_title}</h4>
+                          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-relaxed line-clamp-2">{task.description}</p>
+                        </div>
+                        <div className="relative z-10 pt-4 flex justify-between items-center border-t border-slate-100 text-[10px] uppercase font-bold tracking-widest text-slate-400">
+                          <span>Due: {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}</span>
+                          <button onClick={() => markCompleted(task.id)} className="text-emerald-600 hover:brightness-75 transition-all flex items-center gap-1">
+                             <CheckCircle2 size={14} /> Finish
+                          </button>
+                        </div>
+                     </motion.div>
                   );
                })}
                {pendingTasks.length === 0 && (

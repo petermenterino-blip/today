@@ -193,6 +193,17 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
     },
   ]);
 
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'message_sync_ts') {
+        loadConversations();
+        queryClient.invalidateQueries({ queryKey: ['messages'] });
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, [loadConversations, queryClient]);
+
   const prevConversationIdRef = useRef<string | null>(null);
 
   useEffect(() => {

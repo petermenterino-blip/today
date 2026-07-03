@@ -1,11 +1,5 @@
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-}
+import { verifyAuth, requireRole, CORS_HEADERS } from '../middleware/auth.ts'
 
 const SYSTEM_PROMPTS: Record<string, string> = {
   application_summary: 'You are a mentor reviewing a student application. Summarize the key points and highlight any concerns or strengths in 2-3 sentences.',
@@ -21,23 +15,11 @@ serve(async (req) => {
   }
 
   const authHeader = req.headers.get('Authorization')
-  if (!authHeader) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: CORS_HEADERS })
-  }
+  const { user, error } = await verifyAuth(authHeader)
+  if (error) return error
 
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')
-  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-  if (!supabaseUrl || !supabaseKey) {
-    return new Response(JSON.stringify({ error: 'Server not configured' }), { status: 500, headers: CORS_HEADERS })
-  }
-
-  const supabase = createClient(supabaseUrl, supabaseKey)
-  const { data: { user }, error: authError } = await supabase.auth.getUser(
-    authHeader.replace('Bearer ', '')
-  )
-  if (authError || !user) {
-    return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 401, headers: CORS_HEADERS })
-  }
+  const roleError = requireRole(user, ['student', 'mentor', 'admin'])
+  if (roleError) return roleError
 
   const apiKey = Deno.env.get('GEMINI_API_KEY')
   if (!apiKey) {

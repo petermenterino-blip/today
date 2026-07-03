@@ -1,9 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { NetworkEvent } from '../types';
 import { eventService } from '../services/eventService';
+import { useRealtimeData } from './useRealtimeData';
 
 export const useEvents = () => {
   const queryClient = useQueryClient();
+
+  useRealtimeData([{ table: 'events', queryKey: ['events'] }]);
 
   const { data: events = [], isLoading: loading } = useQuery({
     queryKey: ['events'],

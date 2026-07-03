@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { Booking, ServiceResponse } from '../types';
+import { Booking, NetworkEvent, ServiceResponse } from '../types';
 import { notify } from './notificationService';
 import { handleError } from '../lib/serviceHelper';
 
@@ -19,6 +19,45 @@ function rowToBooking(row: any): Booking {
     attendance: row.attendance,
     created_at: row.created_at,
   };
+}
+
+async function checkTimeslotConflict(userId: string, date: string, time: string): Promise<string | null> {
+  const { data: existing, error } = await supabase
+    .from('bookings')
+    .select('id, date, time')
+    .eq('user_id', userId)
+    .eq('date', date)
+    .neq('status', 'cancelled');
+
+  if (error) return null;
+
+  if (existing?.some(b => b.time === time)) {
+    return 'You already have a booking at this time';
+  }
+
+  return null;
+}
+
+async function checkEventCapacity(eventId: string): Promise<string | null> {
+  const { data: event, error } = await supabase
+    .from('events')
+    .select('capacity')
+    .eq('id', eventId)
+    .single();
+
+  if (error || !event) return null;
+  if (!event.capacity) return null;
+
+  const { count } = await supabase
+    .from('event_attendees')
+    .select('id', { count: 'exact', head: true })
+    .eq('event_id', eventId);
+
+  if (count !== null && count >= event.capacity) {
+    return 'This event has reached its capacity';
+  }
+
+  return null;
 }
 
 function bookingToRow(b: Partial<Booking>): Record<string, any> {
@@ -48,6 +87,14 @@ export const bookingService = {
   },
 
   async insert(booking: Omit<Booking, 'id'>): Promise<ServiceResponse<Booking>> {
+    const conflict = await checkTimeslotConflict(booking.user_id, booking.date, booking.time);
+    if (conflict) return { data: null, error: conflict };
+
+    if (booking.program_id) {
+      const cap = await checkEventCapacity(booking.program_id);
+      if (cap) return { data: null, error: cap };
+    }
+
     const row = { ...bookingToRow(booking as any) };
     delete row.id;
     const { data, error } = await supabase

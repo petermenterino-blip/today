@@ -1,9 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sessionService } from '../services/sessionService';
 import { Session } from '../interfaces';
+import { useRealtimeData } from './useRealtimeData';
 
 export const useSessions = (userId?: string, role?: 'student' | 'mentor') => {
   const queryClient = useQueryClient();
+
+  useRealtimeData([{ table: 'sessions', queryKey: ['sessions'], filter: userId ? { column: role === 'mentor' ? 'mentor_id' : 'student_id', value: userId } : undefined }]);
 
   const { data: allSessions = [], isLoading: loading } = useQuery({
     queryKey: ['sessions'],

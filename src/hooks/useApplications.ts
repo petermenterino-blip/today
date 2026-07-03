@@ -1,9 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { applicationService } from '../services/applicationService';
 import { Application } from '../types';
+import { useRealtimeData } from './useRealtimeData';
 
 export const useApplications = () => {
   const queryClient = useQueryClient();
+
+  useRealtimeData([{ table: 'applications', queryKey: ['applications'] }]);
 
   const { data: applications = [], isLoading: loading } = useQuery({
     queryKey: ['applications'],

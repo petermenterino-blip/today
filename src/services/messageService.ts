@@ -138,6 +138,8 @@ export const messageService = {
       })
       .eq('id', msg.conversationId);
 
+    try { localStorage.setItem('message_sync_ts', Date.now().toString()) } catch {}
+
     return fromDbMessage(data);
   },
 

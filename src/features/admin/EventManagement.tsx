@@ -10,6 +10,7 @@ import { eventService } from '../../services/eventService';
 import { studentService } from '../../services/studentService';
 import { notificationStorage } from '../../services/notificationStorage';
 import { messageService } from '../../services/messageService';
+import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
 
 interface EventManagementProps {
@@ -25,6 +26,7 @@ export const EventManagement: React.FC<EventManagementProps> = ({
   onEdit, 
   onDelete 
 }) => {
+  const { user } = useAuth();
   const [event, setEvent] = useState<NetworkEvent | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -322,7 +324,7 @@ export const EventManagement: React.FC<EventManagementProps> = ({
         // Also add conversation ping
         await messageService.sendMessage({
           conversationId: 'all-students', // Group broadcast target
-          senderId: 'mentor-1',
+          senderId: user?.id || 'system',
           senderName: 'Peter Mannarino',
           content: `Hi ${reg.name}, friendly reminder for our event "${event.title}" today at ${event.time}! Here is your access link: ${event.meetingLink || '#'}`,
           type: 'text'

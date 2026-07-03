@@ -13,6 +13,8 @@ import { MenteesTab } from './components/MenteesTab';
 import { TasksTab } from './components/TasksTab';
 import { ApplicationsTab } from './components/ApplicationsTab';
 import { VisitorBookingsTab } from './components/VisitorBookingsTab';
+import GrowthAuditTab from './components/GrowthAuditTab';
+import { ProgramProgressTab } from './components/ProgramProgressTab';
 import { useDashboard, MentorTab } from './hooks/useDashboard';
 import { tagService } from '../../services/tagService';
 import { notifySuccess } from '../../utils/toast';
@@ -148,6 +150,13 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
           handleScheduleSession={d.handleScheduleSession}
           setActiveTab={d.setActiveTab}
           setIsSchedulingSession={d.setIsSchedulingSession}
+          formSubmissions={d.formSubmissions}
+          isCreatingForm={d.isCreatingForm}
+          setIsCreatingForm={d.setIsCreatingForm}
+          menteeGoals={d.menteeGoals}
+          handleAddGoal={d.handleAddGoal}
+          handleUpdateGoal={d.handleUpdateGoal}
+          handleDeleteGoal={d.handleDeleteGoal}
         />
       )}
       {d.activeTab === 'applications' && (
@@ -387,6 +396,21 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
 
       {d.activeTab === 'gallery' && (
         <GalleryManagement />
+      )}
+
+      {d.activeTab === 'growth-audit' && (
+        <GrowthAuditTab
+          studentProfiles={d.studentProfiles}
+          taskActivities={d.taskActivities}
+        />
+      )}
+
+      {d.activeTab === 'program-progress' && (
+        <ProgramProgressTab
+          programs={d.programs}
+          studentProfiles={d.studentProfiles}
+          onNavigateToStudent={d.handleOpenStudentProfile}
+        />
       )}
 
       {/* Tag Management Modal */}

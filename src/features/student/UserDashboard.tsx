@@ -56,6 +56,8 @@ import StudentEvents from "./StudentEvents";
 import StudentTasks from "./StudentTasks";
 import WhatsAppMessaging from "../messaging/WhatsAppMessaging";
 import GrowthForm from "./GrowthForm";
+import StudentForms from "./StudentForms";
+import StudentEditProfile from "./StudentEditProfile";
 
 interface UserDashboardProps {
   currentUser: User | null;
@@ -73,6 +75,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
   // Dynamic Data & Local Storage state
   const [studentProfiles, setStudentProfiles] = useState<any[]>([]);
   const [programs, setPrograms] = useState<any[]>([]);
+  const [formsTab, setFormsTab] = useState<'activities' | 'custom'>('activities');
 
   // Data Hooks
   const {
@@ -714,7 +717,33 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
               />
               <Route
                 path="/forms"
-                element={<GrowthForm />}
+                element={
+                  <div className="space-y-6">
+                    <div className="flex gap-2 bg-white rounded-[20px] p-1.5 border border-slate-100 shadow-sm w-fit">
+                      <button
+                        onClick={() => setFormsTab('activities')}
+                        className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                          formsTab === 'activities' ? 'bg-black text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                        }`}
+                      >
+                        Activities
+                      </button>
+                      <button
+                        onClick={() => setFormsTab('custom')}
+                        className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                          formsTab === 'custom' ? 'bg-black text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                        }`}
+                      >
+                        Custom Forms
+                      </button>
+                    </div>
+                    {formsTab === 'activities' ? (
+                      <GrowthForm />
+                    ) : (
+                      <StudentForms userId={currentUser?.id || ''} userName={currentUser?.name || ''} />
+                    )}
+                  </div>
+                }
               />
               <Route
                 path="/programs/:programId" 
@@ -828,6 +857,10 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
                     onAttend={attendEvent}
                   />
                 }
+              />
+              <Route
+                path="/profile"
+                element={<StudentEditProfile currentUser={currentUser} />}
               />
               <Route path="*" element={<Navigate to="/student" replace />} />
             </Routes>
