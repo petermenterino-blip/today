@@ -23,7 +23,7 @@ test.describe('Mentorship Application Flow', () => {
   test('step 1: navigates to step 2 when fields filled', async ({ page }) => {
     await page.locator('select').first().selectOption('Career Strategist');
     await page.locator('input[placeholder="John Doe"]').fill('Peter Smith');
-    await page.locator('input[placeholder="+1 (555) 000-0000"]').fill('+1 555-1234');
+    await page.locator('input[placeholder="(555) 000-0000"]').fill('+1 555-1234');
     await page.locator('input[placeholder="john@example.com"]').fill('peter@test.com');
 
     await page.getByRole('button', { name: /next/i }).click();
@@ -37,7 +37,7 @@ test.describe('Mentorship Application Flow', () => {
     // Step 1
     await page.locator('select').first().selectOption('Academic Guide');
     await page.locator('input[placeholder="John Doe"]').fill('Jane Smith');
-    await page.locator('input[placeholder="+1 (555) 000-0000"]').fill('+1 555-5678');
+    await page.locator('input[placeholder="(555) 000-0000"]').fill('+1 555-5678');
     await page.locator('input[placeholder="john@example.com"]').fill('jane@test.com');
     await page.getByRole('button', { name: /next/i }).click();
 
@@ -48,7 +48,7 @@ test.describe('Mentorship Application Flow', () => {
 
     // Step 3
     await expect(page.getByText('THE CORE')).toBeVisible();
-    await page.locator('textarea').fill('I want to advance my career in cybersecurity and get certified.');
+    await page.locator('textarea').fill('I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified. I want to advance my career in cybersecurity and get certified.');
     await page.getByRole('button', { name: /next/i }).click();
 
     // Step 4

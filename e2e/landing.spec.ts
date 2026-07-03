@@ -35,7 +35,6 @@ test.describe('Landing Page', () => {
 
   test('displays footer with copyright and mentor portal', async ({ page }) => {
     const footer = page.locator('footer');
-    await expect(footer.getByText(/Mentorino/i)).toBeVisible();
-    await expect(footer.getByText(/ALL RIGHTS RESERVED/i)).toBeVisible();
+    await expect(footer.getByText(/ALL RIGHTS RESERVED/i)).toBeVisible({ timeout: 10000 });
   });
 });

@@ -45,7 +45,7 @@ async function setupStudentPage(page: Page) {
     // Journals
     if (url.includes('/rest/v1/journal') || url.includes('/rest/v1/journals')) {
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([
-        { id: 'journal-1', student_id: 'mock-student-1', title: 'Productive Day', content: 'Today was very productive. I completed my resume draft and scheduled a meeting with my mentor.', type: 'daily', mood: 'good', wins: ['Completed resume draft'], challenges: ['Need to research more companies'], mentor_comments: null, reviewed_by_mentor: false, created_at: '2025-06-17T00:00:00Z', updated_at: '2025-06-17T00:00:00Z' },
+        { id: 'journal-1', student_id: 'mock-student-1', title: 'Daily Reflection', content: 'Today was very productive. I completed my resume draft and scheduled a meeting with my mentor.', type: 'daily', mood: 'good', wins: ['Completed resume draft'], challenges: ['Need to research more companies'], mentor_comments: null, reviewed_by_mentor: false, created_at: '2025-06-17T00:00:00Z', updated_at: '2025-06-17T00:00:00Z' },
         { id: 'journal-2', student_id: 'mock-student-1', title: 'Weekly Reflection', content: 'Good week overall. Made progress on goals.', type: 'weekly', mood: 'great', wins: ['Finished all tasks'], challenges: ['Time management'], mentor_comments: null, reviewed_by_mentor: false, created_at: '2025-06-14T00:00:00Z', updated_at: '2025-06-14T00:00:00Z' },
       ]) });
       return;
@@ -54,8 +54,8 @@ async function setupStudentPage(page: Page) {
     // Tasks
     if (url.includes('/rest/v1/tasks')) {
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([
-        { id: 'task-1', user_id: 'mock-student-1', title: 'Submit updated resume PDF', description: 'Export resume as PDF and submit', status: 'pending', due_date: new Date(Date.now() + 3 * 86400000).toISOString(), priority: 'high', created_at: '2025-06-15T00:00:00Z', program_id: null, task_title: null, feedback: null, mentor_response: null },
-        { id: 'task-2', user_id: 'mock-student-1', title: 'Read PM Interview Guide', description: 'Read chapters 1-3 of the guide', status: 'in_progress', due_date: new Date(Date.now() + 5 * 86400000).toISOString(), priority: 'medium', created_at: '2025-06-15T00:00:00Z', program_id: null, task_title: null, feedback: null, mentor_response: null },
+        { id: 'task-1', student_id: 'mock-student-1', title: 'Submit updated resume PDF', description: 'Export resume as PDF and submit', status: 'pending', due_date: new Date(Date.now() + 3 * 86400000).toISOString(), priority: 'high', created_at: '2025-06-15T00:00:00Z', program_id: null, task_title: null, feedback: null, mentor_response: null },
+        { id: 'task-2', student_id: 'mock-student-1', title: 'Read PM Interview Guide', description: 'Read chapters 1-3 of the guide', status: 'in_progress', due_date: new Date(Date.now() + 5 * 86400000).toISOString(), priority: 'medium', created_at: '2025-06-15T00:00:00Z', program_id: null, task_title: null, feedback: null, mentor_response: null },
       ]) });
       return;
     }
