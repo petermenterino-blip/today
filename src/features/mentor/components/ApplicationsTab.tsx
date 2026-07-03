@@ -50,6 +50,7 @@ interface ApplicationsTabProps {
   handleApplicationAction: (id: string, status: 'approved' | 'rejected', options?: { reason?: string; feedback?: string }) => Promise<void>;
   refreshApps: (params?: any) => Promise<void>;
   updateAppStatus: (id: string, status: 'approved' | 'rejected') => Promise<any>;
+  filteredAppsForTab: Application[];
 }
 
 const ApplicationCard: React.FC<{
@@ -136,6 +137,7 @@ const ApplicationDetailModal: React.FC<{
   setIsRejecting: (v: boolean) => void;
 }> = ({ application, details, loading, activeTab, setActiveTab, onClose, onApprove, onReject, rejectionReason, setRejectionReason, rejectionFeedback, setRejectionFeedback, isRejecting, setIsRejecting }) => {
   const [confirmAction, setConfirmAction] = useState<'approve' | 'reject' | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   const handleConfirm = () => {
     if (confirmAction === 'approve') {
@@ -144,22 +146,23 @@ const ApplicationDetailModal: React.FC<{
       onReject(application.id, rejectionReason, rejectionFeedback);
     }
     setConfirmAction(null);
+    setShowConfirmDialog(false);
   };
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 20 }}
-      className="fixed inset-0 z-50 flex items-start justify-center pt-16 pb-8 px-4 bg-black/20 backdrop-blur-sm overflow-y-auto"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="w-full max-w-3xl bg-white rounded-[40px] shadow-2xl border border-slate-100 overflow-hidden"
+        className="w-full max-w-3xl bg-white rounded-[40px] shadow-2xl border border-slate-100 flex flex-col max-h-[90vh]"
       >
-        <div className="p-6 sm:p-8 border-b border-slate-100 flex items-start justify-between gap-4">
+        <div className="p-6 sm:p-8 border-b border-slate-100 flex items-start justify-between gap-4 shrink-0">
           <div className="flex items-start gap-4 min-w-0">
             <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center font-bold text-lg text-slate-600 border border-slate-200 shrink-0">
               {application.full_name.slice(0, 2).toUpperCase()}
@@ -186,7 +189,7 @@ const ApplicationDetailModal: React.FC<{
           </button>
         </div>
 
-        <div className="flex border-b border-slate-100 px-6 sm:px-8">
+        <div className="flex border-b border-slate-100 px-6 sm:px-8 shrink-0">
           {(['details', 'notes', 'timeline'] as const).map((tab) => (
             <button
               key={tab}
@@ -200,131 +203,133 @@ const ApplicationDetailModal: React.FC<{
           ))}
         </div>
 
-        <div className="p-6 sm:p-8 max-h-[50vh] overflow-y-auto custom-scrollbar">
-          {loading ? (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="animate-spin text-slate-300" size={32} />
-            </div>
-          ) : activeTab === 'details' ? (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Phone</p>
-                  <p className="text-sm font-semibold text-slate-900">{application.phone || 'Not provided'}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Meeting Preference</p>
-                  <p className="text-sm font-semibold text-slate-900">{application.meeting_preference || 'Virtual'}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Frequency</p>
-                  <p className="text-sm font-semibold text-slate-900">{application.frequency || 'Weekly'}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Focus Area</p>
-                  <p className="text-sm font-semibold text-slate-900">{application.focus_area || 'General'}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">LinkedIn</p>
-                  <p className="text-sm font-semibold text-blue-600 truncate">{application.linkedin_url ? <a href={application.linkedin_url} target="_blank" rel="noopener noreferrer" className="hover:underline flex items-center gap-1"><ExternalLink size={12} />Profile</a> : 'Not provided'}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Applied</p>
-                  <p className="text-sm font-semibold text-slate-900">{new Date(application.created_at).toLocaleDateString()}</p>
-                </div>
+        <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0">
+          <div className="p-6 sm:p-8">
+            {loading ? (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 className="animate-spin text-slate-300" size={32} />
               </div>
-              {application.goal && (
-                <div className="space-y-1">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Goal</p>
-                  <p className="text-sm text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-100">{application.goal}</p>
+            ) : activeTab === 'details' ? (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Phone</p>
+                    <p className="text-sm font-semibold text-slate-900">{application.phone || 'Not provided'}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Meeting Preference</p>
+                    <p className="text-sm font-semibold text-slate-900">{application.meeting_preference || 'Virtual'}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Frequency</p>
+                    <p className="text-sm font-semibold text-slate-900">{application.frequency || 'Weekly'}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Focus Area</p>
+                    <p className="text-sm font-semibold text-slate-900">{application.focus_area || 'General'}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">LinkedIn</p>
+                    <p className="text-sm font-semibold text-blue-600 truncate">{application.linkedin_url ? <a href={application.linkedin_url} target="_blank" rel="noopener noreferrer" className="hover:underline flex items-center gap-1"><ExternalLink size={12} />Profile</a> : 'Not provided'}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Applied</p>
+                    <p className="text-sm font-semibold text-slate-900">{new Date(application.created_at).toLocaleDateString()}</p>
+                  </div>
                 </div>
-              )}
-            </div>
-          ) : activeTab === 'notes' ? (
-            <div className="space-y-4">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider text-center py-8">Notes feature coming soon</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider text-center py-8">Timeline feature coming soon</p>
-            </div>
-          )}
+                {application.goal && (
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Goal</p>
+                    <p className="text-sm text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-100">{application.goal}</p>
+                  </div>
+                )}
+              </div>
+            ) : activeTab === 'notes' ? (
+              <div className="space-y-4">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider text-center py-8">Notes feature coming soon</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider text-center py-8">Timeline feature coming soon</p>
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="p-6 sm:p-8 border-t border-slate-100">
-          {application.status === 'pending' && (
-            <div className="space-y-4">
-              {confirmAction === 'reject' ? (
-                <div className="space-y-4 p-4 bg-red-50 rounded-3xl border border-red-200">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-red-700">Rejection Reason</p>
-                  <textarea
-                    value={rejectionReason}
-                    onChange={(e) => setRejectionReason(e.target.value)}
-                    className="w-full p-3 bg-white border border-red-200 rounded-xl text-sm outline-none focus:border-red-500"
-                    rows={2}
-                    placeholder="Reason for rejection..."
-                  />
-                  <textarea
-                    value={rejectionFeedback}
-                    onChange={(e) => setRejectionFeedback(e.target.value)}
-                    className="w-full p-3 bg-white border border-red-200 rounded-xl text-sm outline-none focus:border-red-500"
-                    rows={2}
-                    placeholder="Optional feedback for the applicant..."
-                  />
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => { setConfirmAction(null); setIsRejecting(false); }}
-                      className="flex-1 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={() => { setIsRejecting(true); onReject(application.id, rejectionReason, rejectionFeedback); }}
-                      disabled={!rejectionReason.trim() || isRejecting}
-                      className="flex-1 py-3 bg-red-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-red-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                    >
-                      {isRejecting ? <Loader2 size={14} className="animate-spin" /> : null}
-                      Confirm Rejection
-                    </button>
-                  </div>
-                </div>
-              ) : confirmAction === 'approve' ? (
-                <div className="space-y-4 p-4 bg-emerald-50 rounded-3xl border border-emerald-200">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-emerald-700">Confirm Approval</p>
-                  <p className="text-sm text-emerald-800">This will create an account and send an invitation email to {application.user_email}.</p>
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => setConfirmAction(null)}
-                      className="flex-1 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={() => onApprove(application.id)}
-                      className="flex-1 py-3 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all flex items-center justify-center gap-2"
-                    >
-                      <CheckCircle size={14} /> Confirm Approval
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setConfirmAction('reject')}
-                    className="flex-1 py-3 border border-red-200 bg-red-50 text-red-700 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-red-100 transition-all flex items-center justify-center gap-2"
-                  >
-                    <XCircle size={14} /> Reject Application
-                  </button>
-                  <button
-                    onClick={() => setConfirmAction('approve')}
-                    className="flex-1 py-3 bg-black text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
-                  >
-                    <CheckCircle size={14} /> Approve Application
-                  </button>
-                </div>
-              )}
+        <div className="p-6 sm:p-8 border-t border-slate-100 shrink-0">
+          {application.status === 'pending' && !confirmAction && !showConfirmDialog && (
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setConfirmAction('reject'); setShowConfirmDialog(true); }}
+                className="flex-1 py-3 border border-red-200 bg-red-50 text-red-700 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-red-100 transition-all flex items-center justify-center gap-2"
+              >
+                <XCircle size={14} /> Reject Application
+              </button>
+              <button
+                onClick={() => { setConfirmAction('approve'); setShowConfirmDialog(true); }}
+                className="flex-1 py-3 bg-black text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
+              >
+                <CheckCircle size={14} /> Approve Application
+              </button>
             </div>
           )}
+
+          {application.status === 'pending' && confirmAction === 'reject' && showConfirmDialog && (
+            <div className="space-y-4">
+              <textarea
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                className="w-full p-3 bg-red-50 border border-red-200 rounded-xl text-sm outline-none focus:border-red-500"
+                rows={2}
+                placeholder="Rejection reason (required)..."
+              />
+              <textarea
+                value={rejectionFeedback}
+                onChange={(e) => setRejectionFeedback(e.target.value)}
+                className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:border-black"
+                rows={2}
+                placeholder="Optional feedback for the applicant..."
+              />
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { setConfirmAction(null); setShowConfirmDialog(false); setIsRejecting(false); }}
+                  className="flex-1 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => { setIsRejecting(true); onReject(application.id, rejectionReason, rejectionFeedback); }}
+                  disabled={!rejectionReason.trim() || isRejecting}
+                  className="flex-1 py-3 bg-red-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-red-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isRejecting ? <Loader2 size={14} className="animate-spin" /> : null}
+                  Confirm Rejection
+                </button>
+              </div>
+            </div>
+          )}
+
+          {application.status === 'pending' && confirmAction === 'approve' && showConfirmDialog && (
+            <div className="space-y-4 p-4 bg-emerald-50 rounded-3xl border border-emerald-200">
+              <p className="text-[9px] font-black uppercase tracking-widest text-emerald-700">Confirm Approval</p>
+              <p className="text-sm text-emerald-800">This will create an account and send an invitation email to {application.user_email}.</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { setConfirmAction(null); setShowConfirmDialog(false); }}
+                  className="flex-1 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => onApprove(application.id)}
+                  className="flex-1 py-3 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all flex items-center justify-center gap-2"
+                >
+                  <CheckCircle size={14} /> Confirm Approval
+                </button>
+              </div>
+            </div>
+          )}
+
           {application.status !== 'pending' && (
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider text-center py-3">
               This application has been {application.status}
@@ -359,6 +364,7 @@ export const ApplicationsTab: React.FC<ApplicationsTabProps> = ({
   handleApplicationAction,
   refreshApps,
   updateAppStatus,
+  filteredAppsForTab,
 }) => {
   const totalCount = applications.length;
   const pendingCount = pendingApplications.length;
@@ -418,22 +424,23 @@ export const ApplicationsTab: React.FC<ApplicationsTabProps> = ({
             className="px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold outline-none focus:border-black transition-all appearance-none cursor-pointer"
           >
             <option value="">All Status</option>
-            <option value="pending_review">Pending Review</option>
+            <option value="pending">Pending</option>
             <option value="approved">Approved</option>
             <option value="rejected">Rejected</option>
-            <option value="invited">Invited</option>
           </select>
           <select
             value={appDiscipline}
             onChange={(e) => setAppDiscipline(e.target.value)}
             className="px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold outline-none focus:border-black transition-all appearance-none cursor-pointer"
           >
-            <option value="">All Disciplines</option>
+            <option value="">All Focus Areas</option>
             <option value="Career Strategist">Career Strategist</option>
             <option value="Academic Guide">Academic Guide</option>
             <option value="Research Mentor">Research Mentor</option>
             <option value="Industry Expert">Industry Expert</option>
             <option value="Life Coach">Life Coach</option>
+            <option value="Product Strategy">Product Strategy</option>
+            <option value="Software Architecture">Software Architecture</option>
           </select>
           <select
             value={`${appSortBy}-${appSortOrder}`}
@@ -446,20 +453,21 @@ export const ApplicationsTab: React.FC<ApplicationsTabProps> = ({
           >
             <option value="created_at-desc">Newest First</option>
             <option value="created_at-asc">Oldest First</option>
-            <option value="email-asc">Email A-Z</option>
-            <option value="email-desc">Email Z-A</option>
+            <option value="full_name-asc">Alphabetical (A-Z)</option>
+            <option value="full_name-desc">Alphabetical (Z-A)</option>
+            <option value="updated_at-desc">Recently Updated</option>
           </select>
         </div>
 
         <div className="space-y-4">
-          {applications.length === 0 ? (
+          {filteredAppsForTab.length === 0 ? (
             <div className="text-center py-16">
               <FileText size={40} className="mx-auto text-slate-300 mb-4" />
               <p className="text-sm font-bold text-slate-400 uppercase tracking-wider">No applications found</p>
-              <p className="text-xs text-slate-400 mt-1">Applications will appear here when students submit them.</p>
+              <p className="text-xs text-slate-400 mt-1">Try adjusting your filters or search criteria.</p>
             </div>
           ) : (
-            applications.map((app) => (
+            filteredAppsForTab.map((app) => (
               <ApplicationCard
                 key={app.id}
                 app={app}

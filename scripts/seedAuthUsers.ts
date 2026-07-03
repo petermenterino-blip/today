@@ -36,7 +36,8 @@ async function seedAuthUsers() {
 
   for (const user of SEED_USERS) {
     const { data: existingList } = await supabase.auth.admin.listUsers();
-    const existing = existingList?.users?.find(u => u.email === user.email);
+    const existingUsers = existingList?.users ?? [];
+    const existing = existingUsers.find((u: any) => u?.email === user.email);
     if (existing) {
       console.log(`  Skipping ${user.email} (already exists)`);
       continue;

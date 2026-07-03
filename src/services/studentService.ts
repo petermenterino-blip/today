@@ -17,6 +17,9 @@ function fromDbProfile(row: any): StudentProfile {
     notes: row.notes || '',
     growth_score: row.growth_score || 0,
     metrics: row.metrics || { attendanceRate: 0, goalCompletionRate: 0, activityLevel: 0 },
+    mentor_id: row.mentor_id || '',
+    specialization: row.specialization || row.focus_area || '',
+    current_status: row.current_status || row.status || 'active',
   };
 }
 

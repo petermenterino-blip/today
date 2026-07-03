@@ -10,6 +10,9 @@ export interface StudentProfile {
   privateNotes?: string; // Mentor private notes
   notes?: string; // General notes
   growth_score?: number;
+  mentor_id?: string;
+  specialization?: string;
+  current_status?: string;
   metrics: {
     attendanceRate: number;
     goalCompletionRate: number;

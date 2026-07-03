@@ -59,6 +59,7 @@ function rowToApplication(row: any): Application {
       message_to_mentor: extras.message_to_mentor || '',
       status: mappedStatus,
       created_at: row.created_at,
+      updated_at: row.updated_at,
       mentor_type: row.discipline,
       phone: row.phone_number,
       meeting_preference: extras.meeting_preference || 'Virtual',

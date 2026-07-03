@@ -17,7 +17,7 @@ const StudentSessions: React.FC<StudentSessionsProps> = ({ studentId }) => {
   const handleJoinSession = (session: any) => {
     setNotification(`Joining session with Peter Mannarino...\nDate: ${new Date(session.startTime).toLocaleDateString()}\n\nRedirecting to secure video link.`);
     setTimeout(() => {
-      window.open(session.meetingLink || 'https://meet.google.com/new', '_blank');
+      window.open(session.meetingUrl || 'https://meet.google.com/new', '_blank');
       setNotification(null);
     }, 2000);
   };

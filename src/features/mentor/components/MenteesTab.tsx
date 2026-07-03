@@ -5,13 +5,18 @@ import {
   Activity, TrendingUp, Video, Globe, CalendarDays, ClipboardList,
   Plus, CheckCircle2, XCircle, Clock, X, FileSearch, MoreVertical,
   Trash, FileText, Zap, ExternalLink, Layout, Tag, History, File,
-  CheckCircle, Sparkles as SparkleIcon, Eye, Award, Target, Edit2
+  CheckCircle, Sparkles as SparkleIcon, Eye, Award, Target, Edit2,
+  Send, AlertTriangle
 } from 'lucide-react';
 import { tagService } from '../../../services/tagService';
 import { customFormService } from '../../../services/customFormService';
+import { sharedFilesService } from '../../../services/sharedFilesService';
+import { timelineService } from '../../../services/timelineService';
 import { notifySuccess, notifyError } from '../../../utils/toast';
 import type { StudentTag, TaskActivity, StudentProfile, CustomForm, FormSubmission } from '../../../types';
 import type { Goal } from '../../../interfaces';
+import type { TimelineEvent } from '../../../services/timelineService';
+import type { SharedFileRecord } from '../../../services/sharedFilesService';
 import FormBuilderModal from './FormBuilderModal';
 import IssueCredentialModal from './IssueCredentialModal';
 
@@ -109,6 +114,22 @@ export const MenteesTab: React.FC<MenteesTabProps> = ({
   const [formsLoading, setFormsLoading] = useState(false);
   const [selectedFormSubmissions, setSelectedFormSubmissions] = useState<FormSubmission[] | null>(null);
   const [showCredentialModal, setShowCredentialModal] = useState(false);
+  const [sharedFiles, setSharedFiles] = useState<SharedFileRecord[]>([]);
+  const [filesLoading, setFilesLoading] = useState(false);
+  const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([]);
+  const [timelineLoading, setTimelineLoading] = useState(false);
+  const [timelineFilter, setTimelineFilter] = useState<string>('all');
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [renamingFileId, setRenamingFileId] = useState<string | null>(null);
+  const [renamingFileName, setRenamingFileName] = useState('');
+  const [fileSearchQuery, setFileSearchQuery] = useState('');
+  const [taskSearchQuery, setTaskSearchQuery] = useState('');
+  const [goalSearchQuery, setGoalSearchQuery] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState<{ type: string; id: string; label: string } | null>(null);
+  const [sendingFormId, setSendingFormId] = useState<string | null>(null);
+  const [editingTagId, setEditingTagId] = useState<string | null>(null);
+  const [editingTagLabel, setEditingTagLabel] = useState('');
+  const [editingTagColor, setEditingTagColor] = useState('');
 
   useEffect(() => {
     setFormsLoading(true);
@@ -117,6 +138,24 @@ export const MenteesTab: React.FC<MenteesTabProps> = ({
       .catch(() => {})
       .finally(() => setFormsLoading(false));
   }, [isCreatingForm]);
+
+  useEffect(() => {
+    if (!selectedMenteeId || menteeSubTab !== 'files') return;
+    setFilesLoading(true);
+    sharedFilesService.getByUserId(selectedMenteeId)
+      .then(setSharedFiles)
+      .catch(() => {})
+      .finally(() => setFilesLoading(false));
+  }, [selectedMenteeId, menteeSubTab]);
+
+  useEffect(() => {
+    if (!selectedMenteeId || menteeSubTab !== 'history') return;
+    setTimelineLoading(true);
+    timelineService.getByStudentId(selectedMenteeId)
+      .then(setTimelineEvents)
+      .catch(() => {})
+      .finally(() => setTimelineLoading(false));
+  }, [selectedMenteeId, menteeSubTab]);
 
   const refreshForms = () => {
     customFormService.getAllForms()
@@ -129,6 +168,144 @@ export const MenteesTab: React.FC<MenteesTabProps> = ({
       .then(s => setSelectedFormSubmissions(s as any))
       .catch(() => notifyError('Failed to load submissions'));
   };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.[0] || !selectedMenteeId) return;
+    setUploadingFile(true);
+    try {
+      await sharedFilesService.upload(selectedMenteeId, e.target.files[0]);
+      notifySuccess('File uploaded successfully');
+      const files = await sharedFilesService.getByUserId(selectedMenteeId);
+      setSharedFiles(files);
+    } catch (err: any) {
+      notifyError(err?.message || 'Failed to upload file');
+    } finally {
+      setUploadingFile(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleFileDownload = async (file: SharedFileRecord) => {
+    try {
+      const url = await sharedFilesService.getDownloadUrl(file.storage_path, file.name);
+      window.open(url, '_blank');
+    } catch {
+      notifyError('Failed to download file');
+    }
+  };
+
+  const handleFileRename = async (id: string) => {
+    if (!renamingFileName.trim()) return;
+    try {
+      await sharedFilesService.rename(id, renamingFileName.trim());
+      notifySuccess('File renamed');
+      setSharedFiles(prev => prev.map(f => f.id === id ? { ...f, name: renamingFileName.trim() } : f));
+      setRenamingFileId(null);
+      setRenamingFileName('');
+    } catch (err: any) {
+      notifyError(err?.message || 'Failed to rename file');
+    }
+  };
+
+  const handleFileDelete = async (file: SharedFileRecord) => {
+    try {
+      await sharedFilesService.delete(file.id, file.storage_path);
+      notifySuccess('File deleted');
+      setSharedFiles(prev => prev.filter(f => f.id !== file.id));
+    } catch {
+      notifyError('Failed to delete file');
+    }
+    setDeleteConfirm(null);
+  };
+
+  const handleEditTagSave = async (tagId: string) => {
+    if (!editingTagLabel.trim()) return;
+    try {
+      await tagService.update(tagId, { label: editingTagLabel.trim(), color: editingTagColor });
+      setAllTags(prev => prev.map(t => t.id === tagId ? { ...t, label: editingTagLabel.trim(), color: editingTagColor } : t));
+      notifySuccess('Tag updated');
+      setEditingTagId(null);
+    } catch {
+      notifyError('Failed to update tag');
+    }
+  };
+
+  const handleDeleteTag = async (tagId: string) => {
+    try {
+      await tagService.delete(tagId);
+      setAllTags(prev => prev.filter(t => t.id !== tagId));
+      notifySuccess('Tag deleted');
+    } catch {
+      notifyError('Failed to delete tag');
+    }
+    setDeleteConfirm(null);
+  };
+
+  const handleSendFormToStudent = async (formId: string) => {
+    if (!selectedMenteeId) return;
+    setSendingFormId(formId);
+    try {
+      const form = formsList.find(f => f.id === formId);
+      if (!form) return;
+      const assigned = form.assigned_to || [];
+      if (!assigned.includes(selectedMenteeId)) {
+        await customFormService.updateForm(formId, {
+          assigned_to: [...assigned, selectedMenteeId],
+        });
+      }
+      notifySuccess('Form sent to student');
+      refreshForms();
+    } catch {
+      notifyError('Failed to send form');
+    } finally {
+      setSendingFormId(null);
+    }
+  };
+
+  const filteredSharedFiles = sharedFiles.filter(f =>
+    !fileSearchQuery || f.name.toLowerCase().includes(fileSearchQuery.toLowerCase())
+  );
+
+  const filteredTimelineEvents = timelineEvents.filter(e =>
+    timelineFilter === 'all' || e.type === timelineFilter
+  );
+
+  const getTimelineIcon = (type: string) => {
+    switch (type) {
+      case 'application_submitted': return CheckCircle2;
+      case 'application_approved': return CheckCircle;
+      case 'program_assigned': return Layout;
+      case 'goal_created': return Target;
+      case 'goal_completed': return Award;
+      case 'task_assigned': return ClipboardList;
+      case 'task_completed': return CheckCircle2;
+      case 'form_submitted': return FileText;
+      case 'session_completed': return Video;
+      case 'file_shared': return File;
+      case 'milestone_achieved': return SparkleIcon;
+      case 'mentor_note': return Edit2;
+      default: return Activity;
+    }
+  };
+
+  const getTimelineColor = (type: string) => {
+    switch (type) {
+      case 'application_submitted': return 'bg-indigo-500';
+      case 'application_approved': return 'bg-emerald-500';
+      case 'program_assigned': return 'bg-blue-500';
+      case 'goal_created': return 'bg-amber-500';
+      case 'goal_completed': return 'bg-emerald-500';
+      case 'task_assigned': return 'bg-amber-500';
+      case 'task_completed': return 'bg-emerald-500';
+      case 'form_submitted': return 'bg-purple-500';
+      case 'session_completed': return 'bg-indigo-500';
+      case 'file_shared': return 'bg-cyan-500';
+      case 'milestone_achieved': return 'bg-amber-500';
+      case 'mentor_note': return 'bg-slate-500';
+      default: return 'bg-slate-400';
+    }
+  };
+
   return (
     <div className="space-y-6">
       {!selectedMenteeId ? (
@@ -641,43 +818,101 @@ export const MenteesTab: React.FC<MenteesTabProps> = ({
                     {/* FILES SUBTAB */}
                     {menteeSubTab === 'files' && (
                       <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm space-y-8">
-                        <div className="flex justify-between items-center">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                           <div>
                             <h3 className="text-xl font-black uppercase tracking-tighter">Shared Assets</h3>
                             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Direct file sharing vault</p>
                           </div>
-                          <button className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20">
-                            <Plus size={14} /> Upload to Vault
-                          </button>
+                          <div className="flex items-center gap-3">
+                            <div className="relative flex-1 md:w-56">
+                              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                              <input
+                                type="text"
+                                placeholder="Search files..."
+                                className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-100 rounded-xl text-xs font-medium outline-none focus:border-indigo-500 transition-all"
+                                value={fileSearchQuery}
+                                onChange={e => setFileSearchQuery(e.target.value)}
+                              />
+                            </div>
+                            <label className={`flex items-center gap-2 px-5 py-2.5 ${uploadingFile ? 'bg-slate-400' : 'bg-indigo-600 hover:bg-indigo-700'} text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-500/20 cursor-pointer`}>
+                              {uploadingFile ? (
+                                <><div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" /> Uploading...</>
+                              ) : (
+                                <><Plus size={14} /> Upload to Vault</>
+                              )}
+                              <input type="file" className="hidden" onChange={handleFileUpload} disabled={uploadingFile} accept=".pdf,.docx,.pptx,.png,.jpg,.jpeg,.gif,.zip" />
+                            </label>
+                          </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {[
-                            { name: 'Roadmap_Final.pdf', type: 'PDF', size: '2.4 MB', date: 'Oct 12' },
-                            { name: 'Resume_Review.docx', type: 'DOC', size: '1.1 MB', date: 'Oct 05' },
-                            { name: 'Portfolio_Inspiration.png', type: 'IMG', size: '4.8 MB', date: 'Sep 28' },
-                          ].map((file, i) => (
-                            <div key={i} className="p-5 bg-slate-50 border border-slate-100 rounded-[24px] group hover:bg-indigo-50/30 hover:border-indigo-100 transition-all">
-                              <div className="flex items-start justify-between mb-4">
-                                <div className="p-3 bg-white rounded-xl shadow-sm">
-                                  <FileSearch size={24} className="text-indigo-600" />
+                        {filesLoading ? (
+                          <div className="flex items-center justify-center py-12">
+                            <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                          </div>
+                        ) : filteredSharedFiles.length === 0 ? (
+                          <div className="py-16 text-center bg-slate-50 border border-dashed border-slate-200 rounded-[32px]">
+                            <FileSearch size={40} className="mx-auto text-slate-200 mb-4" />
+                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                              {fileSearchQuery ? 'No files match your search.' : 'No files shared yet. Upload your first file.'}
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {filteredSharedFiles.map(file => (
+                              <div key={file.id} className="p-5 bg-slate-50 border border-slate-100 rounded-[24px] group hover:bg-indigo-50/30 hover:border-indigo-100 transition-all">
+                                <div className="flex items-start justify-between mb-4">
+                                  <div className="p-3 bg-white rounded-xl shadow-sm">
+                                    <FileSearch size={24} className="text-indigo-600" />
+                                  </div>
+                                  <div className="relative">
+                                    <button
+                                      onClick={() => {
+                                        setRenamingFileId(renamingFileId === file.id ? null : file.id);
+                                        setRenamingFileName(file.name);
+                                      }}
+                                      className="text-slate-300 hover:text-black p-1"
+                                    >
+                                      <MoreVertical size={16} />
+                                    </button>
+                                  </div>
                                 </div>
-                                <button className="text-slate-300 hover:text-black">
-                                  <MoreVertical size={16} />
-                                </button>
+                                {renamingFileId === file.id ? (
+                                  <div className="space-y-2">
+                                    <input
+                                      type="text"
+                                      value={renamingFileName}
+                                      onChange={e => setRenamingFileName(e.target.value)}
+                                      className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-indigo-500"
+                                      autoFocus
+                                      onKeyDown={e => { if (e.key === 'Enter') handleFileRename(file.id); if (e.key === 'Escape') setRenamingFileId(null); }}
+                                    />
+                                    <div className="flex gap-1">
+                                      <button onClick={() => handleFileRename(file.id)} className="px-3 py-1 bg-black text-white rounded-lg text-[8px] font-black uppercase tracking-widest">Save</button>
+                                      <button onClick={() => setRenamingFileId(null)} className="px-3 py-1 bg-slate-200 text-slate-600 rounded-lg text-[8px] font-black uppercase tracking-widest">Cancel</button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <p className="font-bold text-sm truncate mb-1">{file.name}</p>
+                                    <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-widest text-slate-400">
+                                      <span>{file.type}</span>
+                                      <span>{new Date(file.shared_at).toLocaleDateString()}</span>
+                                    </div>
+                                    <div className="mt-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <button onClick={() => handleFileDownload(file)} className="flex-1 py-2 bg-indigo-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all">Download</button>
+                                      <button
+                                        onClick={() => setDeleteConfirm({ type: 'file', id: file.id, label: file.name })}
+                                        className="p-2 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-red-500 hover:border-red-200 transition-all"
+                                      >
+                                        <Trash size={12} />
+                                      </button>
+                                    </div>
+                                  </>
+                                )}
                               </div>
-                              <p className="font-bold text-sm truncate mb-1">{file.name}</p>
-                              <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-widest text-slate-400">
-                                <span>{file.type} &bull; {file.size}</span>
-                                <span>{file.date}</span>
-                              </div>
-                              <div className="mt-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button className="flex-1 py-2 bg-indigo-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest">Download</button>
-                                <button className="p-2 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-red-500" aria-label="Delete file"><Trash size={12} /></button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -765,9 +1000,22 @@ export const MenteesTab: React.FC<MenteesTabProps> = ({
                                         <Eye size={12} /> View
                                       </button>
                                     ) : (
-                                      <span className="px-5 py-2 bg-slate-200 text-slate-500 rounded-full text-[9px] font-black uppercase tracking-widest">
-                                        Awaiting
-                                      </span>
+                                      <div className="flex items-center gap-2">
+                                        <span className="px-5 py-2 bg-slate-200 text-slate-500 rounded-full text-[9px] font-black uppercase tracking-widest">
+                                          Awaiting
+                                        </span>
+                                        <button
+                                          onClick={() => handleSendFormToStudent(form.id)}
+                                          disabled={sendingFormId === form.id}
+                                          className="px-4 py-2 bg-indigo-600 text-white rounded-full text-[9px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all disabled:opacity-50 flex items-center gap-1"
+                                        >
+                                          {sendingFormId === form.id ? (
+                                            <><div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" /> Sending...</>
+                                          ) : (
+                                            <><Send size={11} /> Send to Student</>
+                                          )}
+                                        </button>
+                                      </div>
                                     )}
                                   </div>
                                 </div>
@@ -795,27 +1043,72 @@ export const MenteesTab: React.FC<MenteesTabProps> = ({
 
                     {/* HISTORY/GROWTH LOG SUBTAB */}
                     {menteeSubTab === 'history' && (
-                      <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm space-y-8">
-                        <h3 className="text-xl font-black uppercase tracking-tighter">Student Growth Journey</h3>
-                        <div className="relative pl-8 space-y-8 before:content-[''] before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-100">
-                          {[
-                            { title: 'Program Registration', desc: 'Officially accepted and registered for UX Career Jumpstart', date: 'Sep 15', icon: CheckCircle2, color: 'bg-emerald-500' },
-                            { title: 'First Task Completed', desc: 'Finished Portfolio Information Architecture mapping', date: 'Sep 22', icon: Zap, color: 'bg-amber-500' },
-                            { title: 'Intake Assessment', desc: 'Completed initial skills assessment with high visual design aptitude', date: 'Sep 28', icon: FileText, color: 'bg-indigo-500' },
-                            { title: 'Major Milestone', desc: 'Responded to case study feedback with advanced iterations', date: 'Oct 05', icon: SparkleIcon, color: 'bg-purple-500' },
-                          ].map((log, i) => (
-                            <div key={i} className="relative">
-                              <div className={`absolute -left-[30px] top-1 w-5 h-5 rounded-full border-4 border-white shadow-sm z-10 ${log.color}`}></div>
-                              <div className="space-y-1">
-                                <div className="flex items-center gap-2">
-                                  <p className="font-black text-sm uppercase tracking-tight">{log.title}</p>
-                                  <span className="text-[10px] font-bold text-slate-300">{log.date}</span>
-                                </div>
-                                <p className="text-sm text-slate-500 leading-relaxed max-w-xl">{log.desc}</p>
-                              </div>
-                            </div>
-                          ))}
+                      <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                          <div>
+                            <h3 className="text-xl font-black uppercase tracking-tighter">Growth Log</h3>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Timeline of progress & milestones</p>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {['all', 'goal_created', 'goal_completed', 'session_completed', 'form_submitted', 'file_shared', 'mentor_note'].map(f => (
+                              <button
+                                key={f}
+                                onClick={() => setTimelineFilter(f)}
+                                className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
+                                  timelineFilter === f
+                                    ? 'bg-indigo-600 text-white shadow-sm'
+                                    : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
+                                }`}
+                              >
+                                {f === 'all' ? 'All' : f.replace(/_/g, ' ')}
+                              </button>
+                            ))}
+                          </div>
                         </div>
+
+                        {timelineLoading ? (
+                          <div className="flex items-center justify-center py-12">
+                            <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                          </div>
+                        ) : filteredTimelineEvents.length === 0 ? (
+                          <div className="py-16 text-center bg-slate-50 border border-dashed border-slate-200 rounded-[32px]">
+                            <Clock size={40} className="mx-auto text-slate-200 mb-4" />
+                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                              {timelineFilter !== 'all' ? 'No events of this type yet.' : 'No timeline events yet.'}
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="relative pl-8 border-l-2 border-slate-200 space-y-10">
+                            {filteredTimelineEvents.map((event) => {
+                              const Icon = getTimelineIcon(event.type);
+                              return (
+                                <div key={event.id} className="relative">
+                                  <div className={`absolute -left-[calc(1rem+5px)] top-0 w-4 h-4 rounded-full ${getTimelineColor(event.type)} border-4 border-white shadow-sm flex items-center justify-center`} />
+                                  <div className="flex items-start gap-4">
+                                    <div className="flex-1">
+                                      <p className="text-[9px] font-black uppercase tracking-widest text-indigo-600 mb-1">
+                                        {new Date(event.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                      </p>
+                                      <p className="font-bold mb-0.5">{event.title}</p>
+                                      {event.description && (
+                                        <p className="text-xs text-slate-500">{event.description}</p>
+                                      )}
+                                      {event.metadata && Object.keys(event.metadata).length > 0 && (
+                                        <div className="mt-2 flex flex-wrap gap-1.5">
+                                          {Object.entries(event.metadata).map(([k, v]) => (
+                                            <span key={k} className="px-2 py-0.5 bg-slate-100 rounded-lg text-[8px] font-semibold uppercase tracking-widest text-slate-500">
+                                              {k.replace(/_/g, ' ')}: {String(v)}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -904,24 +1197,52 @@ export const MenteesTab: React.FC<MenteesTabProps> = ({
                   ))}
                 </div>
               </div>
-              <div className="space-y-4">
+                <div className="space-y-4">
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2">Library Tags ({allTags.length})</p>
                 <div className="grid grid-cols-1 gap-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                  {allTags.map(tag => (
-                    <div key={tag.id} className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl group hover:border-slate-300 transition-all">
-                      <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${tag.color}`}>{tag.label}</span>
-                      <button
-                        onClick={() => {
-                          tagService.delete(tag.id);
-                          setAllTags(prev => prev.filter(t => t.id !== tag.id));
-                          notifySuccess('Tag removed from library');
-                        }}
-                        className="w-8 h-8 flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-rose-50 rounded-full transition-all opacity-0 group-hover:opacity-100"
-                      >
-                        <Trash size={14} />
-                      </button>
-                    </div>
-                  ))}
+                  {allTags.map(tag => {
+                    const editing = editingTagId === tag.id;
+                    return (
+                      <div key={tag.id} className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl group hover:border-slate-300 transition-all">
+                        {editing ? (
+                          <div className="flex-1 space-y-2">
+                            <input
+                              type="text"
+                              value={editingTagLabel}
+                              onChange={e => setEditingTagLabel(e.target.value)}
+                              className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-black"
+                              autoFocus
+                              onKeyDown={e => { if (e.key === 'Enter') handleEditTagSave(tag.id); if (e.key === 'Escape') setEditingTagId(null); }}
+                            />
+                            <div className="flex items-center gap-2">
+                              {['bg-blue-100 text-blue-700', 'bg-emerald-100 text-emerald-700', 'bg-amber-100 text-amber-700', 'bg-indigo-100 text-indigo-700', 'bg-purple-100 text-purple-700', 'bg-rose-100 text-rose-700', 'bg-slate-100 text-slate-700'].map(color => (
+                                <button key={color} onClick={() => setEditingTagColor(color)} className={`w-5 h-5 rounded-full transition-all border-2 ${color} ${editingTagColor === color ? 'border-black scale-110' : 'border-transparent opacity-50 hover:opacity-100'}`} />
+                              ))}
+                            </div>
+                            <div className="flex gap-1">
+                              <button onClick={() => handleEditTagSave(tag.id)} className="px-3 py-1 bg-black text-white rounded-lg text-[8px] font-black uppercase tracking-widest">Save</button>
+                              <button onClick={() => setEditingTagId(null)} className="px-3 py-1 bg-slate-200 text-slate-600 rounded-lg text-[8px] font-black uppercase tracking-widest">Cancel</button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${tag.color}`}>{tag.label}</span>
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                              <button onClick={() => { setEditingTagId(tag.id); setEditingTagLabel(tag.label); setEditingTagColor(tag.color); }} className="w-8 h-8 flex items-center justify-center text-slate-300 hover:text-indigo-500 hover:bg-indigo-50 rounded-full transition-all">
+                                <Edit2 size={12} />
+                              </button>
+                              <button
+                                onClick={() => setDeleteConfirm({ type: 'tag', id: tag.id, label: tag.label })}
+                                className="w-8 h-8 flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-rose-50 rounded-full transition-all"
+                              >
+                                <Trash size={14} />
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
                   {allTags.length === 0 && (
                     <p className="text-center py-8 text-[10px] font-bold text-slate-300 uppercase tracking-widest">No tags in library.</p>
                   )}
@@ -931,6 +1252,50 @@ export const MenteesTab: React.FC<MenteesTabProps> = ({
           </motion.div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-300">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="bg-white rounded-[32px] max-w-sm w-full p-8 shadow-2xl text-center"
+          >
+            <div className="w-14 h-14 mx-auto mb-4 bg-red-50 rounded-full flex items-center justify-center">
+              <AlertTriangle size={28} className="text-red-500" />
+            </div>
+            <h3 className="text-xl font-black uppercase tracking-tighter mb-2">Confirm Delete</h3>
+            <p className="text-sm text-slate-500 mb-6">
+              {deleteConfirm.type === 'file'
+                ? `Are you sure you want to delete "${deleteConfirm.label}"? This action cannot be undone.`
+                : `Delete tag "${deleteConfirm.label}"? It will be removed from all students.`
+              }
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="flex-1 py-3 bg-white border border-slate-200 text-slate-600 text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-slate-50 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (deleteConfirm.type === 'file') {
+                    const file = sharedFiles.find(f => f.id === deleteConfirm.id);
+                    if (file) handleFileDelete(file);
+                  } else if (deleteConfirm.type === 'tag') {
+                    handleDeleteTag(deleteConfirm.id);
+                  }
+                }}
+                className="flex-1 py-3 bg-red-600 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-red-700 transition-all shadow-lg shadow-red-500/20"
+              >
+                Delete
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
     </div>
   );
 };

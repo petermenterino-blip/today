@@ -48,6 +48,7 @@ export interface Application {
   message_to_mentor?: string;
   status: 'pending' | 'approved' | 'rejected' | 'invited';
   created_at: string;
+  updated_at?: string;
   mentor_type?: string;
   phone?: string;
   meeting_preference?: 'Virtual' | 'In-Person' | 'Hybrid';

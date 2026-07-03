@@ -202,6 +202,7 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
           handleApplicationAction={d.handleApplicationAction}
           refreshApps={d.refreshApps}
           updateAppStatus={d.updateAppStatus}
+          filteredAppsForTab={d.filteredAppsForTab}
         />
       )}
 

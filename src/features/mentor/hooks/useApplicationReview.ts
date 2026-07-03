@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useApplications } from '../../../hooks/useApplications';
 import { applicationService } from '../../../services/applicationService';
 import { notifySuccess, notifyError } from '../../../utils/toast';
@@ -10,7 +10,7 @@ export function useApplicationReview(currentUser: User | null) {
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
 
   const [appSearch, setAppSearch] = useState('');
-  const [appStatus, setAppStatus] = useState('pending_review');
+  const [appStatus, setAppStatus] = useState('');
   const [appDiscipline, setAppDiscipline] = useState('');
   const [appSortBy, setAppSortBy] = useState('created_at');
   const [appSortOrder, setAppSortOrder] = useState('desc');
@@ -27,25 +27,50 @@ export function useApplicationReview(currentUser: User | null) {
   const [isRequestingInfo, setIsRequestingInfo] = useState(false);
 
   const [isRejecting, setIsRejecting] = useState(false);
-  const [rejectionReason, setRejectionReason] = useState('Application declined after assessment.');
+  const [rejectionReason, setRejectionReason] = useState('');
   const [rejectionFeedback, setRejectionFeedback] = useState('');
 
   const pendingApplications = applications.filter(app => app.status === 'pending');
-  const filteredAppsForTab = applications;
 
-  useEffect(() => {
-    if (selectedApplication) {
-      refreshApps({
-        search: appSearch,
-        status: appStatus,
-        discipline: appDiscipline,
-        sortBy: appSortBy,
-        sortOrder: appSortOrder,
-        page: appPage,
-        limit: appLimit
-      });
+  const filteredAppsForTab = useMemo(() => {
+    let result = [...applications];
+
+    if (appSearch) {
+      const q = appSearch.toLowerCase();
+      result = result.filter(app =>
+        app.full_name.toLowerCase().includes(q) ||
+        app.user_email.toLowerCase().includes(q) ||
+        (app.phone && app.phone.toLowerCase().includes(q))
+      );
     }
-  }, [appSearch, appStatus, appDiscipline, appSortBy, appSortOrder, appPage, appLimit, refreshApps]);
+
+    if (appStatus) {
+      result = result.filter(app => app.status === appStatus);
+    }
+
+    if (appDiscipline) {
+      result = result.filter(app =>
+        app.focus_area === appDiscipline || app.mentor_type === appDiscipline
+      );
+    }
+
+    result.sort((a, b) => {
+      const dir = appSortOrder === 'asc' ? 1 : -1;
+      if (appSortBy === 'full_name') {
+        return dir * a.full_name.localeCompare(b.full_name);
+      }
+      if (appSortBy === 'updated_at') {
+        const aDate = a.updated_at ? new Date(a.updated_at).getTime() : 0;
+        const bDate = b.updated_at ? new Date(b.updated_at).getTime() : 0;
+        return dir * (aDate - bDate);
+      }
+      const aDate = new Date(a.created_at).getTime();
+      const bDate = new Date(b.created_at).getTime();
+      return dir * (aDate - bDate);
+    });
+
+    return result;
+  }, [applications, appSearch, appStatus, appDiscipline, appSortBy, appSortOrder]);
 
   const loadApplicationDetails = useCallback(async (appId: string) => {
     setDetailsLoading(true);
@@ -79,15 +104,11 @@ export function useApplicationReview(currentUser: User | null) {
         notifySuccess("Application rejected and email notification sent.");
       }
 
-      refreshApps({
-        search: appSearch,
-        status: appStatus,
-        discipline: appDiscipline,
-        sortBy: appSortBy,
-        sortOrder: appSortOrder,
-        page: appPage,
-        limit: appLimit
-      });
+      setRejectionReason('');
+      setRejectionFeedback('');
+      setIsRejecting(false);
+      setSelectedApplication(null);
+      await refreshApps();
     } catch (err: any) {
       notifyError(err.message || 'Failed to update application');
     }

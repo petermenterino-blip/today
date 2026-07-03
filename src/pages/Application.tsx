@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { applicationService } from '../services/applicationService';
+import { useAuth } from '../context/AuthContext';
 import { notifyError, notifySuccess } from '../utils/toast';
 
 const COUNTRY_CODES = [
@@ -35,6 +36,7 @@ const COUNTRY_CODES = [
 
 const ApplicationPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -68,12 +70,18 @@ const ApplicationPage: React.FC = () => {
   const handleFileSelect = async (file: File) => {
     setUploadingResume(true);
     try {
-      const { data, error } = await applicationService.uploadDocument(file);
+      const userId = user?.id ?? undefined;
+      const { data, error } = await applicationService.uploadDocument(file, userId);
       if (error) throw new Error(error);
       setResumeUrl(data);
       notifySuccess("Document uploaded successfully!");
     } catch (err: any) {
-      notifyError(err.message || "Failed to upload document");
+      const msg = err.message || "Failed to upload document";
+      if (msg.includes("permission") || msg.includes("row-level security")) {
+        notifyError("Unable to upload file as a visitor. Please check the file or contact support.");
+      } else {
+        notifyError(msg);
+      }
     } finally {
       setUploadingResume(false);
     }
