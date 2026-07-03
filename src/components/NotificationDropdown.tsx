@@ -4,21 +4,54 @@ import { Bell, CheckCheck, Trash, X, Loader2 } from 'lucide-react';
 import { useNotifications } from '../hooks/useNotifications';
 import { Notification as NotificationType } from '../interfaces';
 
+const DROPDOWN_WIDTH = 320;
+const VIEWPORT_MARGIN = 12;
+
 const NotificationDropdown: React.FC = () => {
   const { notifications, loading, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [panelStyle, setPanelStyle] = useState<React.CSSProperties>({});
+
+  const updatePosition = () => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const spaceRight = window.innerWidth - rect.left - VIEWPORT_MARGIN;
+    const spaceLeft = rect.right - VIEWPORT_MARGIN;
+
+    if (spaceRight >= DROPDOWN_WIDTH) {
+      setPanelStyle({ left: '0', right: 'auto' });
+    } else if (spaceLeft >= DROPDOWN_WIDTH) {
+      setPanelStyle({ left: 'auto', right: '0' });
+    } else {
+      setPanelStyle({ left: '0', right: 'auto' });
+    }
+  };
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
+  useEffect(() => {
+    if (!open) {
+      setPanelStyle({});
+      return;
+    }
+
+    const raf = requestAnimationFrame(updatePosition);
+    window.addEventListener('resize', updatePosition);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', updatePosition);
+    };
+  }, [open]);
+
   return (
-    <div ref={ref} className="relative">
+    <div ref={containerRef} className="relative">
       <button
         onClick={() => setOpen(!open)}
         className="relative p-2 rounded-full hover:bg-slate-100 transition-colors"
@@ -39,7 +72,8 @@ const NotificationDropdown: React.FC = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 mt-2 w-80 max-h-96 bg-white rounded-[24px] shadow-xl border border-slate-100 overflow-hidden z-50"
+            className="absolute mt-2 w-80 max-h-96 bg-white rounded-[24px] shadow-xl border border-slate-100 overflow-hidden z-50"
+            style={panelStyle}
           >
             <div className="flex items-center justify-between p-4 border-b border-slate-100">
               <h3 className="text-xs font-black uppercase tracking-widest text-slate-900">Notifications</h3>
