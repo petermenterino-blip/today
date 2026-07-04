@@ -76,8 +76,9 @@ export const profileService = {
 
   async uploadAvatar(userId: string, file: File): Promise<ServiceResponse<string>> {
     try {
-      const url = await storageService.uploadAvatar(userId, file);
-      return { data: url, error: null };
+      const path = await storageService.uploadAvatar(userId, file);
+      const { data: { publicUrl } } = storageService.getPublicUrl('profile-avatars', path);
+      return { data: publicUrl, error: null };
     } catch (err: any) {
       return { data: null, error: err.message };
     }

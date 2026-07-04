@@ -15,6 +15,10 @@ export const QK = {
   studentList: 'studentList',
   tasks: 'tasks',
   transactions: 'transactions',
+  visitorBookings: 'visitorBookings',
+  gallery: 'gallery',
+  socialLinks: 'socialLinks',
+  websiteSettings: 'websiteSettings',
 } as const;
 
 export const STALE_TIMES = {

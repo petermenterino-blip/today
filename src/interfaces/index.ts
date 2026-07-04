@@ -7,3 +7,4 @@ export * from './student.interface';
 export * from './notification.interface';
 export * from './settings.interface';
 export * from './review.interface';
+export * from './gallery.interface';

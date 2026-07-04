@@ -1,145 +1,38 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus, X, Calendar, MapPin, Sparkles, Trash2, Image as ImageIcon, Edit2, ExternalLink, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { useGallery } from '../../hooks/useGallery';
+import { GalleryItem, GalleryCategory } from '../../interfaces/gallery.interface';
+import { galleryService } from '../../services/galleryService';
 import { notifySuccess, notifyError } from '../../utils/toast';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 
-interface GalleryItem {
-  id: string;
-  title: string;
-  image: string;
-  category: 'Careers' | 'Academic' | 'Ceremonies' | 'Virtual';
-  date: string;
-  location: string;
-  description: string;
-}
-
-const DEFAULT_GALLERY: GalleryItem[] = [
-  {
-    id: 'g-1',
-    title: "Career Counselling Session",
-    image: "/images/event-1.jpeg",
-    category: "Careers",
-    date: "May 2026",
-    location: "Hoboken Tech Labs",
-    description: "One-on-one career counselling sessions guiding students through certification pathways, resume strategy, and professional growth planning."
-  },
-  {
-    id: 'g-4',
-    title: "Student Professional Presence Event",
-    image: "/images/event-4.jpg",
-    category: "Academic",
-    date: "March 2026",
-    location: "Jersey City Incubator",
-    description: "Former alumni serving as Lead Security Operations managers and Cloud Architects shared raw career advice."
-  }
-];
-
-const PRESET_IMAGES = [
-  "/images/event-1.jpeg",
-  "/images/event-2.jpeg",
-  "/images/event-3.jpeg",
-  "/images/event-4.jpg",
-];
-
-const UPLOADED_IMAGES_KEY = 'gallery_uploaded_images';
-const HIDDEN_PRESETS_KEY = 'gallery_hidden_presets';
-
 const GalleryManagement: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [items, setItems] = useState<GalleryItem[]>([]);
+  const { items, loading, addItem, updateItem, deleteItem } = useGallery();
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<GalleryItem | null>(null);
 
   const [newTitle, setNewTitle] = useState('');
-  const [newCategory, setNewCategory] = useState<GalleryItem['category']>('Careers');
+  const [newCategory, setNewCategory] = useState<GalleryCategory>('Careers');
   const [newDate, setNewDate] = useState('');
   const [newLocation, setNewLocation] = useState('');
   const [newDesc, setNewDesc] = useState('');
-  const [newImage, setNewImage] = useState(PRESET_IMAGES[0]);
-  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [newImage, setNewImage] = useState('');
   const [uploading, setUploading] = useState(false);
-  const [hiddenPresets, setHiddenPresets] = useState<number[]>([]);
-  const [confirmDeleteUpload, setConfirmDeleteUpload] = useState<number | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [confirmDeleteEvent, setConfirmDeleteEvent] = useState<string | null>(null);
 
-  useEffect(() => {
-    const saved = localStorage.getItem('gallery_items_v1');
-    if (saved) {
-      setItems(JSON.parse(saved));
-    } else {
-      localStorage.setItem('gallery_items_v1', JSON.stringify(DEFAULT_GALLERY));
-      setItems(DEFAULT_GALLERY);
-    }
-    const savedUploads = localStorage.getItem(UPLOADED_IMAGES_KEY);
-    if (savedUploads) {
-      setUploadedImages(JSON.parse(savedUploads));
-    }
-    const savedHidden = localStorage.getItem(HIDDEN_PRESETS_KEY);
-    if (savedHidden) {
-      setHiddenPresets(JSON.parse(savedHidden));
-    }
-  }, []);
-
-  const handleFileUpload = (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      notifyError('Please select an image file (PNG, JPG, etc.)');
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      notifyError('Image must be under 5MB');
-      return;
-    }
-    setUploading(true);
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result as string;
-      const updated = [...uploadedImages, dataUrl];
-      setUploadedImages(updated);
-      localStorage.setItem(UPLOADED_IMAGES_KEY, JSON.stringify(updated));
-      setNewImage(dataUrl);
-      setUploading(false);
-      notifySuccess('Image uploaded');
-    };
-    reader.onerror = () => {
-      notifyError('Failed to read image file');
-      setUploading(false);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleDeleteUploadedImage = (index: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setConfirmDeleteUpload(index);
-  };
-
-  const executeDeleteUpload = () => {
-    if (confirmDeleteUpload === null) return;
-    const updated = uploadedImages.filter((_, i) => i !== confirmDeleteUpload);
-    setUploadedImages(updated);
-    localStorage.setItem(UPLOADED_IMAGES_KEY, JSON.stringify(updated));
-    if (newImage === uploadedImages[confirmDeleteUpload]) {
-      setNewImage(PRESET_IMAGES[0]);
-    }
-    notifySuccess('Image deleted');
-    setConfirmDeleteUpload(null);
-  };
-
-  const handleHidePreset = (index: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const updated = [...hiddenPresets, index];
-    setHiddenPresets(updated);
-    localStorage.setItem(HIDDEN_PRESETS_KEY, JSON.stringify(updated));
-    if (newImage === PRESET_IMAGES[index]) {
-      const remaining = PRESET_IMAGES.filter((_, i) => !updated.includes(i));
-      setNewImage(remaining[0] || (uploadedImages.length > 0 ? uploadedImages[0] : ''));
-    }
-  };
-
-  const visiblePresets = PRESET_IMAGES.filter((_, i) => !hiddenPresets.includes(i));
+  const categories: (GalleryCategory | 'All')[] = ['All', 'Careers', 'Academic', 'Ceremonies', 'Virtual'];
+  const [selectedCategory, setSelectedCategory] = useState<GalleryCategory | 'All'>('All');
+  const filteredItems = selectedCategory === 'All'
+    ? items
+    : items.filter(item => item.category === selectedCategory);
 
   const resetForm = () => {
     setNewTitle('');
@@ -147,7 +40,7 @@ const GalleryManagement: React.FC = () => {
     setNewDate('');
     setNewLocation('');
     setNewDesc('');
-    setNewImage(PRESET_IMAGES[0]);
+    setNewImage('');
     setEditingItem(null);
   };
 
@@ -160,48 +53,71 @@ const GalleryManagement: React.FC = () => {
     e.stopPropagation();
     setNewTitle(item.title);
     setNewCategory(item.category);
-    setNewDate(item.date);
+    setNewDate(item.event_date);
     setNewLocation(item.location);
     setNewDesc(item.description);
-    setNewImage(item.image);
+    setNewImage(item.image_url);
     setEditingItem(item);
     setIsFormOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleFileUpload = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      notifyError('Please select an image file (PNG, JPG, etc.)');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      notifyError('Image must be under 5MB');
+      return;
+    }
+    setUploading(true);
+    try {
+      const url = await galleryService.uploadImage(user?.id || 'anonymous', file);
+      setNewImage(url);
+      notifySuccess('Image uploaded');
+    } catch {
+      notifyError('Failed to upload image');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle || !newDate || !newLocation || !newDesc) {
       notifyError('Please fill in all details.');
       return;
     }
-
-    if (editingItem) {
-      const updated = items.map(i =>
-        i.id === editingItem.id
-          ? { ...i, title: newTitle, category: newCategory, date: newDate, location: newLocation, description: newDesc, image: newImage }
-          : i
-      );
-      setItems(updated);
-      localStorage.setItem('gallery_items_v1', JSON.stringify(updated));
-      notifySuccess('Gallery event updated!');
-    } else {
-      const newItem: GalleryItem = {
-        id: 'g-' + Date.now(),
-        title: newTitle,
-        image: newImage,
-        category: newCategory,
-        date: newDate,
-        location: newLocation,
-        description: newDesc
-      };
-      const updated = [newItem, ...items];
-      setItems(updated);
-      localStorage.setItem('gallery_items_v1', JSON.stringify(updated));
-      notifySuccess('New gallery event added!');
+    setIsSaving(true);
+    try {
+      if (editingItem) {
+        await updateItem(editingItem.id, {
+          title: newTitle,
+          category: newCategory,
+          event_date: newDate,
+          location: newLocation,
+          description: newDesc,
+          image_url: newImage,
+        });
+        notifySuccess('Gallery event updated!');
+      } else {
+        await addItem({
+          title: newTitle,
+          category: newCategory,
+          event_date: newDate,
+          location: newLocation,
+          description: newDesc,
+          image_url: newImage,
+        });
+        notifySuccess('New gallery event added!');
+      }
+      resetForm();
+      setIsFormOpen(false);
+    } catch {
+      notifyError('Failed to save gallery event');
+    } finally {
+      setIsSaving(false);
     }
-
-    resetForm();
-    setIsFormOpen(false);
   };
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
@@ -209,25 +125,20 @@ const GalleryManagement: React.FC = () => {
     setConfirmDeleteEvent(id);
   };
 
-  const executeDelete = () => {
+  const executeDelete = async () => {
     if (!confirmDeleteEvent) return;
-    const updated = items.filter(i => i.id !== confirmDeleteEvent);
-    setItems(updated);
-    localStorage.setItem('gallery_items_v1', JSON.stringify(updated));
-    notifySuccess('Event deleted.');
-    if (selectedItem?.id === confirmDeleteEvent) setSelectedItem(null);
+    try {
+      await deleteItem(confirmDeleteEvent);
+      notifySuccess('Event deleted.');
+      if (selectedItem?.id === confirmDeleteEvent) setSelectedItem(null);
+    } catch {
+      notifyError('Failed to delete event');
+    }
     setConfirmDeleteEvent(null);
   };
 
-  const categories = ['All', 'Careers', 'Academic', 'Ceremonies', 'Virtual'];
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const filteredItems = selectedCategory === 'All'
-    ? items
-    : items.filter(item => item.category === selectedCategory);
-
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h3 className="text-2xl font-black uppercase tracking-tight text-slate-900">Event Gallery</h3>
@@ -249,7 +160,6 @@ const GalleryManagement: React.FC = () => {
         </div>
       </div>
 
-      {/* Categories filter */}
       <div className="flex flex-wrap gap-2 border-b border-slate-100 pb-4">
         {categories.map(cat => (
           <button
@@ -266,8 +176,11 @@ const GalleryManagement: React.FC = () => {
         ))}
       </div>
 
-      {/* Gallery Grid */}
-      {filteredItems.length === 0 ? (
+      {loading ? (
+        <div className="text-center py-20 bg-slate-50 rounded-[40px] border border-slate-100">
+          <div className="w-8 h-8 border-2 border-slate-400 border-t-transparent rounded-full animate-spin mx-auto" />
+        </div>
+      ) : filteredItems.length === 0 ? (
         <div className="text-center py-20 bg-slate-50 rounded-[40px] border border-slate-100 space-y-4">
           <ImageIcon size={48} className="mx-auto text-slate-300" />
           <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">No events in this category</p>
@@ -285,7 +198,7 @@ const GalleryManagement: React.FC = () => {
             >
               <div className="relative aspect-[3/2] overflow-hidden bg-slate-100">
                 <img
-                  src={item.image}
+                  src={item.image_url || '/images/event-placeholder.svg'}
                   alt={item.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
                   referrerPolicy="no-referrer"
@@ -313,7 +226,7 @@ const GalleryManagement: React.FC = () => {
               </div>
               <div className="p-5 space-y-3 flex-1 flex flex-col">
                 <div className="flex items-center gap-3 text-[9px] font-black uppercase tracking-widest text-slate-400">
-                  <span className="flex items-center gap-1"><Calendar size={11} /> {item.date}</span>
+                  <span className="flex items-center gap-1"><Calendar size={11} /> {item.event_date}</span>
                   <span className="flex items-center gap-1"><MapPin size={11} /> {item.location}</span>
                 </div>
                 <h4 className="text-base font-black uppercase tracking-tight text-slate-900 group-hover:text-indigo-600 transition-colors leading-snug">
@@ -328,7 +241,6 @@ const GalleryManagement: React.FC = () => {
         </div>
       )}
 
-      {/* Lightbox */}
       <AnimatePresence>
         {selectedItem && (
           <motion.div
@@ -352,7 +264,7 @@ const GalleryManagement: React.FC = () => {
                 <X size={18} />
               </button>
               <div className="md:w-1/2 bg-slate-900 min-h-[250px]">
-                <img src={selectedItem.image} alt={selectedItem.title} className="w-full h-full object-cover min-h-[250px]" referrerPolicy="no-referrer" loading="lazy" />
+                <img src={selectedItem.image_url} alt={selectedItem.title} className="w-full h-full object-cover min-h-[250px]" referrerPolicy="no-referrer" loading="lazy" />
                 <div className="absolute top-4 left-4 bg-indigo-600 text-white px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest">
                   {selectedItem.category}
                 </div>
@@ -360,7 +272,7 @@ const GalleryManagement: React.FC = () => {
               <div className="md:w-1/2 p-8 flex flex-col justify-between space-y-4">
                 <div className="space-y-3">
                   <div className="flex flex-wrap gap-3 text-[9px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100 pb-3">
-                    <span className="flex items-center gap-1"><Calendar size={12} /> {selectedItem.date}</span>
+                    <span className="flex items-center gap-1"><Calendar size={12} /> {selectedItem.event_date}</span>
                     <span className="flex items-center gap-1"><MapPin size={12} /> {selectedItem.location}</span>
                   </div>
                   <h3 className="text-xl font-black uppercase tracking-tight text-slate-900">{selectedItem.title}</h3>
@@ -386,7 +298,6 @@ const GalleryManagement: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* Add/Edit Form Modal */}
       <AnimatePresence>
         {isFormOpen && (
           <motion.div
@@ -424,7 +335,7 @@ const GalleryManagement: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">Category</label>
-                    <select value={newCategory} onChange={e => setNewCategory(e.target.value as GalleryItem['category'])}
+                    <select value={newCategory} onChange={e => setNewCategory(e.target.value as GalleryCategory)}
                       className="w-full bg-slate-50 border border-slate-100 focus:border-indigo-500 rounded-2xl py-3 px-4 text-xs font-medium focus:outline-none transition-colors"
                     >
                       <option value="Careers">Careers</option>
@@ -460,44 +371,24 @@ const GalleryManagement: React.FC = () => {
                       e.target.value = '';
                     }}
                   />
-                  <div className="grid grid-cols-4 gap-2 mb-2">
-                    {visiblePresets.map((img, idx) => {
-                      const realIdx = PRESET_IMAGES.indexOf(img);
-                      return (
-                        <div key={realIdx} className="relative">
-                          <button type="button" onClick={() => setNewImage(img)}
-                            className={`w-full aspect-video rounded-lg overflow-hidden border-2 transition-all ${
-                              newImage === img ? 'border-indigo-600 scale-95 shadow-md' : 'border-transparent opacity-60 hover:opacity-100'
-                            }`}
-                          >
-                            <img src={img} className="w-full h-full object-cover" referrerPolicy="no-referrer" alt="" loading="lazy" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => handleHidePreset(realIdx, e)}
-                            className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
-                            title="Remove preset"
-                          >
-                            <X size={8} />
-                          </button>
-                        </div>
-                      );
-                    })}
-                    {hiddenPresets.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => { setHiddenPresets([]); localStorage.removeItem(HIDDEN_PRESETS_KEY); }}
-                        className="aspect-video rounded-lg border-2 border-dashed border-amber-300 hover:border-amber-500 bg-amber-50 flex flex-col items-center justify-center gap-1 transition-all"
-                        title="Restore removed presets"
-                      >
-                        <span className="text-[7px] font-black uppercase tracking-widest text-amber-500 leading-tight text-center px-1">Restore</span>
-                      </button>
+                  <div className="flex flex-wrap gap-2">
+                    {newImage && (
+                      <div className="relative w-24 aspect-video rounded-lg overflow-hidden border-2 border-indigo-600">
+                        <img src={newImage} className="w-full h-full object-cover" alt="" loading="lazy" />
+                        <button
+                          type="button"
+                          onClick={() => setNewImage('')}
+                          className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center"
+                        >
+                          <X size={8} />
+                        </button>
+                      </div>
                     )}
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={uploading}
-                      className="aspect-video rounded-lg border-2 border-dashed border-slate-300 hover:border-indigo-400 bg-slate-50 flex flex-col items-center justify-center gap-1 transition-all disabled:opacity-50"
+                      className={`aspect-video rounded-lg border-2 border-dashed ${newImage ? 'border-slate-300' : 'border-indigo-400'} hover:border-indigo-500 bg-slate-50 flex flex-col items-center justify-center gap-1 transition-all disabled:opacity-50 ${newImage ? 'w-24' : 'w-full max-w-[120px]'}`}
                     >
                       {uploading ? (
                         <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
@@ -509,34 +400,6 @@ const GalleryManagement: React.FC = () => {
                       )}
                     </button>
                   </div>
-                  {uploadedImages.length > 0 && (
-                    <div>
-                      <p className="text-[8px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Your Uploads</p>
-                      <div className="grid grid-cols-4 gap-2">
-                        {uploadedImages.map((img, idx) => (
-                          <div key={idx} className="relative">
-                            <button
-                              type="button"
-                              onClick={() => setNewImage(img)}
-                              className={`w-full aspect-video rounded-lg overflow-hidden border-2 transition-all ${
-                                newImage === img ? 'border-indigo-600 scale-95 shadow-md' : 'border-transparent opacity-60 hover:opacity-100'
-                              }`}
-                            >
-                              <img src={img} className="w-full h-full object-cover" alt="Uploaded" loading="lazy" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => handleDeleteUploadedImage(idx, e)}
-                              className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
-                              title="Delete image"
-                            >
-                              <X size={8} />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
                 <div className="space-y-1">
                   <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">Description</label>
@@ -551,10 +414,10 @@ const GalleryManagement: React.FC = () => {
                   >
                     Cancel
                   </button>
-                  <button type="submit"
-                    className="btn-normal bg-black text-white hover:bg-slate-800 flex-1 text-center justify-center flex"
+                  <button type="submit" disabled={isSaving}
+                    className="btn-normal bg-black text-white hover:bg-slate-800 flex-1 text-center justify-center flex disabled:opacity-50"
                   >
-                    {editingItem ? 'Save Changes' : 'Add to Gallery'}
+                    {isSaving ? 'Saving...' : editingItem ? 'Save Changes' : 'Add to Gallery'}
                   </button>
                 </div>
               </form>
@@ -562,16 +425,6 @@ const GalleryManagement: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <ConfirmDialog
-        open={confirmDeleteUpload !== null}
-        title="Delete Uploaded Image"
-        message="Delete this uploaded image permanently?"
-        confirmLabel="Delete"
-        variant="danger"
-        onConfirm={executeDeleteUpload}
-        onCancel={() => setConfirmDeleteUpload(null)}
-      />
 
       <ConfirmDialog
         open={!!confirmDeleteEvent}

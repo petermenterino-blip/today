@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Save, Loader2, User } from 'lucide-react';
 import { profileService } from '../../services/profileService';
-import { storageService } from '../../services/storageService';
 import { notifySuccess, notifyError } from '../../utils/toast';
 
 interface StudentEditProfileProps {
@@ -18,10 +17,10 @@ const StudentEditProfile: React.FC<StudentEditProfileProps> = ({ currentUser }) 
     bio: '',
     linkedin_url: '',
     discipline: '',
+    avatar_url: '',
   });
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
 
   useEffect(() => {
@@ -38,19 +37,41 @@ const StudentEditProfile: React.FC<StudentEditProfileProps> = ({ currentUser }) 
     load();
   }, [currentUser.id]);
 
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      notifyError('Please select an image file.');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      notifyError('Image must be less than 10MB.');
+      return;
+    }
+
+    setAvatarUploading(true);
+    try {
+      const { data: url, error } = await profileService.uploadAvatar(currentUser.id, file);
+      if (error) { notifyError(error); return; }
+      if (url) {
+        setForm(prev => ({ ...prev, avatar_url: url }));
+        await profileService.updateProfile(currentUser.id, { avatar_url: url } as any);
+      }
+      window.dispatchEvent(new Event('user-avatar-changed'));
+      notifySuccess('Profile photo updated!');
+    } catch (err: any) {
+      notifyError(err?.message || 'Failed to upload avatar');
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
-      let avatarUrl: string | undefined;
-      if (avatarFile) {
-        setAvatarUploading(true);
-        avatarUrl = await storageService.uploadAvatar(currentUser.id, avatarFile);
-        setAvatarUploading(false);
-      }
-      await profileService.updateProfile(currentUser.id, {
-        ...form,
-        avatar_url: avatarUrl,
-      } as any);
+      await profileService.updateProfile(currentUser.id, form as any);
+      window.dispatchEvent(new Event('user-profile-changed'));
       notifySuccess('Profile updated successfully');
     } catch {
       notifyError('Failed to update profile');
@@ -85,7 +106,7 @@ const StudentEditProfile: React.FC<StudentEditProfileProps> = ({ currentUser }) 
           </div>
           <label className="cursor-pointer px-5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all">
             {avatarUploading ? 'Uploading...' : 'Change Photo'}
-            <input type="file" accept="image/*" className="hidden" onChange={e => setAvatarFile(e.target.files?.[0] || null)} />
+            <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleAvatarChange} />
           </label>
         </div>
 
