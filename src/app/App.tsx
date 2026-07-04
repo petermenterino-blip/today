@@ -42,14 +42,6 @@ const FullPageLoader = () => (
 
 const AppContent: React.FC = () => {
   const { user, role, authLoading, logout } = useAuth();
-  const [initialLoad, setInitialLoad] = React.useState(true);
-  
-  React.useEffect(() => {
-    if (!authLoading) {
-      const timer = setTimeout(() => setInitialLoad(false), 200);
-      return () => clearTimeout(timer);
-    }
-  }, [authLoading]);
 
   return (
     <Router>
@@ -61,7 +53,6 @@ const AppContent: React.FC = () => {
             <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
           </div>
         }>
-          {initialLoad && authLoading ? <FullPageLoader /> : (
           <Routes>
             <Route path="/" element={<LandingPage currentRole={role} />} />
             <Route path="/about" element={<AboutPage />} />
@@ -104,7 +95,6 @@ const AppContent: React.FC = () => {
 
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
-          )}
         </Suspense>
       </Layout>
     </Router>

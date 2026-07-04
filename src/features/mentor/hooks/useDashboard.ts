@@ -291,10 +291,9 @@ export function useDashboard({ currentUser }: UseDashboardProps) {
 
   // ── Initial load & sync ──
   useEffect(() => {
-    rawRefreshApps();
     customFormService.getAllSubmissions().then(setFormSubmissions);
     messageService.getConversations(currentUser?.id || '', 'mentor').then(setConversations);
-  }, [rawRefreshApps, currentUser?.id]);
+  }, [currentUser?.id]);
 
   useDatabaseSync(useCallback(() => {
     customFormService.getAllSubmissions().then(setFormSubmissions);

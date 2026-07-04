@@ -49,10 +49,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     let mounted = true;
     let initialized = false;
+    const AUTH_TIMEOUT = 15000;
+
+    const authTimeout = setTimeout(() => {
+      if (mounted && !initialized) {
+        logger.warn('AuthContext', 'Auth initialization timed out, proceeding as visitor');
+        initialized = true;
+        setAuthLoading(false);
+      }
+    }, AUTH_TIMEOUT);
+
     const initializeSession = async () => {
       try {
         const profileRes = await authService.getCurrentUser();
         if (mounted) {
+          clearTimeout(authTimeout);
           if (profileRes.data) {
             setUser(profileRes.data);
             setRole(profileRes.data.role);
@@ -63,6 +74,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       } catch (err: any) {
         if (mounted) {
+          clearTimeout(authTimeout);
           logger.error('AuthContext', 'Failed to initialize session', { error: err?.message });
         }
       } finally {
