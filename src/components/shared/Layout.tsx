@@ -209,12 +209,15 @@ const Layout: React.FC<LayoutProps> = ({ children, role, onLogout }) => {
         >
            <Link to="/" className="text-sm font-black tracking-tighter text-black uppercase">Mentorino</Link>
            <div className="flex items-center gap-2">
-             <Link to="/settings" className="w-8 h-8 bg-black rounded-full flex items-center justify-center text-white text-[10px] font-black hover:scale-110 transition-transform active:scale-95">
-               {role === 'mentor' ? 'M' : 'S'}
-             </Link>
-             <button onClick={() => setIsSidebarOpen(true)} className="w-8 h-8 bg-slate-50 border border-slate-100 rounded-full flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-colors">
-               <Menu size={16} />
+             <button onClick={onLogout} className="w-8 h-8 bg-slate-50 border border-slate-100 rounded-full flex items-center justify-center text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-colors" title="Sign Out">
+               <LogOut size={14} />
              </button>
+             <Link to="/settings" className="w-8 h-8 bg-black rounded-full flex items-center justify-center text-white text-[10px] font-black hover:scale-110 transition-transform active:scale-95">
+                {role === 'mentor' ? 'M' : 'S'}
+              </Link>
+              <button onClick={() => setIsSidebarOpen(true)} className="w-8 h-8 bg-slate-50 border border-slate-100 rounded-full flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-colors">
+                <Menu size={16} />
+              </button>
            </div>
         </motion.div>
       )}
@@ -250,6 +253,15 @@ const Layout: React.FC<LayoutProps> = ({ children, role, onLogout }) => {
                 </button>
               </div>
               {renderSidebarLinks(false)}
+              <div className="p-4 border-t border-slate-100 mt-auto">
+                <button
+                  onClick={() => { onLogout(); setIsSidebarOpen(false); }}
+                  className="flex items-center gap-3 w-full h-[50px] px-[20px] rounded-[16px] text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all duration-250"
+                >
+                  <LogOut size={20} className="shrink-0" />
+                  <span className="text-[15px] font-medium">Sign Out</span>
+                </button>
+              </div>
             </motion.aside>
           </>
         )}
@@ -312,8 +324,27 @@ const Layout: React.FC<LayoutProps> = ({ children, role, onLogout }) => {
           {/* Nav links */}
           {renderSidebarLinks(isCollapsed)}
 
-          {/* Empty spacer to push content up instead of logout */}
-          <div className="p-4" />
+          {/* Sign Out */}
+          <div className={`p-4 border-t border-slate-100 ${isCollapsed ? 'flex flex-col items-center' : ''}`}>
+            <button
+              onClick={onLogout}
+              className={`flex items-center transition-all duration-250 ease-in-out group ${
+                isCollapsed
+                  ? 'justify-center h-[42px] w-[42px] rounded-[12px] mx-auto text-slate-500 hover:bg-rose-50 hover:text-rose-600'
+                  : 'h-[50px] w-full px-[20px] rounded-[16px] text-slate-500 hover:bg-rose-50 hover:text-rose-600'
+              }`}
+              title="Sign Out"
+            >
+              <LogOut size={20} className="shrink-0 transition-all duration-250" />
+              <span className={`text-[15px] font-medium tracking-[-0.01em] whitespace-nowrap transition-all duration-150 ease-in-out ${
+                isCollapsed
+                  ? 'opacity-0 max-w-0 overflow-hidden ml-0'
+                  : 'opacity-100 max-w-[200px] ml-4'
+              }`}>
+                Sign Out
+              </span>
+            </button>
+          </div>
         </motion.aside>
       )}
 

@@ -18,6 +18,7 @@ import GrowthAuditTab from './components/GrowthAuditTab';
 import { ProgramProgressTab } from './components/ProgramProgressTab';
 import { ReviewsTab } from './components/ReviewsTab';
 import AnalyticsBI from './components/AnalyticsBI';
+import ErrorBoundary from '../../components/shared/ErrorBoundary';
 import AIDashboard from './components/AIDashboard';
 import ResourceDashboard from '../resources/ResourceDashboard';
 import { useDashboard, MentorTab } from './hooks/useDashboard';
@@ -275,7 +276,9 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
       )}
 
       {d.activeTab === 'analytics' && (
-        <AnalyticsBI currentUser={d.currentUser} />
+        <ErrorBoundary>
+          <AnalyticsBI currentUser={d.currentUser} />
+        </ErrorBoundary>
       )}
 
       {d.activeTab === 'ai' && (

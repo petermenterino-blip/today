@@ -33,7 +33,7 @@ export const useResources = () => {
       const result = await resourceService.fetchAll(filters);
       return { data: result.data || [], count: result.count || 0 };
     },
-    staleTime: 2 * 60 * 1000,
+    staleTime: 10 * 1000,
   });
 
   // ── Single resource ──
@@ -113,12 +113,18 @@ export const useResources = () => {
       const { data } = await resourceService.getStats();
       return data as ResourceStats;
     },
-    staleTime: 60 * 1000,
+    staleTime: 10 * 1000,
   });
 
   // ── Mutations ──
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: [QK.resources] });
+    queryClient.invalidateQueries({ queryKey: [QK.resources, 'list'] });
+    queryClient.invalidateQueries({ queryKey: [QK.resources, 'stats'] });
+    queryClient.invalidateQueries({ queryKey: [QK.resources, 'student'] });
+    queryClient.invalidateQueries({ queryKey: [QK.resources, 'favorites'] });
+    queryClient.invalidateQueries({ queryKey: [QK.resources, 'completions'] });
+    queryClient.invalidateQueries({ queryKey: [QK.resources, 'recently_viewed'] });
   };
 
   const createResource = useMutation({

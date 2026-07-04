@@ -6,6 +6,19 @@ const ScrollToTop = () => {
   const locationKey = `${pathname}${search}${hash}`;
 
   useEffect(() => {
+    const scrollToId = sessionStorage.getItem('scrollToSection');
+    if (scrollToId) {
+      sessionStorage.removeItem('scrollToSection');
+      requestAnimationFrame(() => {
+        const el = document.getElementById(scrollToId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return;
+        }
+      });
+      return;
+    }
+
     const html = document.documentElement;
     const originalBehavior = html.style.scrollBehavior;
     html.style.scrollBehavior = 'auto';

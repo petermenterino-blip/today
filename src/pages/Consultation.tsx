@@ -27,7 +27,7 @@ const ConsultationPage: React.FC = () => {
         </div>
 
         {/* Pricing Options Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 mb-24 max-w-5xl mx-auto">
+        <div id="pricing-options" className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 mb-24 max-w-5xl mx-auto">
           {/* Free Call Option */}
           <motion.div 
             initial={{ opacity: 0, x: -30 }}
@@ -59,7 +59,7 @@ const ConsultationPage: React.FC = () => {
             </ul>
 
             <div className="pt-4 mt-auto w-full">
-              <Link to="/book-call?type=intro" className="btn-normal w-full bg-slate-900 text-white hover:bg-black text-center justify-center flex">
+              <Link to="/book-call?type=intro" onClick={() => sessionStorage.setItem('scrollToSection', 'pricing-options')} className="btn-normal w-full bg-slate-900 text-white hover:bg-black text-center justify-center flex">
                 Book Free Call
               </Link>
             </div>
@@ -99,7 +99,7 @@ const ConsultationPage: React.FC = () => {
             </ul>
 
             <div className="pt-4 mt-auto w-full relative z-10">
-              <Link to="/book-call?type=rapid" className="btn-normal w-full bg-white text-black hover:bg-slate-100 text-center justify-center flex">
+              <Link to="/book-call?type=rapid" onClick={() => sessionStorage.setItem('scrollToSection', 'pricing-options')} className="btn-normal w-full bg-white text-black hover:bg-slate-100 text-center justify-center flex">
                 Schedule Response Call
               </Link>
             </div>

@@ -63,7 +63,7 @@ const BookingPage: React.FC = () => {
   const [company, setCompany] = useState('');
   const [studentProfessional, setStudentProfessional] = useState<'student' | 'professional' | null>(null);
   const [programOfInterest, setProgramOfInterest] = useState('');
-  const [preferredMentor, setPreferredMentor] = useState('');
+  const [preferredMentor, setPreferredMentor] = useState('Peter');
   const [meetingType, setMeetingType] = useState<'phone' | 'video' | 'in_person' | null>(null);
   const [message, setMessage] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -156,6 +156,7 @@ const BookingPage: React.FC = () => {
 
       setIsBooked(true);
       notifySuccess(isRapid ? 'Rapid response call booked!' : 'Intro call booked!');
+      setTimeout(() => navigate('/'), 2000);
     } catch {
       notifyError('Failed to submit booking. Please try again.');
     } finally {
@@ -198,7 +199,7 @@ const BookingPage: React.FC = () => {
 
   const renderBackButton = () => (
     <button
-      onClick={() => step > 1 ? setStep(s => s - 1) : navigate(-1)}
+      onClick={() => { if (step > 1) { setStep(s => s - 1); } else { sessionStorage.setItem('scrollToSection', 'pricing-options'); navigate(-1); } }}
       className="mb-8 sm:mb-12 flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-white border border-black/[0.05] rounded-full shadow-sm hover:scale-110 active:scale-95 transition-all group"
     >
       <ArrowLeft size={18} className="sm:w-5 sm:h-5 text-black group-hover:-translate-x-1 transition-transform" />
@@ -378,9 +379,8 @@ const BookingPage: React.FC = () => {
             <input
               type="text"
               value={preferredMentor}
-              onChange={e => setPreferredMentor(e.target.value)}
-              className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-100 text-sm font-medium outline-none focus:border-black transition-all placeholder:text-slate-400"
-              placeholder="Mentor name (optional)"
+              readOnly
+              className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-slate-100 border border-slate-200 text-sm font-bold text-slate-900 outline-none cursor-not-allowed"
             />
           </div>
         </div>
@@ -584,7 +584,6 @@ const BookingPage: React.FC = () => {
   );
 
   const renderSummaryCard = () => {
-    const price = isRapid ? 25 : 250;
     return (
       <div className={`rounded-[32px] p-6 sm:p-8 border shadow-lg sticky top-24 ${isRapid ? 'bg-black border-white/10 text-white' : 'bg-white border-slate-100 text-slate-900'}`}>
         <div className="flex items-center gap-3 mb-6">
@@ -604,7 +603,14 @@ const BookingPage: React.FC = () => {
           </div>
           <div className="flex justify-between items-center">
             <span className={`text-[9px] font-black uppercase tracking-widest ${isRapid ? 'text-white/50' : 'text-slate-400'}`}>Investment</span>
-            <span className="text-2xl font-black">${price}</span>
+            {isRapid ? (
+              <span className="text-2xl font-black">$25</span>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-black line-through text-slate-300">$250</span>
+                <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-black uppercase tracking-widest animate-pulse">Free</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -620,7 +626,7 @@ const BookingPage: React.FC = () => {
               {submitting ? (
                 <><Loader2 size={16} className="animate-spin" /> Submitting...</>
               ) : (
-                <><Sparkles size={16} /> Submit Booking</>
+                <>Submit Booking</>
               )}
             </button>
             <p className={`text-[7px] text-center font-black uppercase tracking-[0.2em] ${isRapid ? 'text-white/30' : 'text-slate-400'}`}>

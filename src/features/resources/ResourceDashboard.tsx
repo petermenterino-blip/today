@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import {
   Upload, Loader2, BookOpen, X, ArrowUpDown, CheckSquare, Square,
   Trash2, Archive, Download, Share2, Tags, ChevronLeft, ChevronRight,
-  Layers, UserPlus, Copy, FolderInput, BarChart3
+  Layers, UserPlus, Copy, FolderInput, BarChart3, RefreshCw
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { usePrograms } from '../../hooks/usePrograms';
@@ -51,7 +51,7 @@ const ResourceDashboard: React.FC<ResourceDashboardProps> = ({ isMentor }) => {
 
   const PAGE_SIZE = 20;
 
-  const { data: resourceResult = { data: [], count: 0 }, isLoading: resourcesLoading } = useResourceList({ ...filters, page, pageSize: PAGE_SIZE });
+  const { data: resourceResult = { data: [], count: 0 }, isLoading: resourcesLoading, refetch: refetchResources } = useResourceList({ ...filters, page, pageSize: PAGE_SIZE });
   const { data: categories = [] } = useCategories();
   const { data: stats, isLoading: statsLoading } = useStats();
   const { data: favorites = [] } = useFavorites();
@@ -204,15 +204,24 @@ const ResourceDashboard: React.FC<ResourceDashboardProps> = ({ isMentor }) => {
             {isMentor ? 'Manage and share learning materials' : 'Access your assigned learning materials'}
           </p>
         </div>
-        {isMentor && (
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => setShowUpload(true)}
-            className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold uppercase tracking-widest transition-all shadow-lg shadow-slate-200 hover:shadow-xl"
+            onClick={() => refetchResources()}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-100 text-slate-600 hover:text-slate-900 rounded-xl text-xs font-bold uppercase tracking-widest transition-all shadow-sm hover:shadow-md"
           >
-            <Upload size={14} />
-            Upload Resource
+            <RefreshCw size={14} />
+            Refresh
           </button>
-        )}
+          {isMentor && (
+            <button
+              onClick={() => setShowUpload(true)}
+              className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold uppercase tracking-widest transition-all shadow-lg shadow-slate-200 hover:shadow-xl"
+            >
+              <Upload size={14} />
+              Upload Resource
+            </button>
+          )}
+        </div>
       </div>
 
       <ResourceStatsCards stats={stats || null} loading={statsLoading} />

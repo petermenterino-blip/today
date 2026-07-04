@@ -323,9 +323,23 @@ export function useDashboard({ currentUser }: UseDashboardProps) {
 
   // ── Cross-domain handlers ──
   const handleOpenStudentProfile = (studentId: string) => {
-    setSelectedMenteeId(studentId);
-    setActiveTab('mentees');
-    navigate('/mentor?tab=mentees');
+    const profileExists = studentProfiles.some(p => (p.user_id || p.id) === studentId);
+    if (profileExists) {
+      setSelectedMenteeId(studentId);
+      setActiveTab('mentees');
+      navigate('/mentor?tab=mentees');
+    } else {
+      const app = applications.find(a => a.user_id === studentId || a.id === studentId);
+      if (app) {
+        setSelectedApplication(app);
+        setActiveTab('applications');
+        navigate('/mentor?tab=applications');
+      } else {
+        setSelectedMenteeId(studentId);
+        setActiveTab('mentees');
+        navigate('/mentor?tab=mentees');
+      }
+    }
   };
 
   const handleMessageStudent = async (studentId: string, studentName: string) => {
