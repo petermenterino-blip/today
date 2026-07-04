@@ -10,8 +10,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-const TIMEOUT_MS = 15000;
-
 export const supabase = createClient(
   supabaseUrl || 'http://localhost:54321',
   supabaseAnonKey || 'placeholder-key',
@@ -20,10 +18,6 @@ export const supabase = createClient(
       autoRefreshToken: true,
       detectSessionInUrl: true,
       persistSession: true,
-    },
-    global: {
-      fetch: (url, opts) =>
-        fetch(url, { ...opts, signal: AbortSignal.timeout(TIMEOUT_MS) }),
     },
   }
 );
