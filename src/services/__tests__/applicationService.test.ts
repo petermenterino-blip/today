@@ -1,10 +1,13 @@
 import { applicationService } from '../applicationService';
 import type { Mock } from 'vitest';
 
-const { mockFrom, mockSingle } = vi.hoisted(() => {
+const { mockFrom, mockSingle, mockMaybeSingle } = vi.hoisted(() => {
   const mSingle = vi.fn();
+  const mMaybeSingle = vi.fn();
   const mOrder = vi.fn();
-  const mSelect = vi.fn(() => ({ eq: vi.fn(() => ({ single: mSingle, order: mOrder })), order: mOrder, single: mSingle }));
+  const mLimit = vi.fn();
+  const mEq = vi.fn(() => ({ single: mSingle, maybeSingle: mMaybeSingle, order: mOrder, limit: mLimit }));
+  const mSelect = vi.fn(() => ({ eq: mEq, order: mOrder, single: mSingle, maybeSingle: mMaybeSingle, limit: mLimit }));
   const mInsertSingle = vi.fn();
   const mInsertSelect = vi.fn(() => ({ single: mInsertSingle }));
   const mInsert = vi.fn(() => ({ select: mInsertSelect }));
@@ -14,7 +17,7 @@ const { mockFrom, mockSingle } = vi.hoisted(() => {
   const mDelete = vi.fn(() => ({ eq: mDeleteEq }));
   const mUpsert = vi.fn().mockResolvedValue({ error: null });
   const mFrom = vi.fn(() => ({ select: mSelect, insert: mInsert, update: mUpdate, delete: mDelete, upsert: mUpsert }));
-  return { mockFrom: mFrom, mockSingle: mSingle };
+  return { mockFrom: mFrom, mockSingle: mSingle, mockMaybeSingle: mMaybeSingle };
 });
 
 const { mockSignUp } = vi.hoisted(() => ({
@@ -184,11 +187,25 @@ describe('applicationService', () => {
         data: mockRow(),
         error: null,
       });
+      const chainResolve = vi.fn().mockResolvedValue({ data: null, error: null });
+      const chainMock = vi.fn(() => ({
+        single: singleMock,
+        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+        limit: chainMock,
+        order: vi.fn(),
+        or: chainMock,
+      }));
+      const selectMock = vi.fn(() => ({
+        eq: chainMock,
+        single: singleMock,
+        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+        limit: chainMock,
+        order: vi.fn(),
+        or: chainMock,
+      }));
       mockFrom.mockReturnValue({
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({ single: singleMock })),
-          single: singleMock,
-        })),
+        select: selectMock,
+        insert: vi.fn().mockResolvedValue({ data: null, error: null }),
         update: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) })),
         upsert: vi.fn().mockResolvedValue({ error: null }),
       });
@@ -210,10 +227,18 @@ describe('applicationService', () => {
         data: null,
         error: { message: 'Not found' },
       });
+      const chainResolve = vi.fn().mockResolvedValue({ data: null, error: null });
       mockFrom.mockReturnValue({
         select: vi.fn(() => ({
-          eq: vi.fn(() => ({ single: singleMock })),
+          eq: vi.fn(() => ({
+            single: singleMock,
+            maybeSingle: chainResolve,
+            limit: chainResolve,
+            order: chainResolve,
+          })),
           single: singleMock,
+          maybeSingle: chainResolve,
+          order: chainResolve,
         })),
       });
 

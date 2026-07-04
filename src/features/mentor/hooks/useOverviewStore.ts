@@ -383,7 +383,7 @@ export function useOverviewStore() {
     reviewDomain.reviews.forEach(r => {
       if (r.status === 'completed') {
         timeline.push({
-          id: `review-${r.id}`, studentId: r.studentId || '', studentName: r.studentName || 'Student',
+          id: `review-${r.id}`, studentId: r.student_id || '', studentName: r.student_name || 'Student',
           activity: `Review completed`, type: 'review',
           timestamp: r.completed_at || r.created_at || new Date().toISOString(), icon: 'Star', color: 'text-yellow-600',
         });
@@ -443,7 +443,7 @@ export function useOverviewStore() {
       const studentTasks = taskActivities.filter(t => t.user_id === pId);
       const overdueTasks = studentTasks.filter(t => t.status === 'pending' && t.due_date && new Date(t.due_date) < now);
       if (overdueTasks.length > 0 && !reason) {
-        reason = `Overdue: "${overdueTasks[0].task_title || overdueTasks[0].title}"`;
+        reason = `Overdue: "${overdueTasks[0].task_title}"`;
         riskScore = Math.max(riskScore, 70);
         riskLevel = 'high';
         suggestedAction = 'Follow up on overdue tasks';
