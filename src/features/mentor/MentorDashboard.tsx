@@ -36,6 +36,23 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
 
   const anyLoading = d.appsLoading || d.tasksLoading || d.bookingsLoading || d.eventsLoading;
 
+  if (anyLoading && d.activeTab === 'overview') {
+    return (
+      <div className="animate-in fade-in duration-700 space-y-8">
+        <div className="space-y-4">
+          <div className="h-8 w-48 bg-slate-100 rounded-xl animate-pulse" />
+          <div className="h-4 w-96 bg-slate-100 rounded-xl animate-pulse" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-32 bg-slate-100 rounded-[32px] animate-pulse" />
+          ))}
+        </div>
+        <div className="h-64 bg-slate-100 rounded-[32px] animate-pulse" />
+      </div>
+    );
+  }
+
   if (d.selectedEventId) {
     return (
       <div className="animate-in fade-in duration-700">
