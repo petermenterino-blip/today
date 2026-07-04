@@ -14,7 +14,18 @@ interface Props {
 }
 
 export const CalendarPreviewWidget: React.FC<Props> = ({ days, onDayClick, onSessionClick }) => {
-  if (days.length === 0) return null;
+  if (days.length === 0) return (
+    <div className="bg-white rounded-[32px] p-6 border border-slate-100 shadow-sm">
+      <div className="mb-4">
+        <h4 className="text-xs font-black uppercase tracking-widest text-slate-400">CALENDAR</h4>
+        <p className="text-sm font-black text-brand-charcoal uppercase tracking-tighter">Next 7 Days</p>
+      </div>
+      <div className="text-center py-8 text-slate-400 text-xs font-medium">
+        <CalendarDays className="mx-auto mb-2" size={24} />
+        No upcoming sessions or events.
+      </div>
+    </div>
+  );
   return (
     <div className="bg-white rounded-[32px] p-6 border border-slate-100 shadow-sm">
       <div className="mb-4">

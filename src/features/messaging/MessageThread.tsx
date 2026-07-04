@@ -1,4 +1,5 @@
 import React from 'react';
+import { CheckCheck } from 'lucide-react';
 import { VoiceMessagePlayer } from './VoiceMessagePlayer';
 
 interface Message {
@@ -9,6 +10,7 @@ interface Message {
   content: string;
   type: 'text' | 'voice' | 'file' | 'system' | 'image';
   timestamp: string;
+  status?: 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
   audioUrl?: string;
   duration?: number;
   fileName?: string;
@@ -23,6 +25,7 @@ interface MessageThreadProps {
   isGroup: boolean;
   chatContainerRef: React.RefObject<HTMLDivElement | null>;
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
+  onRetrySendMessage?: (message: Message) => void;
 }
 
 function formatFileSize(bytes?: number): string {
@@ -69,6 +72,7 @@ export const MessageThread = React.memo<MessageThreadProps>(({
   isGroup,
   chatContainerRef,
   messagesEndRef,
+  onRetrySendMessage,
 }) => {
   return (
     <div ref={chatContainerRef} className="flex-1 overflow-y-auto px-6 md:px-12 py-6 z-0 relative custom-scrollbar flex flex-col bg-[#efeae2]"
@@ -164,6 +168,22 @@ export const MessageThread = React.memo<MessageThreadProps>(({
 
                 <div className="absolute right-[12px] bottom-[6px] flex items-center gap-[4px] text-[10px] text-[#667781] select-none pointer-events-none">
                   <span>{new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }).toLowerCase()}</span>
+                  {isMine && m.type !== 'system' && (
+                    <span className="inline-flex ml-0.5">
+                      {(m as any).status === 'sending' && <span className="text-[10px] opacity-50">◌</span>}
+                      {(m as any).status === 'sent' && <CheckCheck size={12} className="text-[#8696a0]" />}
+                      {(m as any).status === 'delivered' && <CheckCheck size={12} className="text-[#53bdeb]" />}
+                      {(m as any).status === 'read' && <CheckCheck size={12} className="text-[#53bdeb]" />}
+                      {(m as any).status === 'failed' && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onRetrySendMessage?.(m); }}
+                          className="text-[10px] text-red-500 font-bold hover:text-red-700 cursor-pointer"
+                          title="Retry sending"
+                        >!</button>
+                      )}
+                      {!(m as any).status && <CheckCheck size={12} className="text-[#8696a0]" />}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

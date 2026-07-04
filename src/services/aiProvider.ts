@@ -28,14 +28,16 @@ export class GeminiProvider implements AIProviderInterface {
   supportsStreaming = true;
 
   async chat(options: AIRequestOptions): Promise<string> {
+    const body = {
+      messages: options.messages,
+      systemPrompt: options.systemPrompt,
+      temperature: options.temperature ?? 0.7,
+      maxTokens: options.maxTokens ?? 4096,
+      stream: !!options.onToken,
+    };
+
     const { data, error } = await supabase.functions.invoke('gemini', {
-      body: {
-        messages: options.messages,
-        systemPrompt: options.systemPrompt,
-        temperature: options.temperature ?? 0.7,
-        maxTokens: options.maxTokens ?? 4096,
-        stream: options.stream ?? false,
-      },
+      body,
     });
 
     if (error) {
@@ -47,6 +49,33 @@ export class GeminiProvider implements AIProviderInterface {
     if (data?.error) {
       options.onError?.(data.error);
       throw new Error(data.error);
+    }
+
+    if (options.onToken && data) {
+      const reader = (data as any).getReader?.();
+      if (reader) {
+        let accumulated = '';
+        const decoder = new TextDecoder();
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n').filter(Boolean);
+            for (const line of lines) {
+              try {
+                const parsed = JSON.parse(line);
+                if (parsed.token) { accumulated += parsed.token; options.onToken(parsed.token); }
+                if (parsed.error) throw new Error(parsed.error);
+              } catch { /* skip malformed */ }
+            }
+          }
+        } finally {
+          reader.releaseLock();
+        }
+        options.onComplete?.(accumulated);
+        return accumulated;
+      }
     }
 
     const text = data?.result || data?.text || '';

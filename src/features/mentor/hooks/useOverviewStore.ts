@@ -116,35 +116,16 @@ export function useOverviewStore() {
 
   useEffect(() => {
     if (!userId) return;
-    const loadProfiles = async () => {
-      const { data } = await supabase
+
+    const loadInitialData = async () => {
+      const { data: profiles } = await supabase
         .from('profiles')
         .select('*')
         .eq('role', 'student');
-      if (data) setStudentProfiles(data as any);
-    };
-    loadProfiles();
-
-    Promise.all([
-      messageService.getConversations(userId, 'mentor'),
-      messageService.getAllConversations(),
-    ]).then(([convos, allConvos]) => {
-      setConversations(convos);
-      setCommunities(allConvos.filter(c => c.isGroup && c.mentorId === userId));
-    });
-
-    supabase.from('program_enrollments').select('*, programs!inner(*)').then(({ data }) => {
-      if (data) setEnrollments(data);
-    });
-  }, [userId]);
-
-  useEffect(() => {
-    if (!userId) return;
-    supabase.from('profiles').select('*').eq('role', 'student').then(({ data }) => {
-      if (data) {
-        const profiles = data as any;
-        const mentorProfiles = profiles.filter((p: any) => p.mentor_id === userId);
-        setStudentProfiles(profiles);
+      if (profiles) {
+        const studentProfilesData = profiles as any;
+        const mentorProfiles = studentProfilesData.filter((p: any) => p.mentor_id === userId);
+        setStudentProfiles(studentProfilesData);
         setStudentCounts({
           accepted: mentorProfiles.filter((p: any) => p.status === 'active' || p.status === 'accepted').length,
           active: mentorProfiles.filter((p: any) => p.status === 'active').length,
@@ -152,7 +133,19 @@ export function useOverviewStore() {
           assigned: mentorProfiles.length,
         });
       }
-    });
+
+      const [convos, allConvos] = await Promise.all([
+        messageService.getConversations(userId, 'mentor'),
+        messageService.getAllConversations(),
+      ]);
+      setConversations(convos);
+      setCommunities(allConvos.filter(c => c.isGroup && c.mentorId === userId));
+
+      const { data: enrolls } = await supabase.from('program_enrollments').select('*, programs!inner(*)');
+      if (enrolls) setEnrollments(enrolls);
+    };
+
+    loadInitialData();
   }, [userId]);
 
   useEffect(() => {
@@ -497,16 +490,44 @@ export function useOverviewStore() {
     completionRate: goals.length > 0 ? Math.round((goals.filter(g => g.status === 'completed').length / goals.length) * 100) : 0,
   }), [sessionsToday, pendingTasks, reviewDomain.reviews, conversationsUnread, pendingApplications, rawEvents, resources, studentProfiles, sessions, goals]);
 
+  const avgResponseTimeStr = useMemo(() => {
+    const repliedConvos = conversations.filter(c => c.lastMessage && c.createdAt);
+    if (repliedConvos.length === 0) return '—';
+    let totalDiff = 0;
+    let count = 0;
+    repliedConvos.forEach(c => {
+      const created = new Date(c.createdAt).getTime();
+      const last = new Date(c.lastMessage).getTime();
+      if (last > created) { totalDiff += last - created; count++; }
+    });
+    if (count === 0) return '—';
+    const avgMs = totalDiff / count;
+    const avgHours = avgMs / (1000 * 60 * 60);
+    if (avgHours < 1) return `${Math.round(avgHours * 60)}m`;
+    return `${avgHours.toFixed(1)}h`;
+  }, [conversations]);
+
+  const studentSatisfactionScore = useMemo(() => {
+    const completedReviews = reviewDomain.reviews.filter(r => r.status === 'completed' && (r as any).rating);
+    if (completedReviews.length === 0) {
+      if (stats.attendanceRate > 0) return stats.attendanceRate;
+      if (goalCompletionRate > 0) return goalCompletionRate;
+      return null;
+    }
+    const avgRating = completedReviews.reduce((acc, r) => acc + ((r as any).rating || 0), 0) / completedReviews.length;
+    return Math.round(avgRating * 20);
+  }, [reviewDomain.reviews, stats.attendanceRate, goalCompletionRate]);
+
   const performanceCards = useMemo(() => ({
-    studentSatisfaction: Math.min(95, 70 + Math.round(engagementRate * 0.25)),
+    studentSatisfaction: studentSatisfactionScore,
     attendance: stats.attendanceRate,
     sessionsThisWeek: sessions.filter(s => { const d = new Date(s.startTime); const now = new Date(); const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay())); startOfWeek.setHours(0,0,0,0); return d >= startOfWeek; }).length,
     completionRate: stats.completionRate,
     assignmentsReviewed: taskActivities.filter(t => t.status === 'approved' || t.status === 'reviewed').length,
     messagesReplied: conversations.filter(c => c.lastMessage).length,
     applicationsProcessed: applications.filter(a => a.status !== 'pending').length,
-    avgResponseTime: '2.4h',
-  }), [engagementRate, stats, sessions, taskActivities, conversations, applications]);
+    avgResponseTime: avgResponseTimeStr,
+  }), [studentSatisfactionScore, stats, sessions, taskActivities, conversations, applications, avgResponseTimeStr]);
 
   const chartData = useMemo(() => {
     const now = new Date();
@@ -516,9 +537,12 @@ export function useOverviewStore() {
       months.push({ name: m.toLocaleString('default', { month: 'short' }), label: m.toLocaleString('default', { month: 'long', year: 'numeric' }) });
     }
 
-    const baseGrowth = Math.max(1, Math.round(activeStudentsCount / 6));
-    const growthData = months.map((m, idx) => ({ name: m.name, active: Math.max(0, baseGrowth * (idx + 1) + Math.round(Math.random() * 2 - 1)) }));
-    if (growthData.length > 0) growthData[growthData.length - 1].active = activeStudentsCount;
+    const totalEnrollments = studentCounts.assigned || activeStudentsCount;
+    const growthData = months.map((m, idx) => {
+      const fraction = (idx + 1) / months.length;
+      return { name: m.name, active: Math.round(totalEnrollments * fraction) };
+    });
+    if (growthData.length > 0) growthData[growthData.length - 1].active = totalEnrollments;
 
     const weeklySessions = sessions.filter(s => s.startTime && new Date(s.startTime) >= new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000));
     const weeks = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
@@ -531,11 +555,11 @@ export function useOverviewStore() {
 
     const programData = programs.slice(0, 6).map(p => ({
       name: p.title?.slice(0, 15) || 'Program',
-      rate: p.progress || Math.round(Math.random() * 40 + 50),
+      rate: p.progress || (activeEnrollments.length > 0 ? Math.round(activeEnrollments.filter((e: any) => e.program_id === p.id && (e as any).status === 'active').length / Math.max(activeEnrollments.length, 1) * 100) : 0),
     }));
 
     return { growth: growthData, sessions: sessionData, completions: programData.length > 0 ? programData : [{ name: 'No Data', rate: 0 }] };
-  }, [activeStudentsCount, sessions, programs]);
+  }, [activeStudentsCount, sessions, programs, studentCounts, activeEnrollments]);
 
   const upcomingEvents = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];

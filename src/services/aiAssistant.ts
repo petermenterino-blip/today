@@ -1,5 +1,5 @@
 import { createAIProvider, AIChatMessage } from './aiProvider';
-import { contextEngine, PlatformContext } from './contextEngine';
+import { contextEngine, type PlatformContext } from './contextEngine';
 import { supabase } from '../lib/supabase';
 
 const SYSTEM_PROMPT = `You are Mentorino AI, the intelligent assistant for the Mentorino mentoring platform. You have access to ALL platform data and can analyze students, programs, sessions, applications, goals, tasks, resources, events, reviews, and analytics.
@@ -158,6 +158,75 @@ Return as a structured JSON array of insights with: type (warning|success|info|t
   });
 }
 
+function generateFallbackResponse(messages: AIChatMessage[], context: PlatformContext): string {
+  const userMsg = messages[messages.length - 1]?.content?.toLowerCase() || '';
+  const students = (context as any).students || [];
+  const programs = (context as any).programs || [];
+  const applications = (context as any).applications || [];
+  const sessions = (context as any).sessions || [];
+
+  if (userMsg.includes('student') && (userMsg.includes('attention') || userMsg.includes('risk') || userMsg.includes('need'))) {
+    const atRisk = students.filter((s: any) => s.healthStatus === 'at_risk' || s.status === 'at_risk');
+    if (atRisk.length === 0) return 'All students are currently on track. No one needs immediate attention.';
+    return `**Students needing attention:**\n\n${atRisk.slice(0, 5).map((s: any) => `- ${s.name || s.email} — ${s.healthStatus === 'at_risk' ? 'At risk' : 'Needs attention'}`).join('\n')}\n\nSuggested: Schedule 1:1 sessions to address their concerns.`;
+  }
+
+  if (userMsg.includes('session') && (userMsg.includes('miss') || userMsg.includes('absent'))) {
+    const missed = sessions.filter((s: any) => s.attendanceStatus === 'missed');
+    if (missed.length === 0) return 'No missed sessions found. Great attendance record!';
+    return `**Missed sessions:**\n\n${missed.slice(0, 5).map((s: any) => `- ${s.title} (${new Date(s.startTime || s.createdAt).toLocaleDateString()})`).join('\n')}\n\nSuggested: Follow up with these students to reschedule.`;
+  }
+
+  if (userMsg.includes('application') && (userMsg.includes('pending') || userMsg.includes('review'))) {
+    const pending = applications.filter((a: any) => a.status === 'pending');
+    if (pending.length === 0) return 'No pending applications. All caught up!';
+    return `**Pending applications:** ${pending.length}\n\n${pending.slice(0, 5).map((a: any) => `- ${a.full_name} (${a.created_at ? new Date(a.created_at).toLocaleDateString() : 'N/A'})`).join('\n')}\n\nSuggested: Review and process these applications.`;
+  }
+
+  if (userMsg.includes('behind') || userMsg.includes('falling') || userMsg.includes('goal')) {
+    const lowProgress = students.filter((s: any) => (s.goal_progress || 0) < 30);
+    if (lowProgress.length === 0) return 'All students are making good progress on their goals.';
+    return `**Students falling behind on goals:**\n\n${lowProgress.slice(0, 5).map((s: any) => `- ${s.name || s.email} — ${s.goal_progress || 0}% progress`).join('\n')}\n\nSuggested: Schedule goal review sessions to help them get back on track.`;
+  }
+
+  if (userMsg.includes('today') || userMsg.includes('summary') || userMsg.includes('overview')) {
+    const activeStudents = students.filter((s: any) => s.status === 'active').length;
+    const pendingApps = applications.filter((a: any) => a.status === 'pending').length;
+    const sessionsToday = sessions.filter((s: any) => s.startTime && new Date(s.startTime).toDateString() === new Date().toDateString()).length;
+    const atRisk = students.filter((s: any) => s.healthStatus === 'at_risk' || s.status === 'at_risk').length;
+    return `**Daily Summary:**\n\n- ${activeStudents} active students\n- ${sessionsToday} session${sessionsToday !== 1 ? 's' : ''} today\n- ${pendingApps} pending application${pendingApps !== 1 ? 's' : ''}\n- ${atRisk} student${atRisk !== 1 ? 's' : ''} at risk\n- ${programs.length} active program${programs.length !== 1 ? 's' : ''}`;
+  }
+
+  if (userMsg.includes('attendance')) {
+    const total = sessions.length;
+    const attended = sessions.filter((s: any) => s.attendanceStatus === 'attended').length;
+    const rate = total > 0 ? Math.round((attended / total) * 100) : 0;
+    return `**Attendance Summary:**\n\n- Overall attendance rate: ${rate}%\n- ${attended} attended out of ${total} sessions\n- ${sessions.filter((s: any) => s.attendanceStatus === 'missed').length} missed session${sessions.filter((s: any) => s.attendanceStatus === 'missed').length !== 1 ? 's' : ''}`;
+  }
+
+  if (userMsg.includes('top') || userMsg.includes('performer')) {
+    const sorted = [...students].sort((a: any, b: any) => (b.goal_progress || 0) - (a.goal_progress || 0));
+    if (sorted.length === 0) return 'No student data available yet.';
+    return `**Top Performing Students:**\n\n${sorted.slice(0, 5).map((s: any) => `- ${s.name || s.email} — ${s.goal_progress || 0}% progress`).join('\n')}`;
+  }
+
+  if (userMsg.includes('week') || userMsg.includes('plan')) {
+    const nextSessions = sessions.filter((s: any) => s.startTime && new Date(s.startTime) > new Date()).slice(0, 5);
+    return `**Next Week Plan:**\n\n${nextSessions.length > 0 ? `Scheduled sessions:\n${nextSessions.map((s: any) => `- ${s.title} on ${new Date(s.startTime).toLocaleDateString()}`).join('\n')}` : 'No sessions scheduled yet.'}\n\nPriorities: Review pending applications, check on at-risk students, prepare session materials.`;
+  }
+
+  if (userMsg.includes('help') || userMsg.includes('what can you')) {
+    return 'I can help you with:\n- Student performance analysis\n- Session attendance tracking\n- Application review insights\n- Goal progress monitoring\n- Weekly report generation\n- Identifying at-risk students\n- And more!\n\nTry asking about specific topics like "students needing attention" or "today\'s summary".';
+  }
+
+  const activeStudents = students.filter((s: any) => s.status === 'active').length;
+  if (activeStudents > 0) {
+    return `Based on your workspace data:\n- ${activeStudents} active students across ${programs.length} program${programs.length !== 1 ? 's' : ''}\n- ${sessions.length} total sessions\n- ${applications.filter((a: any) => a.status === 'pending').length} pending applications\n\nHow can I help you further? Try one of the quick commands or ask a specific question.`;
+  }
+
+  return 'I\'m your Mentorino AI assistant. I can help you analyze student data, track sessions, review applications, and more. Check the quick commands to get started.';
+}
+
 export async function chatWithContext(
   messages: AIChatMessage[],
   userId: string,
@@ -177,11 +246,29 @@ ${JSON.stringify(context, null, 2).slice(0, 15000)}
 - Suggest quick actions where relevant
 - Be helpful and concise`;
 
-  return provider.chat({
-    messages,
-    systemPrompt: systemWithContext,
-    maxTokens: 4096,
-    temperature: 0.7,
-    onToken,
-  });
+  try {
+    return await provider.chat({
+      messages,
+      systemPrompt: systemWithContext,
+      maxTokens: 4096,
+      temperature: 0.7,
+      onToken,
+    });
+  } catch {
+    const fallback = generateFallbackResponse(messages, context);
+    if (onToken) {
+      let idx = 0;
+      const interval = setInterval(() => {
+        if (idx < fallback.length) {
+          const chunkSize = Math.min(3, fallback.length - idx);
+          onToken(fallback.slice(idx, idx + chunkSize));
+          idx += chunkSize;
+        } else {
+          clearInterval(interval);
+        }
+      }, 30);
+      await new Promise(resolve => setTimeout(resolve, fallback.length * 12));
+    }
+    return fallback;
+  }
 }

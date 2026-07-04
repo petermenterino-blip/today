@@ -209,13 +209,23 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
           });
           return sortConversations(updated);
         });
+
+        if (row.conversation_id === selectedConversation?.id) {
+          messageService.markAsRead(row.conversation_id);
+        } else {
+          messageService.markAsDelivered(row.conversation_id);
+        }
       },
     },
     {
       table: 'messages',
       event: 'UPDATE',
       callback: (payload: any) => {
-        queryClient.invalidateQueries({ queryKey: ['messages', payload.new.conversation_id] });
+        const row = payload.new as any;
+        queryClient.invalidateQueries({ queryKey: ['messages', row.conversation_id] });
+        queryClient.setQueryData<Message[]>(['messages', row.conversation_id], (old = []) =>
+          (old || []).map(m => m.id === row.id ? { ...m, status: row.status } : m)
+        );
       },
     },
     {
@@ -369,7 +379,8 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
 
     let uploadedUrl = '';
     try {
-      const file = new File([audioBlob], `voice_${Date.now()}.webm`, { type: 'audio/webm' });
+      const ext = audioBlob.type.includes('wav') ? 'wav' : 'webm';
+      const file = new File([audioBlob], `voice_${Date.now()}.${ext}`, { type: audioBlob.type || 'audio/webm' });
       const storagePath = await storageService.uploadMessageAttachment(currentUserId, file);
       const { data: { publicUrl } } = storageService.getPublicUrl('message-attachments', storagePath);
       uploadedUrl = publicUrl;
@@ -468,7 +479,8 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
 
     try {
       setToast({ message: 'Uploading file...', type: 'info' });
-      const storageUrl = await uploadFileWithRetry(file);
+      const storagePath = await uploadFileWithRetry(file);
+      const { data: { publicUrl } } = storageService.getPublicUrl('message-attachments', storagePath);
 
       const sent = await messageService.sendMessage({
         senderId: currentUserId,
@@ -477,14 +489,14 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
         content: file.name,
         type: 'file',
         fileName: file.name,
-        fileUrl: storageUrl,
+        fileUrl: publicUrl,
         fileSize: file.size,
         fileType: file.type,
       });
 
       if (sent) {
         queryClient.setQueryData<Message[]>(['messages', selectedConversation.id], (old = []) =>
-          (old || []).map(m => m.id === tempId ? { ...m, id: sent.id, status: 'sent' as const, fileUrl: storageUrl } : m)
+          (old || []).map(m => m.id === tempId ? { ...m, id: sent.id, status: 'sent' as const, fileUrl: publicUrl } : m)
         );
         setToast({ message: 'File sent!', type: 'success' });
       }
@@ -611,6 +623,7 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
                 isGroup={selectedConversation.isGroup}
                 chatContainerRef={chatContainerRef}
                 messagesEndRef={messagesEndRef}
+                onRetrySendMessage={retrySendMessage}
               />
 
               <ComposeBar
@@ -631,6 +644,8 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
               onAddParticipant={handleAddParticipant}
               onRemoveParticipant={handleRemoveParticipant}
               onShowToast={(message, type) => setToast({ message, type })}
+              participantProfile={otherParticipantProfile}
+              presenceMap={presenceMap}
             />
           </>
         )}

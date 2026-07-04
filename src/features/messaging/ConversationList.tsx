@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Search, Archive, MessageSquarePlus, X, Pin, BellOff, Users, MessageSquare } from 'lucide-react';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { supabase } from '../../lib/supabase';
@@ -40,13 +40,19 @@ export const ConversationList = React.memo<ConversationListProps>(({
   const activeConversations = useMemo(() => conversations.filter(c => !c.archived), [conversations]);
   const archivedConversations = useMemo(() => conversations.filter(c => c.archived), [conversations]);
 
+  const getDisplayName = useCallback((c: Conversation) => {
+    if (c.isGroup) return c.name || 'Group Chat';
+    const otherName = role === 'mentor' ? (c.studentName || 'Unknown Student') : (c.mentorName || 'Unknown Mentor');
+    return otherName;
+  }, [role]);
+
   const filteredConversations = useMemo(() => {
     const source = showArchivedOnly ? archivedConversations : activeConversations;
     return source.filter(c => {
-      const name = c.isGroup ? (c.name || 'Group') : (role === 'mentor' ? c.studentName : 'Mentor');
-      return (name || '').toLowerCase().includes(searchQuery.toLowerCase());
+      const name = getDisplayName(c);
+      return name.toLowerCase().includes(searchQuery.toLowerCase());
     });
-  }, [activeConversations, archivedConversations, showArchivedOnly, searchQuery, role]);
+  }, [activeConversations, archivedConversations, showArchivedOnly, searchQuery, getDisplayName]);
 
   return (
     <div className="w-full md:w-[350px] lg:w-[400px] bg-white border-r border-[#d1d7db] flex flex-col">
@@ -149,7 +155,7 @@ export const ConversationList = React.memo<ConversationListProps>(({
         ) : (
           <>
             {filteredConversations.map(c => {
-              const displayName = c.isGroup ? (c.name || 'Community') : (role === 'mentor' ? c.studentName : 'Mentor');
+              const displayName = getDisplayName(c);
               const isSelected = selectedConversationId === c.id;
               const isUnread = c.unreadCount > 0;
               return (

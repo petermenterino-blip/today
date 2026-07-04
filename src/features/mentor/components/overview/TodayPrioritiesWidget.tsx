@@ -12,7 +12,12 @@ const ICON_MAP: Record<string, React.FC<{ size?: number; className?: string }>> 
 };
 
 export const TodayPrioritiesWidget: React.FC<Props> = ({ priorities, onAction }) => {
-  if (priorities.length === 0) return null;
+  if (priorities.length === 0) return (
+    <div className="space-y-3 pt-2">
+      <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Today's Priorities</p>
+      <p className="text-xs text-white/50 font-medium italic">All caught up — no outstanding items.</p>
+    </div>
+  );
 
   return (
     <div className="space-y-3 pt-2">

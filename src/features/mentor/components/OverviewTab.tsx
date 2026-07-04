@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'motion/react';
-import { Plus, Users, Calendar, Activity, Bot, Loader2, Send, Sparkles } from 'lucide-react';
+import { Plus, Users, Calendar, Activity, Bot, Loader2, Send, Sparkles, FileText, MessageSquare, ClipboardList, Bell } from 'lucide-react';
 import { useOverviewStore } from '../hooks/useOverviewStore';
 import { useAIAssistant } from '../hooks/useAIAssistant';
 import { useAuth } from '../../../context/AuthContext';
@@ -101,6 +101,8 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     notifySuccess(`Application ${action}`);
   }, [store]);
 
+  const isHeroLoading = loading.sessions || loading.apps || loading.programs;
+
   const [hasImminentSession, setHasImminentSession] = useState(false);
 
   const handleOpenSession = useCallback((session: any) => {
@@ -155,105 +157,161 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-emerald-500/10 rounded-full blur-[60px] pointer-events-none" />
             <div className="relative z-10 grid grid-cols-1 md:grid-cols-10 gap-8 items-start">
               <div className="md:col-span-6 space-y-6">
-                <MentorWorkspaceStatus status={mentorStatus} nextSession={nextSession} formatRelativeTime={formatRelativeTime} />
-                <TodayPrioritiesWidget priorities={priorities} onAction={(tab) => handleTabChange(tab as MentorTab)} />
-                <AIDailySummaryWidget summary={aiDailySummary} />
-                <SummaryStatsRow
-                  todaySessions={stats.todaySessions}
-                  pendingReviews={stats.pendingReviews}
-                  unreadMessages={stats.unreadMessages}
-                  applications={stats.applications}
-                  onStatClick={(type) => handleTabChange(type as MentorTab)}
-                />
+                {isHeroLoading ? (
+                  <div className="space-y-6">
+                    <div className="animate-pulse space-y-3">
+                      <div className="h-8 w-72 bg-white/10 rounded-2xl" />
+                      <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-white/10 rounded-full" /><div className="h-3 w-48 bg-white/10 rounded-2xl" /></div>
+                      <div className="h-3 w-36 bg-white/10 rounded-2xl" />
+                    </div>
+                    <div className="animate-pulse space-y-2"><div className="h-3 w-24 bg-white/10 rounded-2xl" /><div className="h-4 w-64 bg-white/10 rounded-2xl" /><div className="h-4 w-56 bg-white/10 rounded-2xl" /></div>
+                    <div className="animate-pulse p-4 bg-white/5 rounded-2xl"><div className="h-10" /></div>
+                    <div className="animate-pulse pt-6 grid grid-cols-4 gap-4 border-t border-white/10"><div className="h-10 bg-white/10 rounded-2xl" /><div className="h-10 bg-white/10 rounded-2xl" /><div className="h-10 bg-white/10 rounded-2xl" /><div className="h-10 bg-white/10 rounded-2xl" /></div>
+                  </div>
+                ) : (
+                  <>
+                    <MentorWorkspaceStatus status={mentorStatus} nextSession={nextSession} formatRelativeTime={formatRelativeTime} />
+                    <TodayPrioritiesWidget priorities={priorities} onAction={(tab) => handleTabChange(tab as MentorTab)} />
+                    <AIDailySummaryWidget summary={aiDailySummary} />
+                    <SummaryStatsRow
+                      todaySessions={stats.todaySessions}
+                      pendingReviews={stats.pendingReviews}
+                      unreadMessages={stats.unreadMessages}
+                      applications={stats.applications}
+                      onStatClick={(type) => handleTabChange(type as MentorTab)}
+                    />
+                  </>
+                )}
               </div>
-              <HeroSidePanel
-                currentProgram={currentProgram}
-                nextProgram={nextProgram}
-                activeStudents={activeStudentsCount}
-                studentCounts={studentCounts}
-                nextSession={nextSession}
-                upcomingSessions={upcomingSessions}
-                onTabChange={(tab) => handleTabChange(tab as MentorTab)}
-              />
+              {isHeroLoading ? (
+                <div className="md:col-span-4 grid grid-cols-2 gap-6 border-t md:border-t-0 md:border-l border-white/10 pt-6 md:pt-0 md:pl-10">
+                  <div className="animate-pulse space-y-2"><div className="h-2.5 w-20 bg-white/10 rounded" /><div className="h-4 w-32 bg-white/10 rounded-2xl" /></div>
+                  <div className="animate-pulse space-y-2"><div className="h-2.5 w-20 bg-white/10 rounded" /><div className="h-4 w-28 bg-white/10 rounded-2xl" /></div>
+                  <div className="animate-pulse space-y-2"><div className="h-2.5 w-20 bg-white/10 rounded" /><div className="h-4 w-36 bg-white/10 rounded-2xl" /></div>
+                  <div className="animate-pulse space-y-2"><div className="h-2.5 w-20 bg-white/10 rounded" /><div className="h-4 w-24 bg-white/10 rounded-2xl" /></div>
+                </div>
+              ) : (
+                <HeroSidePanel
+                  currentProgram={currentProgram}
+                  nextProgram={nextProgram}
+                  activeStudents={activeStudentsCount}
+                  studentCounts={studentCounts}
+                  nextSession={nextSession}
+                  upcomingSessions={upcomingSessions}
+                  onTabChange={(tab) => handleTabChange(tab as MentorTab)}
+                />
+              )}
             </div>
 
-            <NewApplicationsCard
-              count={pendingApplications.length}
-              newestApplicant={pendingApplications[0] ? { name: pendingApplications[0].full_name, created_at: pendingApplications[0].created_at } : undefined}
-              onReview={() => setShowReviewApps(true)}
-            />
+            {isHeroLoading ? (
+              <div className="animate-pulse mt-6"><div className="h-16 bg-white/10 rounded-2xl" /></div>
+            ) : (
+              <NewApplicationsCard
+                count={pendingApplications.length}
+                newestApplicant={pendingApplications[0] ? { name: pendingApplications[0].full_name, created_at: pendingApplications[0].created_at } : undefined}
+                onReview={() => setShowReviewApps(true)}
+              />
+            )}
 
-            <QuickActionsBar
-              onReviewApplications={() => setShowReviewApps(true)}
-              onStartSession={() => setShowStartSession(true)}
-              onMessageStudents={() => setShowQuickMessage(true)}
-              onViewCalendar={() => setShowCalendar(true)}
-              onGrowthAudit={() => setShowGrowthAudit(true)}
-              onCreateProgram={() => { setIsCreatingProgram(true); setProgramWizardStep(1); }}
-              onAddResource={() => handleTabChange('resources')}
-              onCreateEvent={() => handleTabChange('events')}
-              onBroadcast={() => setShowBroadcast(true)}
-              onUploadGallery={() => handleTabChange('gallery')}
-              onAISummary={() => {
-                const el = document.getElementById('ai-assistant-section');
-                el?.scrollIntoView({ behavior: 'smooth' });
-              }}
-              hasSession={hasImminentSession}
-            />
+            {isHeroLoading ? (
+              <div className="animate-pulse mt-6 pt-6 border-t border-white/10 space-y-3"><div className="flex gap-3"><div className="h-10 w-40 bg-white/10 rounded-2xl" /><div className="h-10 w-36 bg-white/10 rounded-2xl" /></div></div>
+            ) : (
+              <QuickActionsBar
+                onReviewApplications={() => setShowReviewApps(true)}
+                onStartSession={() => setShowStartSession(true)}
+                onMessageStudents={() => setShowQuickMessage(true)}
+                onViewCalendar={() => setShowCalendar(true)}
+                onGrowthAudit={() => setShowGrowthAudit(true)}
+                onCreateProgram={() => { setIsCreatingProgram(true); setProgramWizardStep(1); }}
+                onAddResource={() => handleTabChange('resources')}
+                onCreateEvent={() => handleTabChange('events')}
+                onBroadcast={() => setShowBroadcast(true)}
+                onUploadGallery={() => handleTabChange('gallery')}
+                onAISummary={() => {
+                  const el = document.getElementById('ai-assistant-section');
+                  el?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                hasSession={hasImminentSession}
+              />
+            )}
           </div>
 
           {/* OVERALL MENTORING HEALTH */}
-          <HealthOverviewWidget
-            healthy={overallMentoringHealth.healthy}
-            atRisk={overallMentoringHealth.atRisk}
-            inactive={overallMentoringHealth.inactive}
-            needsReview={overallMentoringHealth.needsReview}
-            attendanceRate={stats.attendanceRate}
-            avgProgress={stats.avgStudentProgress}
-            upcomingDeadlines={getOverdueCount(taskActivities)}
-            onFilter={(filter) => handleTabChange('mentees')}
-          />
+          {isHeroLoading ? (
+            <div className="animate-pulse bg-white rounded-[32px] p-6 border border-slate-100 shadow-sm space-y-4"><div className="h-8 bg-slate-100 rounded-2xl w-48" /><div className="grid grid-cols-4 gap-3"><div className="h-20 bg-slate-100 rounded-2xl" /><div className="h-20 bg-slate-100 rounded-2xl" /><div className="h-20 bg-slate-100 rounded-2xl" /><div className="h-20 bg-slate-100 rounded-2xl" /></div></div>
+          ) : (
+            <HealthOverviewWidget
+              healthy={overallMentoringHealth.healthy}
+              atRisk={overallMentoringHealth.atRisk}
+              inactive={overallMentoringHealth.inactive}
+              needsReview={overallMentoringHealth.needsReview}
+              attendanceRate={stats.attendanceRate}
+              avgProgress={stats.avgStudentProgress}
+              upcomingDeadlines={getOverdueCount(taskActivities)}
+              onFilter={(filter) => handleTabChange('mentees')}
+            />
+          )}
 
           {/* OPERATIONAL METRICS */}
-          <OperationalMetricsWidget
-            metrics={healthMetrics}
-            onMetricClick={(tab) => tab && handleTabChange(tab as MentorTab)}
-          />
+          {isHeroLoading ? (
+            <div className="animate-pulse bg-white rounded-[32px] p-6 border border-slate-100 shadow-sm space-y-6"><div className="h-6 bg-slate-100 rounded w-40" /><div className="grid grid-cols-4 gap-6"><div className="h-16 bg-slate-100 rounded-2xl" /><div className="h-16 bg-slate-100 rounded-2xl" /><div className="h-16 bg-slate-100 rounded-2xl" /><div className="h-16 bg-slate-100 rounded-2xl" /></div></div>
+          ) : (
+            <OperationalMetricsWidget
+              metrics={healthMetrics}
+              onMetricClick={(tab) => tab && handleTabChange(tab as MentorTab)}
+            />
+          )}
 
           {/* SECOND ROW: Activity Timeline & At-Risk */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <ActivityTimelineWidget
-              activities={activityTimeline}
-              onStudentClick={handleOpenStudentProfile}
-              onViewAll={() => handleTabChange('mentees')}
-              formatRelativeTime={formatRelativeTime}
-            />
-            <AtRiskStudentsWidget
-              students={atRiskStudents}
-              onStudentClick={handleOpenStudentProfile}
-              onQuickMessage={handleQuickActionClick}
-              onScheduleSession={(sid) => {
-                handleOpenStudentProfile(sid);
-              }}
-            />
+            {isHeroLoading ? (
+              <div className="animate-pulse lg:col-span-2 bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm h-[520px]"><div className="h-6 bg-slate-100 rounded-2xl w-48 mb-6" /><div className="space-y-4"><div className="h-16 bg-slate-100 rounded-2xl" /><div className="h-16 bg-slate-100 rounded-2xl" /><div className="h-16 bg-slate-100 rounded-2xl" /></div></div>
+            ) : (
+              <ActivityTimelineWidget
+                activities={activityTimeline}
+                onStudentClick={handleOpenStudentProfile}
+                onViewAll={() => handleTabChange('mentees')}
+                formatRelativeTime={formatRelativeTime}
+              />
+            )}
+            {isHeroLoading ? (
+              <div className="animate-pulse bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm h-[520px]"><div className="h-6 bg-slate-100 rounded-2xl w-36 mb-4" /><div className="space-y-3"><div className="h-20 bg-slate-100 rounded-2xl" /><div className="h-20 bg-slate-100 rounded-2xl" /></div></div>
+            ) : (
+              <AtRiskStudentsWidget
+                students={atRiskStudents}
+                onStudentClick={handleOpenStudentProfile}
+                onQuickMessage={handleQuickActionClick}
+                onScheduleSession={(sid) => {
+                  handleOpenStudentProfile(sid);
+                }}
+              />
+            )}
           </div>
 
           {/* THIRD ROW: Calendar & Communication */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <CalendarOverviewWidget
-              sessions={sessions}
-              events={store.rawEvents}
-              studentProfiles={studentProfiles}
-              applications={applications}
-              onSessionClick={() => handleTabChange('sessions')}
-              onEventClick={() => handleTabChange('events')}
-            />
-            <CommunicationHubWidget
-              communities={communities}
-              conversations={conversations}
-              onMessagingClick={() => handleTabChange('messaging')}
-              onBroadcastClick={() => setShowBroadcast(true)}
-            />
+            {isHeroLoading ? (
+              <div className="animate-pulse lg:col-span-2 bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm h-[420px]"><div className="h-6 bg-slate-100 rounded-2xl w-36 mb-4" /><div className="flex gap-6"><div className="flex-1"><div className="h-64 bg-slate-100 rounded-2xl" /></div></div></div>
+            ) : (
+              <CalendarOverviewWidget
+                sessions={sessions}
+                events={store.rawEvents}
+                studentProfiles={studentProfiles}
+                applications={applications}
+                onSessionClick={() => handleTabChange('sessions')}
+                onEventClick={() => handleTabChange('events')}
+              />
+            )}
+            {isHeroLoading ? (
+              <div className="animate-pulse bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm h-[420px]"><div className="h-6 bg-slate-100 rounded-2xl w-40 mb-6" /><div className="h-40 bg-slate-100 rounded-2xl" /></div>
+            ) : (
+              <CommunicationHubWidget
+                communities={communities}
+                conversations={conversations}
+                onMessagingClick={() => handleTabChange('messaging')}
+                onBroadcastClick={() => setShowBroadcast(true)}
+              />
+            )}
           </div>
 
           {/* FOURTH ROW: Events, Notifications, Calendar Preview */}
@@ -279,14 +337,22 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           </div>
 
           {/* PERFORMANCE CARDS */}
-          <PerformanceCardsWidget data={performanceCards} />
+          {isHeroLoading ? (
+            <div className="animate-pulse bg-white rounded-[32px] p-6 border border-slate-100 shadow-sm"><div className="h-6 bg-slate-100 rounded-2xl w-24 mb-4" /><div className="grid grid-cols-4 gap-3"><div className="h-16 bg-slate-100 rounded-2xl" /><div className="h-16 bg-slate-100 rounded-2xl" /><div className="h-16 bg-slate-100 rounded-2xl" /><div className="h-16 bg-slate-100 rounded-2xl" /></div></div>
+          ) : (
+            <PerformanceCardsWidget data={performanceCards} />
+          )}
 
           {/* WORKSPACE METRICS CHART */}
-          <WorkspaceMetricsChart
-            chartData={chartData}
-            selectedTab={selectedChartTab}
-            onTabChange={setSelectedChartTab}
-          />
+          {isHeroLoading ? (
+            <div className="animate-pulse bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm"><div className="h-6 bg-slate-100 rounded-2xl w-56 mb-6" /><div className="h-[280px] bg-slate-100 rounded-2xl" /></div>
+          ) : (
+            <WorkspaceMetricsChart
+              chartData={chartData}
+              selectedTab={selectedChartTab}
+              onTabChange={setSelectedChartTab}
+            />
+          )}
 
           {/* AI MENTOR ASSISTANT */}
           <div id="ai-assistant-section" className="bg-slate-950 p-8 rounded-[40px] text-white shadow-2xl relative overflow-hidden flex flex-col md:flex-row gap-8">

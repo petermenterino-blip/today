@@ -2,7 +2,7 @@ import React from 'react';
 import { ThumbsUp, Target, Calendar, CheckCircle, FileText, MessageSquare, Users, Clock } from 'lucide-react';
 
 interface PerformanceData {
-  studentSatisfaction: number;
+  studentSatisfaction: number | null;
   attendance: number;
   sessionsThisWeek: number;
   completionRate: number;
@@ -39,8 +39,10 @@ export const PerformanceCardsWidget: React.FC<Props> = ({ data, onCardClick }) =
         {PERFORMANCE_CARDS.map(card => {
           const Icon = card.icon;
           const value = data[card.key as keyof PerformanceData];
-          const displayValue = typeof value === 'number' && card.key !== 'sessionsThisWeek' && card.key !== 'assignmentsReviewed' && card.key !== 'messagesReplied' && card.key !== 'applicationsProcessed'
-            ? `${value}%` : value;
+          const displayValue = card.key === 'avgResponseTime' ? value
+            : value === null || value === undefined ? '—'
+            : card.key !== 'sessionsThisWeek' && card.key !== 'assignmentsReviewed' && card.key !== 'messagesReplied' && card.key !== 'applicationsProcessed'
+              ? `${value}%` : value;
           return (
             <button
               key={card.key}

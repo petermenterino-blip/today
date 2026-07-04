@@ -8,7 +8,17 @@ interface Props {
 }
 
 export const OperationalMetricsWidget: React.FC<Props> = ({ metrics, onMetricClick }) => {
-  if (metrics.length === 0) return null;
+  if (metrics.length === 0) return (
+    <div className="bg-white rounded-[32px] p-6 md:p-8 border border-slate-100 shadow-sm space-y-6">
+      <div>
+        <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-1">OVERALL MENTORING HEALTH</h4>
+        <p className="text-lg font-black text-brand-charcoal uppercase tracking-tighter">OPERATIONAL METRICS</p>
+      </div>
+      <div className="text-center py-8 text-slate-400 text-xs font-medium">
+        No metrics available yet. Start mentoring to see operational data.
+      </div>
+    </div>
+  );
 
   return (
     <div className="bg-white rounded-[32px] p-6 md:p-8 border border-slate-100 shadow-sm space-y-6">

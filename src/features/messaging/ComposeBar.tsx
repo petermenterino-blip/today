@@ -42,7 +42,7 @@ const EMOJIS = ['😀', '😂', '😍', '👍', '🙏', '🎉', '🔥', '❤️'
 
 interface ComposeBarProps {
   onSendMessage: (text: string) => void;
-  onSendVoiceMessage: (audioUrl: string, duration: number) => void;
+  onSendVoiceMessage: (audioBlob: Blob, duration: number) => void;
   onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
@@ -199,8 +199,7 @@ export const ComposeBar: React.FC<ComposeBarProps> = ({ onSendMessage, onSendVoi
     setIsUploading(true);
     
     try {
-      const audioUrl = URL.createObjectURL(recordedBlob);
-      onSendVoiceMessage(audioUrl, recordedDuration);
+      onSendVoiceMessage(recordedBlob, recordedDuration);
       
       if (recordedUrl) {
         URL.revokeObjectURL(recordedUrl);

@@ -171,6 +171,14 @@ export const messageService = {
     return fromDbMessage(data);
   },
 
+  async markAsDelivered(conversationId: string): Promise<void> {
+    await supabase
+      .from('messages')
+      .update({ status: 'delivered' })
+      .eq('conversation_id', conversationId)
+      .eq('status', 'sent');
+  },
+
   async markAsRead(conversationId: string): Promise<void> {
     await supabase
       .from('conversations')
@@ -286,13 +294,21 @@ export const messageService = {
 
     if (existing) return fromDbConversation(existing);
 
-    const mentorProfile = await fetchProfileName(mentorId);
+    const [studentProfile, mentorProfile] = await Promise.all([
+      fetchProfileName(studentId),
+      fetchProfileName(mentorId),
+    ]);
+
+    const resolvedStudentName = studentName || studentProfile;
+    if (resolvedStudentName === 'Unknown User' || mentorProfile === 'Unknown User') {
+      return null;
+    }
 
     const { data, error } = await supabase
       .from('conversations')
       .insert({
         student_id: studentId,
-        student_name: studentName,
+        student_name: resolvedStudentName,
         mentor_id: mentorId,
         mentor_name: mentorProfile === 'Unknown User' ? undefined : mentorProfile,
         last_message_time: new Date().toISOString(),

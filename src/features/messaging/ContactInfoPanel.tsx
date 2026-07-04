@@ -15,6 +15,8 @@ interface ContactInfoPanelProps {
   onAddParticipant: (studentId: string) => void;
   onRemoveParticipant: (studentId: string) => void;
   onShowToast?: (message: string, type: 'success' | 'error' | 'info') => void;
+  participantProfile?: { id: string; name: string; role: string; avatar_url?: string; email?: string; bio?: string; phone?: string; specialization?: string; created_at?: string } | null;
+  presenceMap?: Record<string, { status: string; lastSeen?: string }>;
 }
 
 export const ContactInfoPanel: React.FC<ContactInfoPanelProps> = ({
@@ -28,12 +30,20 @@ export const ContactInfoPanel: React.FC<ContactInfoPanelProps> = ({
   onAddParticipant,
   onRemoveParticipant,
   onShowToast,
+  participantProfile,
+  presenceMap = {},
 }) => {
   const [showAddParticipantDropdown, setShowAddParticipantDropdown] = useState(false);
 
+  const otherUserPresence = participantProfile?.id ? presenceMap[participantProfile.id] : null;
+  const isOnline = otherUserPresence?.status === 'online';
+  const lastSeenText = otherUserPresence?.lastSeen
+    ? new Date(otherUserPresence.lastSeen).toLocaleDateString()
+    : '';
+
   const contactName = selectedConversation.isGroup 
     ? selectedConversation.name 
-    : (role === 'mentor' ? selectedConversation.studentName : 'Peter Mannarino');
+    : (participantProfile?.name || (role === 'mentor' ? selectedConversation.studentName : 'Unknown User'));
   const initials = contactName?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || '?';
 
   const handleAddParticipantClick = useCallback((studentId: string) => {
@@ -104,17 +114,19 @@ export const ContactInfoPanel: React.FC<ContactInfoPanelProps> = ({
             </h3>
             
             <p className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 mt-1">
-              {selectedConversation.isGroup ? "Group Chat" : (selectedConversation.mentorId === currentUserId || role === 'student' ? "Mentor" : "Student")}
+              {selectedConversation.isGroup ? "Group Chat" : (participantProfile?.role ? (participantProfile.role === 'mentor' ? 'Mentor' : 'Student') : (selectedConversation.mentorId === currentUserId || role === 'student' ? "Mentor" : "Student"))}
             </p>
             
             <div className="flex items-center justify-center gap-1.5 mt-2 w-full">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+              <span className={`w-2 h-2 rounded-full shrink-0 ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
               <p className="text-xs text-[#667781] font-medium truncate max-w-full">
                 {selectedConversation.isGroup 
                   ? `${selectedConversation.participants?.length || 0} participants` 
-                  : role === 'student' 
-                    ? "Online • Last seen today at 2:45 PM" 
-                    : "Online • Active now"
+                  : isOnline
+                    ? "Online"
+                    : lastSeenText
+                      ? `Last seen ${lastSeenText}`
+                      : "Offline"
                 }
               </p>
             </div>
@@ -126,10 +138,7 @@ export const ContactInfoPanel: React.FC<ContactInfoPanelProps> = ({
             <p className="text-sm text-slate-800 font-medium leading-relaxed" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
               {selectedConversation.isGroup 
                 ? (selectedConversation.description || "Helping students build careers with structured mentorship.")
-                : (role === 'student' 
-                    ? "Helping students build careers with structured mentorship." 
-                    : "No bio available."
-                  )
+                : (participantProfile?.bio || "No bio available.")
               }
             </p>
           </div>
@@ -218,44 +227,44 @@ export const ContactInfoPanel: React.FC<ContactInfoPanelProps> = ({
                 <div className="flex flex-col w-full">
                   <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Role</p>
                   <p className="font-semibold text-slate-800 mt-0.5" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
-                    {role === 'student' ? 'Mentor' : 'Student'}
+                    {participantProfile?.role === 'mentor' ? 'Mentor' : participantProfile?.role === 'student' ? 'Student' : (role === 'student' ? 'Mentor' : 'Student')}
                   </p>
                 </div>
                 
                 <div className="flex flex-col w-full border-t border-slate-100 pt-2.5">
                   <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">
-                    {role === 'student' ? 'Mentor ID' : 'Student ID'}
+                    {participantProfile?.role === 'student' ? 'Student ID' : 'Mentor ID'}
                   </p>
                   <p className="font-mono text-slate-700 font-semibold mt-0.5" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
-                    {role === 'student' ? (selectedConversation.mentorId || 'Mentor') : (selectedConversation.studentId || 'Student')}
+                    {participantProfile?.id || (role === 'student' ? (selectedConversation.mentorId || 'Mentor') : (selectedConversation.studentId || 'Student'))}
                   </p>
                 </div>
 
                 <div className="flex flex-col w-full border-t border-slate-100 pt-2.5">
                   <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Email</p>
                   <p className="font-semibold text-slate-800 mt-0.5" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
-                    {role === 'student' ? 'peter@mannarino.com' : 'student@email.com'}
+                    {participantProfile?.email || 'Not provided'}
                   </p>
                 </div>
 
                 <div className="flex flex-col w-full border-t border-slate-100 pt-2.5">
                   <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Phone</p>
                   <p className="font-semibold text-slate-800 mt-0.5" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
-                    {role === 'student' ? '+1 (555) 234-5678' : '+91 XXXXX XXXXX'}
+                    {participantProfile?.phone || 'Not provided'}
                   </p>
                 </div>
 
                 <div className="flex flex-col w-full border-t border-slate-100 pt-2.5">
-                  <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Location</p>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Specialization</p>
                   <p className="font-semibold text-slate-800 mt-0.5" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
-                    {role === 'student' ? 'San Francisco, USA' : 'India'}
+                    {participantProfile?.specialization || 'Not specified'}
                   </p>
                 </div>
 
                 <div className="flex flex-col w-full border-t border-slate-100 pt-2.5">
                   <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Member Since</p>
                   <p className="font-semibold text-slate-800 mt-0.5" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
-                    {role === 'student' ? 'Sep 2025' : 'Jan 2026'}
+                    {participantProfile?.created_at ? new Date(participantProfile.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short' }) : 'Unknown'}
                   </p>
                 </div>
               </div>

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Search, X, Users } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Search, X, Users, CheckCheck } from 'lucide-react';
 import { Conversation } from '../../types/messaging';
 
 interface ConversationHeaderProps {
@@ -18,6 +18,16 @@ export const ConversationHeader: React.FC<ConversationHeaderProps> = ({
   const [showInChatSearch, setShowInChatSearch] = useState(false);
   const [searchInChatQuery, setSearchInChatQuery] = useState('');
 
+  const displayName = useMemo(() => {
+    if (selectedConversation.isGroup) return selectedConversation.name || 'Group Chat';
+    return role === 'mentor' ? (selectedConversation.studentName || 'Unknown Student') : (selectedConversation.mentorName || 'Unknown Mentor');
+  }, [selectedConversation, role]);
+
+  const headerInitial = useMemo(() => {
+    if (selectedConversation.isGroup) return '';
+    return displayName.charAt(0) || '?';
+  }, [selectedConversation, displayName]);
+
   return (
     <>
       <div className="h-[60px] bg-[#f0f2f5] px-4 flex items-center justify-between border-b border-[#d1d7db] shrink-0 z-10 w-full relative">
@@ -29,14 +39,18 @@ export const ConversationHeader: React.FC<ConversationHeaderProps> = ({
             <X size={20} />
           </button>
           <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center shrink-0 text-indigo-700 font-bold">
-            {selectedConversation.isGroup ? <Users size={18} /> : (role === 'mentor' ? selectedConversation.studentName : 'Peter Mannarino')?.charAt(0)}
+            {selectedConversation.isGroup ? <Users size={18} /> : headerInitial}
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-base text-[#111b21] truncate font-medium hover:text-indigo-600 transition-colors">
-              {selectedConversation.isGroup ? selectedConversation.name : (role === 'mentor' ? selectedConversation.studentName : 'Peter Mannarino')}
+              {displayName}
             </h3>
-            <p className="text-xs text-[#667781] truncate hover:underline">
-              {selectedConversation.isGroup ? `${selectedConversation.participants?.length || 0} participants` : 'click here for contact info'}
+            <p className="text-xs text-[#667781] truncate hover:underline flex items-center gap-1">
+              {selectedConversation.isGroup ? (
+                <>{selectedConversation.participants?.length || 0} participants</>
+              ) : (
+                <><CheckCheck size={12} className="text-[#53bdeb]" /> Tap here for contact info</>
+              )}
             </p>
           </div>
         </div>

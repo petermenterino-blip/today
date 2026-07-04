@@ -79,6 +79,11 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onLogout, currentUser }) =>
   const [bio, setBio] = useState('');
   const [currentUserAvatar, setCurrentUserAvatar] = useState('');
 
+  // Messaging preferences
+  const [readReceipts, setReadReceipts] = useState(true);
+  const [messageNotifications, setMessageNotifications] = useState(true);
+  const [messageSound, setMessageSound] = useState(true);
+
   // Footer preview
   const [showFooterPreview, setShowFooterPreview] = useState(false);
 
@@ -113,6 +118,9 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onLogout, currentUser }) =>
 
       const res = await profileService.getProfileSettings(currentUser.id);
       if (res.data?.username) setUsername(res.data.username);
+      if (res.data?.read_receipts !== undefined) setReadReceipts(res.data.read_receipts);
+      if (res.data?.message_notifications !== undefined) setMessageNotifications(res.data.message_notifications);
+      if (res.data?.message_sound !== undefined) setMessageSound(res.data.message_sound);
 
       const slRes = await socialLinksService.fetchAll();
       if (slRes.data && slRes.data.length > 0) {
@@ -671,6 +679,35 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onLogout, currentUser }) =>
             )}
           </div>
         )}
+
+        {/* Messaging Preferences */}
+        <div className="bg-white p-8 sm:p-12 rounded-[48px] border border-black/[0.03] shadow-sm">
+          <h3 className="text-xl font-black uppercase mb-8 text-center sm:text-left">Messaging Preferences</h3>
+          <div className="space-y-6">
+            {[
+              { key: 'read_receipts', label: 'Read Receipts', desc: 'Let others see when you\'ve read their messages', val: readReceipts, set: setReadReceipts },
+              { key: 'message_notifications', label: 'Push Notifications', desc: 'Get notified when you receive a new message', val: messageNotifications, set: setMessageNotifications },
+              { key: 'message_sound', label: 'Message Sound', desc: 'Play a sound when a new message arrives', val: messageSound, set: setMessageSound },
+            ].map(item => (
+              <div key={item.key} className="flex items-center justify-between p-4 bg-slate-50 rounded-3xl border border-slate-100">
+                <div>
+                  <p className="text-sm font-bold text-slate-800">{item.label}</p>
+                  <p className="text-[10px] text-slate-500 font-medium mt-0.5">{item.desc}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    const next = !item.val;
+                    item.set(next);
+                    profileService.updateProfileSettings(currentUser.id, { [item.key]: next });
+                  }}
+                  className={`w-12 h-7 rounded-full transition-all relative ${item.val ? 'bg-[#00a884]' : 'bg-slate-300'}`}
+                >
+                  <div className={`w-5 h-5 bg-white rounded-full shadow absolute top-1 transition-all ${item.val ? 'left-6' : 'left-1'}`} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* Logout Section */}
         <div className="flex justify-center pt-4">
