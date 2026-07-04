@@ -26,6 +26,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [role, setRole] = useState<UserRole>('visitor');
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
+  const loginInProgress = React.useRef(false);
 
   const clearError = useCallback(() => setAuthError(null), []);
 
@@ -49,21 +50,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     let mounted = true;
     let initialized = false;
-    const AUTH_TIMEOUT = 15000;
-
-    const authTimeout = setTimeout(() => {
-      if (mounted && !initialized) {
-        logger.warn('AuthContext', 'Auth initialization timed out, proceeding as visitor');
-        initialized = true;
-        setAuthLoading(false);
-      }
-    }, AUTH_TIMEOUT);
-
     const initializeSession = async () => {
       try {
         const profileRes = await authService.getCurrentUser();
         if (mounted) {
-          clearTimeout(authTimeout);
           if (profileRes.data) {
             setUser(profileRes.data);
             setRole(profileRes.data.role);
@@ -74,7 +64,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       } catch (err: any) {
         if (mounted) {
-          clearTimeout(authTimeout);
           logger.error('AuthContext', 'Failed to initialize session', { error: err?.message });
         }
       } finally {
@@ -88,9 +77,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const unsubscribe = authService.onAuthStateChange((user) => {
       if (!mounted || !initialized) return;
+      if (loginInProgress.current) return;
       if (user) {
-        setUser(user as any);
-        setRole(user.role);
+        setUser((user.role ? user : { ...user, role: 'visitor' }) as any);
+        setRole(user.role || 'visitor');
       } else {
         setUser(null);
         setRole('visitor');
@@ -126,30 +116,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (email: string, password: string): Promise<User & { profile?: UserProfileDetails }> => {
+    loginInProgress.current = true;
     setAuthLoading(true);
     setAuthError(null);
-    const { data, error } = await authService.signIn(email, password);
-    if (error || !data) {
+    try {
+      const { data, error } = await authService.signIn(email, password);
+      if (error || !data) {
+        setAuthError(interpretError(error));
+        throw new Error(error || 'Login failed');
+      }
+      setUser(data.role ? data : { ...data, role: data.role || 'visitor' });
+      setRole(data.role || 'visitor');
+      return data;
+    } finally {
       setAuthLoading(false);
-      setAuthError(interpretError(error));
-      throw new Error(error || 'Login failed');
+      loginInProgress.current = false;
     }
-    setUser(data);
-    setRole(data.role);
-    setAuthLoading(false);
-    return data;
   };
 
   const signup = async (email: string, password: string, fullName: string): Promise<void> => {
+    loginInProgress.current = true;
     setAuthLoading(true);
     setAuthError(null);
-    const { data, error } = await authService.signUp(email, password, fullName);
-    if (error || !data) {
+    try {
+      const { data, error } = await authService.signUp(email, password, fullName);
+      if (error || !data) {
+        setAuthError(interpretError(error));
+        throw new Error(error || 'Signup failed');
+      }
+    } finally {
       setAuthLoading(false);
-      setAuthError(interpretError(error));
-      throw new Error(error || 'Signup failed');
+      loginInProgress.current = false;
     }
-    setAuthLoading(false);
   };
 
   const logout = async () => {
