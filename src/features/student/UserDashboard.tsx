@@ -166,13 +166,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
   const isOverview =
     location.pathname === "/student" || location.pathname === "/student/";
 
-  if (appsLoading || bookingsLoading || eventsLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="animate-spin text-slate-300" size={40} />
-      </div>
-    );
-  }
+  const anyLoading = appsLoading || bookingsLoading || eventsLoading;
 
   const renderOverview = () => {
     // 1. Get the current student's profile

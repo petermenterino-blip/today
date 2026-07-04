@@ -3,13 +3,28 @@ import React from 'react';
 import { idleRecovery } from '../lib/idleRecovery';
 import { logger } from '../lib/logger';
 
+const STALE_KEYS = [
+  ['applications'],
+  ['tasks'],
+  ['bookings'],
+  ['sessions'],
+  ['events'],
+  ['programs'],
+  ['goals'],
+  ['journals'],
+  ['notifications'],
+  ['messages'],
+  ['conversations'],
+];
+
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 60 * 1000,
-      retry: 3,
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+      retry: 2,
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
-      refetchOnWindowFocus: true,
+      refetchOnWindowFocus: false,
       refetchOnReconnect: true,
       refetchIntervalInBackground: false,
     },
@@ -25,9 +40,9 @@ export const QueryProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     idleRecovery.configure({
       onFullRecovery: async () => {
         logger.info('QueryClient', 'Invalidating stale queries after idle recovery');
-        await queryClient.invalidateQueries({
-          refetchType: 'all',
-        });
+        for (const key of STALE_KEYS) {
+          queryClient.invalidateQueries({ queryKey: key, refetchType: 'active' });
+        }
       },
     });
   }, []);

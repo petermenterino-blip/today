@@ -1,6 +1,8 @@
 
 
-# RC2.6 — Internal Alpha Checklist
+# RC2.6 — Internal Alpha Tester Workbook
+
+> **Note:** This is the tester workflow checklist. For pre-flight checks (environment, security gates, deployment), see `../releases/rc2.6-alpha-checklist.md`.
 
 ## Purpose
 Checklist for internal alpha testers to validate all workflows before inviting external users.

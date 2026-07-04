@@ -46,11 +46,10 @@ class IdleRecoveryManager {
         const timeSinceLastVisible = now - this.lastVisibilityChange;
         this.lastVisibilityChange = now;
 
-        logger.info('IdleRecovery', 'Tab became visible', {
-          hiddenMs: timeSinceLastVisible,
-        });
-
-        if (timeSinceLastVisible > 5000) {
+        if (timeSinceLastVisible > 30000) {
+          logger.info('IdleRecovery', 'Tab became visible after extended idle', {
+            hiddenMs: timeSinceLastVisible,
+          });
           this.triggerRecovery('visibility-change');
         }
       } else {
@@ -62,8 +61,8 @@ class IdleRecoveryManager {
       if (document.visibilityState === 'visible') {
         const now = Date.now();
         const timeSinceLastVisible = now - this.lastVisibilityChange;
-        if (timeSinceLastVisible > 5000) {
-          logger.info('IdleRecovery', 'Window focused after idle', {
+        if (timeSinceLastVisible > 30000) {
+          logger.info('IdleRecovery', 'Window focused after extended idle', {
             hiddenMs: timeSinceLastVisible,
           });
           this.triggerRecovery('window-focus');

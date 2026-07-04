@@ -2,6 +2,8 @@
 
 # Internal Alpha Checklist — Mentorino RC2.6
 
+> **Note:** This is the pre-flight & environment checklist. For the alpha tester workflow checklist (role-specific testing steps), see `../reports/rc2.6-internal-alpha-checklist.md`.
+
 ## Pre-Flight
 
 ### Environment

@@ -411,10 +411,11 @@ export const resourceService = {
 
     if (enrollmentData && enrollmentData.length > 0) {
       const studentIds = enrollmentData.map(e => e.student_id);
-      for (const sid of studentIds) {
-        await supabase.from('resource_assignments').insert({
-          resource_id: resourceId, student_id: sid, assigned_by: assignedBy,
-        });
+      const batch = studentIds.map(student_id => ({
+        resource_id: resourceId, student_id, assigned_by: assignedBy,
+      }));
+      if (batch.length > 0) {
+        await supabase.from('resource_assignments').insert(batch);
       }
     }
 
@@ -677,36 +678,31 @@ export const resourceService = {
   // ========================
 
   async getStats() {
-    const { data: totals } = await supabase
+    const { data: all } = await supabase
       .from('resources')
-      .select('id, downloads_count, views_count, favorites_count, created_at', { count: 'exact', head: false });
+      .select(RESOURCE_SELECT, { count: 'exact', head: false })
+      .order('downloads_count', { ascending: false })
+      .limit(100);
 
-    const all = totals || [];
+    const allRows = all || [];
 
     const now = new Date();
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-    const recentlyAdded = all.filter(r => r.created_at >= weekAgo).length;
+    const recentlyAdded = allRows.filter(r => r.created_at >= weekAgo).length;
+    const totalDownloads = allRows.reduce((sum, r) => sum + (r.downloads_count || 0), 0);
+    const totalViews = allRows.reduce((sum, r) => sum + (r.views_count || 0), 0);
+    const totalFavorites = allRows.reduce((sum, r) => sum + (r.favorites_count || 0), 0);
 
-    const totalDownloads = all.reduce((sum, r) => sum + (r.downloads_count || 0), 0);
-    const totalViews = all.reduce((sum, r) => sum + (r.views_count || 0), 0);
-    const totalFavorites = all.reduce((sum, r) => sum + (r.favorites_count || 0), 0);
+    const mostDownloaded = [...allRows]
+      .sort((a, b) => (b.downloads_count || 0) - (a.downloads_count || 0))
+      .slice(0, 5)
+      .map(rowToResource);
 
-    const sortedByDownloads = [...all].sort((a, b) => (b.downloads_count || 0) - (a.downloads_count || 0)).slice(0, 5);
-    const sortedByViews = [...all].sort((a, b) => (b.views_count || 0) - (a.views_count || 0)).slice(0, 5);
-
-    const mostDownloaded = await Promise.all(
-      sortedByDownloads.map(async r => {
-        const res = await resourceService.fetchById(r.id);
-        return res.data;
-      })
-    );
-    const mostViewed = await Promise.all(
-      sortedByViews.map(async r => {
-        const res = await resourceService.fetchById(r.id);
-        return res.data;
-      })
-    );
+    const mostViewed = [...allRows]
+      .sort((a, b) => (b.views_count || 0) - (a.views_count || 0))
+      .slice(0, 5)
+      .map(rowToResource);
 
     return {
       data: {
@@ -716,8 +712,8 @@ export const resourceService = {
         totalFavorites,
         totalCategories: 0,
         recentlyAdded,
-        mostDownloaded: mostDownloaded.filter(Boolean) as Resource[],
-        mostViewed: mostViewed.filter(Boolean) as Resource[],
+        mostDownloaded,
+        mostViewed,
       } as ResourceStats,
       error: null,
     };

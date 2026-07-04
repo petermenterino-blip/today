@@ -112,15 +112,14 @@ export const crmInitializationService = {
         { title: 'Complete Program Onboarding', description: 'Complete the initial onboarding process to set up your learning journey.', status: 'not_started', progress_percentage: 0 },
         { title: 'Define Career Goals', description: 'Identify and document your short-term and long-term career objectives.', status: 'not_started', progress_percentage: 0 },
       ];
-      for (const goal of defaultGoals) {
-        await supabase.from('goals').insert({
-          student_id: userId,
-          title: goal.title,
-          description: goal.description,
-          status: goal.status,
-          progress_percentage: goal.progress_percentage,
-        });
-      }
+      const goalBatch = defaultGoals.map(goal => ({
+        student_id: userId,
+        title: goal.title,
+        description: goal.description,
+        status: goal.status,
+        progress_percentage: goal.progress_percentage,
+      }));
+      await supabase.from('goals').insert(goalBatch);
     }
 
     const { data: existingConversation } = await supabase
@@ -217,15 +216,14 @@ export const crmInitializationService = {
           { title: 'Complete Program Onboarding', description: 'Complete the initial onboarding process.', status: 'not_started', progress_percentage: 0 },
           { title: 'Define Career Goals', description: 'Identify and document your career objectives.', status: 'not_started', progress_percentage: 0 },
         ];
-        for (const goal of defaultGoals) {
-          await supabase.from('goals').insert({
-            student_id: userId,
-            title: goal.title,
-            description: goal.description,
-            status: goal.status,
-            progress_percentage: goal.progress_percentage,
-          });
-        }
+        const goalBatch = defaultGoals.map(goal => ({
+          student_id: userId,
+          title: goal.title,
+          description: goal.description,
+          status: goal.status,
+          progress_percentage: goal.progress_percentage,
+        }));
+        await supabase.from('goals').insert(goalBatch);
       }
 
       return true;

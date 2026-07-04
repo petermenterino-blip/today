@@ -48,6 +48,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     let mounted = true;
+    let initialized = false;
     const initializeSession = async () => {
       try {
         const profileRes = await authService.getCurrentUser();
@@ -63,10 +64,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } catch (err: any) {
         if (mounted) {
           logger.error('AuthContext', 'Failed to initialize session', { error: err?.message });
-          setAuthError(interpretError(err?.message || 'Connection failed. Please check your internet.'));
         }
       } finally {
         if (mounted) {
+          initialized = true;
           setAuthLoading(false);
         }
       }
@@ -74,7 +75,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     initializeSession();
 
     const unsubscribe = authService.onAuthStateChange((user) => {
-      if (!mounted) return;
+      if (!mounted || !initialized) return;
       if (user) {
         setUser(user as any);
         setRole(user.role);
@@ -85,6 +86,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     const handleProfileChange = async () => {
+      if (!initialized) return;
       try {
         const { data } = await authService.getCurrentUser();
         if (data && mounted) {
@@ -100,7 +102,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     idleRecovery.configure({
       onSessionValidate: async () => {
         logger.info('AuthContext', 'Validating session after idle');
-        await initializeSession();
+        if (initialized) await initializeSession();
       },
     });
 

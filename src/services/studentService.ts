@@ -85,8 +85,16 @@ export const studentService = {
   },
 
   async getByStatus(status: StudentProfile['status']): Promise<StudentProfile[]> {
-    const all = await this.getAll();
-    return all.filter(s => s.status === status);
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('role', 'student')
+      .eq('status', status);
+    if (error) {
+      console.warn('studentService.getByStatus:', interpretError(error));
+      return [];
+    }
+    return (data || []).map(fromDbProfile);
   },
 
   async update(id: string, updates: Partial<StudentProfile>): Promise<StudentProfile | null> {

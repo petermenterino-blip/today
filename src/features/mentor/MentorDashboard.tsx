@@ -34,13 +34,7 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
   const navigate = useNavigate();
   const d = useDashboard({ currentUser });
 
-  if (d.appsLoading || d.tasksLoading || d.bookingsLoading || d.eventsLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="animate-spin text-slate-300" size={40} />
-      </div>
-    );
-  }
+  const anyLoading = d.appsLoading || d.tasksLoading || d.bookingsLoading || d.eventsLoading;
 
   if (d.selectedEventId) {
     return (

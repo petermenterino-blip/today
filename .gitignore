@@ -28,3 +28,10 @@ dist-ssr
 
 # Test coverage
 coverage/
+
+# Build cache
+tsconfig.tsbuildinfo
+
+# Build artifacts
+vite-err.txt
+vite-out.txt

@@ -2,7 +2,15 @@ import { supabase } from '../lib/supabase';
 import { NetworkEvent, ServiceResponse, EventSpeaker, EventWaitlistEntry, EventComment, EventActivity, EventFeedback, EventFile } from '../types';
 import { handleError } from '../lib/serviceHelper';
 
-const EVENT_FIELDS = `
+const EVENT_LIGHT_FIELDS = `
+  id, title, description, event_type, date, time, end_time, timezone, location,
+  meeting_link, venue, image, cover_image, capacity, registration_deadline,
+  speaker, visibility, status, tags, created_at, updated_at,
+  duration, waitlist_limit, resource_files, requirements, event_color,
+  program_id, meeting_platform, allow_registration_approval, notes
+`;
+
+const EVENT_FULL_FIELDS = `
   *,
   event_attendees(user_id, name, email, registration_status, attendance_status, waitlist_position, checked_in, feedback_submitted, bookmarked, registered_at),
   event_speakers(*),
@@ -153,7 +161,7 @@ export const eventService = {
   async fetchAll(): Promise<ServiceResponse<NetworkEvent[]>> {
     const { data, error } = await supabase
       .from('events')
-      .select(EVENT_FIELDS)
+      .select(EVENT_LIGHT_FIELDS)
       .order('date', { ascending: false });
     if (error) return { data: null, error: handleError(error).error };
     return { data: (data || []).map(rowToEvent), error: null };
@@ -163,7 +171,7 @@ export const eventService = {
     const today = new Date().toISOString().split('T')[0];
     const { data, error } = await supabase
       .from('events')
-      .select(EVENT_FIELDS)
+      .select(EVENT_LIGHT_FIELDS)
       .gte('date', today)
       .in('status', ['published', 'draft'])
       .order('date');
@@ -175,7 +183,7 @@ export const eventService = {
     const today = new Date().toISOString().split('T')[0];
     const { data, error } = await supabase
       .from('events')
-      .select(EVENT_FIELDS)
+      .select(EVENT_LIGHT_FIELDS)
       .eq('date', today)
       .eq('status', 'published')
       .order('time');
@@ -186,7 +194,7 @@ export const eventService = {
   async fetchByProgram(programId: string): Promise<ServiceResponse<NetworkEvent[]>> {
     const { data, error } = await supabase
       .from('events')
-      .select(EVENT_FIELDS)
+      .select(EVENT_LIGHT_FIELDS)
       .eq('program_id', programId)
       .order('date');
     if (error) return { data: null, error: handleError(error).error };
@@ -198,7 +206,7 @@ export const eventService = {
     const { data, error } = await supabase
       .from('events')
       .insert(row)
-      .select(EVENT_FIELDS)
+      .select(EVENT_LIGHT_FIELDS)
       .single();
     if (error) return { data: null, error: handleError(error).error };
     return { data: rowToEvent(data), error: null };
@@ -213,7 +221,7 @@ export const eventService = {
   async getById(id: string): Promise<ServiceResponse<NetworkEvent>> {
     const { data, error } = await supabase
       .from('events')
-      .select(EVENT_FIELDS)
+      .select(EVENT_FULL_FIELDS)
       .eq('id', id)
       .single();
     if (error) return { data: null, error: handleError(error).error };
@@ -226,7 +234,7 @@ export const eventService = {
       .from('events')
       .update(row)
       .eq('id', id)
-      .select(EVENT_FIELDS)
+      .select(EVENT_LIGHT_FIELDS)
       .single();
     if (error) return { data: null, error: handleError(error).error };
     if (!data) return { data: null, error: 'Event not found' };

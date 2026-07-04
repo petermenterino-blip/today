@@ -71,13 +71,6 @@ export const sessionService = {
   },
 
   async update(id: string, session: Partial<Session>): Promise<ServiceResponse<Session>> {
-    const { data: old, error: fetchError } = await supabase
-      .from('sessions')
-      .select('*')
-      .eq('id', id)
-      .single();
-    if (fetchError || !old) return { data: null, error: handleError(fetchError).error };
-
     const row = sessionToRow(session);
     const { data, error } = await supabase
       .from('sessions')
@@ -89,7 +82,7 @@ export const sessionService = {
     if (!data) return { data: null, error: 'Session not found' };
 
     const updated = rowToSession(data);
-    if (session.startTime && session.startTime !== old.start_time) {
+    if (session.startTime) {
       notify.sessionRescheduled(updated.studentId, updated.mentorId, updated.title, updated.startTime).catch(() => {});
       timelineService.autoLogSessionRescheduled(updated.studentId, updated.title, updated.mentorId).catch(() => {});
     }
@@ -99,7 +92,7 @@ export const sessionService = {
   async delete(id: string): Promise<ServiceResponse<void>> {
     const { data: old, error: fetchError } = await supabase
       .from('sessions')
-      .select('*')
+      .select('student_id, mentor_id, title')
       .eq('id', id)
       .single();
     if (fetchError) return { data: undefined, error: handleError(fetchError).error };
@@ -111,9 +104,8 @@ export const sessionService = {
     if (error) return { data: undefined, error: handleError(error).error };
 
     if (old) {
-      const s = rowToSession(old);
-      notify.sessionCancelled(s.studentId, s.mentorId, s.title).catch(() => {});
-      timelineService.autoLogSessionCancelled(s.studentId, s.title, s.mentorId).catch(() => {});
+      notify.sessionCancelled(old.student_id, old.mentor_id, old.title).catch(() => {});
+      timelineService.autoLogSessionCancelled(old.student_id, old.title, old.mentor_id).catch(() => {});
     }
     return { data: undefined, error: null };
   }

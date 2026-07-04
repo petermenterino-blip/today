@@ -31,19 +31,25 @@ const ContactPage = lazy(() => import('../pages/Contact'));
 const GalleryPage = lazy(() => import('../pages/Gallery'));
 const MentorshipPage = lazy(() => import('../pages/Mentorship'));
 
+const FullPageLoader = () => (
+  <div className="fixed inset-0 bg-white flex items-center justify-center z-[9999]">
+    <div className="flex flex-col items-center gap-4">
+      <div className="w-12 h-12 border-4 border-slate-100 border-t-black rounded-full animate-spin"></div>
+      <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Loading Workspace</p>
+    </div>
+  </div>
+);
+
 const AppContent: React.FC = () => {
   const { user, role, authLoading, logout } = useAuth();
+  const [initialLoad, setInitialLoad] = React.useState(true);
   
-  if (authLoading) {
-    return (
-      <div className="fixed inset-0 bg-white flex items-center justify-center z-[9999]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-slate-100 border-t-black rounded-full animate-spin"></div>
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Loading Workspace</p>
-        </div>
-      </div>
-    );
-  }
+  React.useEffect(() => {
+    if (!authLoading) {
+      const timer = setTimeout(() => setInitialLoad(false), 200);
+      return () => clearTimeout(timer);
+    }
+  }, [authLoading]);
 
   return (
     <Router>
@@ -55,6 +61,7 @@ const AppContent: React.FC = () => {
             <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
           </div>
         }>
+          {initialLoad && authLoading ? <FullPageLoader /> : (
           <Routes>
             <Route path="/" element={<LandingPage currentRole={role} />} />
             <Route path="/about" element={<AboutPage />} />
@@ -97,6 +104,7 @@ const AppContent: React.FC = () => {
 
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
+          )}
         </Suspense>
       </Layout>
     </Router>
