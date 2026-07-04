@@ -195,6 +195,8 @@ export interface Booking {
   attendance?: 'present' | 'absent' | 'excused';
 }
 
+export type EventType = 'Workshop' | 'Webinar' | 'Bootcamp' | 'AMA Session' | 'Group Mentoring' | 'Networking Event' | 'Office Hours' | 'Interview Session' | 'Career Talk' | 'Alumni Talk' | 'Live Coding' | 'Mock Interview' | 'Hackathon' | 'Assessment' | 'Guest Lecture' | 'Community Meetup';
+
 export interface EventRegistration {
   userId: string;
   name: string;
@@ -202,13 +204,19 @@ export interface EventRegistration {
   program: string;
   registrationDate: string;
   status: 'confirmed' | 'pending' | 'cancelled';
-  attendanceStatus?: 'none' | 'attended' | 'absent';
+  attendanceStatus?: 'none' | 'attended' | 'absent' | 'left_early';
+  waitlistPosition?: number;
+  checkedIn?: boolean;
+  checkedInAt?: string;
+  leftEarly?: boolean;
+  feedbackSubmitted?: boolean;
+  bookmarked?: boolean;
 }
 
 export interface EventFile {
   id: string;
   name: string;
-  type: 'slides' | 'pdf' | 'assignment' | 'recording' | 'resource';
+  type: 'slides' | 'pdf' | 'assignment' | 'recording' | 'resource' | 'video' | 'template' | 'github' | 'figma' | 'googledrive';
   url: string;
   size?: string;
   uploadedAt: string;
@@ -227,28 +235,95 @@ export interface EventFeedback {
   comment: string;
   suggestion?: string;
   date: string;
+  wouldRecommend?: boolean;
+  ratingBreakdown?: Record<string, number>;
+}
+
+export interface EventSpeaker {
+  id: string;
+  eventId: string;
+  name: string;
+  title?: string;
+  bio?: string;
+  avatarUrl?: string;
+  linkedinUrl?: string;
+  company?: string;
+  sortOrder?: number;
+}
+
+export interface EventWaitlistEntry {
+  id: string;
+  eventId: string;
+  userId: string;
+  name?: string;
+  email?: string;
+  position: number;
+  status: 'waiting' | 'promoted' | 'expired' | 'cancelled';
+  createdAt: string;
+  promotedAt?: string;
+}
+
+export interface EventComment {
+  id: string;
+  eventId: string;
+  userId: string;
+  parentId?: string;
+  content: string;
+  isAnnouncement: boolean;
+  createdAt: string;
+  updatedAt: string;
+  user?: { name: string; avatarUrl?: string };
+  replies?: EventComment[];
+}
+
+export interface EventActivity {
+  id: string;
+  eventId: string;
+  userId?: string;
+  action: string;
+  description?: string;
+  metadata?: Record<string, any>;
+  createdAt: string;
+}
+
+export interface AgendaItem {
+  time: string;
+  title: string;
+  description?: string;
+  speaker?: string;
+}
+
+export interface EventNotification {
+  id: string;
+  eventId: string;
+  userId: string;
+  type: 'new_event' | 'registration_confirmed' | 'registration_cancelled' | 'reminder_24h' | 'reminder_1h' | 'event_started' | 'event_cancelled' | 'event_updated' | 'waitlist_promoted' | 'attendance_recorded' | 'feedback_request';
+  sentAt: string;
+  read: boolean;
 }
 
 export interface NetworkEvent {
   id: string;
   title: string;
   date: string;
-  time: string; // Start Time
+  time: string;
+  eventType?: EventType;
   category?: string;
   endTime?: string;
   timezone?: string;
-  location: string; // Meeting Platform (Zoom / Google Meet / Offline)
+  location: string;
   meetingLink?: string;
+  meetingPlatform?: string;
   venue?: string;
-  image?: string; // Banner Image
-  capacity?: number; // Maximum Participants
+  image?: string;
+  capacity?: number;
   registrationDeadline?: string;
-  speaker?: string; // Speaker/Mentor
+  speaker?: string;
   visibility?: 'public' | 'private';
   status?: 'draft' | 'published' | 'cancelled' | 'completed';
   tags?: string;
   description: string;
-  attendees: string[]; // user ids
+  attendees: string[];
   registrations?: EventRegistration[];
   files?: EventFile[];
   recording?: EventRecording;
@@ -260,6 +335,22 @@ export interface NetworkEvent {
   requirements?: string;
   eventColor?: string;
   auditLogs?: { editedBy: string; timestamp: string; changedFields: string[] }[];
+  programId?: string;
+  agenda?: AgendaItem[];
+  reminderSettings?: { '24h'?: boolean; '1h'?: boolean };
+  featured?: boolean;
+  archived?: boolean;
+  formIds?: string[];
+  allowRegistrationApproval?: boolean;
+  notes?: string;
+  speakers?: EventSpeaker[];
+  waitlist?: EventWaitlistEntry[];
+  comments?: EventComment[];
+  activityLog?: EventActivity[];
+  eventNotifications?: EventNotification[];
+  createdBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AIChatMessage {

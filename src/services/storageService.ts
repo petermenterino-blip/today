@@ -16,6 +16,14 @@ class StorageService {
       upsert: false,
     });
     if (error) throw error;
+    return path;
+  }
+
+  getPublicUrl(bucket: BucketName, path: string): { data: { publicUrl: string } } {
+    return supabase.storage.from(bucket).getPublicUrl(path);
+  }
+
+  async getPublicUrlFromPath(bucket: BucketName, path: string): Promise<string> {
     const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(path);
     return publicUrl;
   }

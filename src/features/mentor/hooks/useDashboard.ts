@@ -34,6 +34,7 @@ import { useFeedback } from './useFeedback';
 import { useApplicationReview } from './useApplicationReview';
 import { useEventManager } from './useEventManager';
 import { useProgramManager } from './useProgramManager';
+import { useReviews } from '../../../hooks/useReviews';
 import { useAIAssistant } from './useAIAssistant';
 
 export type MentorTab = 'overview' | 'applications' | 'mentees' | 'programs' | 'sessions' | 'feedback' | 'resources' | 'events' | 'messaging' | 'analytics' | 'ai' | 'gallery' | 'bookings' | 'growth-audit' | 'program-progress';
@@ -79,24 +80,21 @@ export function useDashboard({ currentUser }: UseDashboardProps) {
   const appReviewDomain = useApplicationReview(currentUser);
   const eventDomain = useEventManager(currentUser);
   const programDomain = useProgramManager(currentUser);
+  const reviewDomain = useReviews();
 
   const { applications: rawApplications, loading: appsLoading, refresh: rawRefreshApps } = useApplications();
   const { taskActivities: rawTasks, loading: tasksLoading } = useTasks();
   const { bookings, loading: bookingsLoading, addBooking } = useBookings();
   const { sessions, loading: sessionsLoading, addSession, updateSession, deleteSession, refresh: refreshSessions } = useSessions(currentUser?.id, 'mentor');
   const { events: rawEvents, loading: eventsLoading } = useEvents();
+  const { programs: rawPrograms, loading: programsLoading } = usePrograms();
   const {
-    programs: rawPrograms,
-    loading: programsLoading,
-    duplicateProgram,
-    archiveProgram,
-    unarchiveProgram,
-    useEnrollments,
-    enrollStudent,
-    unenrollStudent,
-    updateEnrollmentStatus,
-  } = usePrograms();
-  const { resources, loading: resourcesLoading, addResource, deleteResource } = useResources();
+    useResourceList: useResList, createResource: createResourceMut, softDeleteResource: softDelResource,
+  } = useResources();
+  const { data: resources = [] } = useResList({}) as any;
+  const resourcesLoading = false;
+  const addResource = createResourceMut;
+  const deleteResource = softDelResource;
   const { goals, loading: goalsLoading } = useGoals();
   const { journals, refresh: refreshJournals } = useJournals();
 
@@ -192,7 +190,7 @@ export function useDashboard({ currentUser }: UseDashboardProps) {
     newPrereqInput, setNewPrereqInput,
     handleEditProgramClick,
     handleSaveProgramEdit,
-    addProgram, deleteProgram, updateProgram,
+    addProgram, deleteProgram,
   } = programDomain;
 
   // ── AI Assistant ──
@@ -293,6 +291,13 @@ export function useDashboard({ currentUser }: UseDashboardProps) {
       });
     }
   }, [activeTab, currentUser?.id]);
+
+  // ── Reviews derived ──
+  const reviewStats = {
+    pending: reviewDomain.reviews.filter(r => ['assigned', 'pending', 'submitted', 'in_review'].includes(r.status)).length,
+    completed: reviewDomain.reviews.filter(r => r.status === 'completed').length,
+    total: reviewDomain.reviews.length,
+  };
 
   // ── Derived ──
   const upcomingSessions = sessions.filter(s => s.attendanceStatus === 'pending');
@@ -530,7 +535,7 @@ export function useDashboard({ currentUser }: UseDashboardProps) {
     { label: 'Active Students', value: activeStudentsCount, icon: 'Activity' as const, bgClass: 'bg-emerald-50', textClass: 'text-emerald-600', tab: 'mentees' as MentorTab, trend: '85% active' },
     { label: 'New Applications', value: pendingApplications.length, icon: 'FileSearch' as const, bgClass: 'bg-blue-50', textClass: 'text-blue-600', tab: 'applications' as MentorTab, trend: `${pendingApplications.length} pending` },
     { label: 'Upcoming Sessions', value: upcomingSessions.length, icon: 'CalendarDays' as const, bgClass: 'bg-amber-50', textClass: 'text-amber-600', tab: 'sessions' as MentorTab, trend: 'Next: Today' },
-    { label: 'Pending Reviews', value: pendingTasks.length, icon: 'CheckCircle2' as const, bgClass: 'bg-rose-50', textClass: 'text-rose-600', tab: 'feedback' as MentorTab, trend: 'Action required' },
+    { label: 'Pending Reviews', value: pendingTasks.length + reviewStats.pending, icon: 'CheckCircle2' as const, bgClass: 'bg-rose-50', textClass: 'text-rose-600', tab: 'feedback' as MentorTab, trend: `${reviewStats.pending} pending review tasks` },
     { label: 'New Journal Entries', value: journals.length, icon: 'FileText' as const, bgClass: 'bg-purple-50', textClass: 'text-purple-600', tab: 'mentees' as MentorTab, trend: 'Recent updates' },
     { label: 'Pending Forms', value: formSubmissions.length, icon: 'ClipboardList' as const, bgClass: 'bg-cyan-50', textClass: 'text-cyan-600', tab: 'mentees' as MentorTab, trend: 'Forms filled' },
   ];
@@ -655,14 +660,7 @@ export function useDashboard({ currentUser }: UseDashboardProps) {
     newPrereqInput, setNewPrereqInput,
     handleEditProgramClick,
     handleSaveProgramEdit,
-    addProgram, deleteProgram, updateProgram,
-    duplicateProgram,
-    archiveProgram,
-    unarchiveProgram,
-    useEnrollments,
-    enrollStudent,
-    unenrollStudent,
-    updateEnrollmentStatus,
+    addProgram, deleteProgram,
 
     // AI Assistant
     chatHistory, setChatHistory,
@@ -733,9 +731,13 @@ export function useDashboard({ currentUser }: UseDashboardProps) {
     selectedEventId,
     addBooking,
 
+    // Reviews
+    reviewDomain,
+
     // Derived
     upcomingSessions,
     activeStudentsCount,
+    reviewStats,
 
     // Utility functions
     getRecentActivityTimeline,

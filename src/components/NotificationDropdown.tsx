@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Bell, CheckCheck, X, Loader2 } from 'lucide-react';
+import { Bell, CheckCheck, X, Loader2, MessageSquare, Calendar, Zap, Target, BookOpen, Info, Megaphone } from 'lucide-react';
 import { useNotifications } from '../hooks/useNotifications';
 
 const DROPDOWN_WIDTH = 320;
@@ -133,29 +133,43 @@ const NotificationDropdown: React.FC = () => {
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">No notifications</p>
                   </div>
                 ) : (
-                  notifications.map(n => (
-                    <div
-                      key={n.id}
-                      className={`flex items-start gap-3 p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer ${!n.read ? 'bg-indigo-50/30' : ''}`}
-                      onClick={() => { markAsRead(n.id); setOpen(false); }}
-                    >
-                      <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${!n.read ? 'bg-indigo-500' : 'bg-transparent'}`} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-slate-900 truncate">{n.title}</p>
-                        <p className="text-[10px] text-slate-500 mt-0.5 line-clamp-2">{n.message}</p>
-                        <p className="text-[8px] font-bold text-slate-300 uppercase tracking-widest mt-1">
-                          {n.createdAt ? new Date(n.createdAt).toLocaleDateString() : ''}
-                        </p>
-                      </div>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); deleteNotification(n.id); }}
-                        className="p-1 text-slate-300 hover:text-red-500 transition-colors shrink-0"
-                        aria-label="Delete notification"
+                  notifications.map(n => {
+                    const typeConfig: Record<string, { icon: React.ReactNode; dotColor: string; bgColor: string }> = {
+                      review: { icon: <MessageSquare size={12} />, dotColor: 'bg-indigo-500', bgColor: 'bg-indigo-50/30' },
+                      session: { icon: <Calendar size={12} />, dotColor: 'bg-blue-500', bgColor: 'bg-blue-50/30' },
+                      task: { icon: <Zap size={12} />, dotColor: 'bg-amber-500', bgColor: 'bg-amber-50/30' },
+                      goal: { icon: <Target size={12} />, dotColor: 'bg-emerald-500', bgColor: 'bg-emerald-50/30' },
+                      journal: { icon: <BookOpen size={12} />, dotColor: 'bg-purple-500', bgColor: 'bg-purple-50/30' },
+                      system: { icon: <Info size={12} />, dotColor: 'bg-slate-500', bgColor: 'bg-slate-50/30' },
+                      announcement: { icon: <Megaphone size={12} />, dotColor: 'bg-pink-500', bgColor: 'bg-pink-50/30' },
+                    };
+                    const tc = typeConfig[n.type] || typeConfig.system;
+                    return (
+                      <div
+                        key={n.id}
+                        className={`flex items-start gap-3 p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer ${!n.read ? tc.bgColor : ''}`}
+                        onClick={() => { markAsRead(n.id); setOpen(false); }}
                       >
-                        <X size={12} />
-                      </button>
-                    </div>
-                  ))
+                        <div className={`w-6 h-6 rounded-full ${tc.dotColor} text-white flex items-center justify-center shrink-0 mt-0.5`}>
+                          {tc.icon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-slate-900 truncate">{n.title}</p>
+                          <p className="text-[10px] text-slate-500 mt-0.5 line-clamp-2">{n.message}</p>
+                          <p className="text-[8px] font-bold text-slate-300 uppercase tracking-widest mt-1">
+                            {n.createdAt ? new Date(n.createdAt).toLocaleDateString() : ''}
+                          </p>
+                        </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); deleteNotification(n.id); }}
+                          className="p-1 text-slate-300 hover:text-red-500 transition-colors shrink-0"
+                          aria-label="Delete notification"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    );
+                  })
                 )}
               </div>
             </motion.div>

@@ -47,8 +47,8 @@ import { useTasks } from "../../hooks/useTasks";
 import { useBookings } from "../../hooks/useBookings";
 import { useEvents } from "../../hooks/useEvents";
 import { useSessions } from "../../hooks/useSessions";
-import { useResources } from "../../hooks/useResources";
 import { notifyError, notifySuccess } from "../../utils/toast";
+import { getRecentlyViewed } from "../../utils/recentlyViewed";
 
 import StudentJournal from "./StudentJournal";
 import StudentGoals from "./StudentGoals";
@@ -59,6 +59,8 @@ import WhatsAppMessaging from "../messaging/WhatsAppMessaging";
 import GrowthForm from "./GrowthForm";
 import StudentForms from "./StudentForms";
 import StudentEditProfile from "./StudentEditProfile";
+import ResourceDashboard from "../resources/ResourceDashboard";
+import { StudentReviews } from "./StudentReviews";
 
 interface UserDashboardProps {
   currentUser: User | null;
@@ -92,11 +94,10 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
   const {
     events,
     loading: eventsLoading,
-    attendEvent,
+    registerForEvent: attendEvent,
     refresh: refreshEvents,
   } = useEvents();
   const { sessions } = useSessions(currentUser?.id, "student");
-  const { resources } = useResources();
   const upcomingSessions = sessions.filter(
     (s) => s.attendanceStatus === "pending",
   );
@@ -434,6 +435,109 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
             </p>
           </motion.div>
         </div>
+
+        {/* Upcoming Events */}
+        <div className="bg-white rounded-[32px] p-6 border border-slate-100 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-black uppercase tracking-tighter text-slate-900">Upcoming Events</h3>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Workshops & networking sessions</p>
+            </div>
+            <Link to="/student/events" className="text-xs font-black uppercase tracking-wider text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
+              View All <ArrowRight size={14} />
+            </Link>
+          </div>
+
+          {(() => {
+            const today = new Date().toISOString().split('T')[0];
+            const upcoming = events
+              .filter((e: NetworkEvent) => e.date >= today && e.status === 'published')
+              .sort((a: any, b: any) => a.date.localeCompare(b.date) || (a.time || '00:00').localeCompare(b.time || '00:00'))
+              .slice(0, 5);
+            const rv = getRecentlyViewed();
+            const mNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const typeColors: Record<string, string> = {
+              Workshop: 'bg-indigo-100 text-indigo-700',
+              Webinar: 'bg-blue-100 text-blue-700',
+              Masterclass: 'bg-emerald-100 text-emerald-700',
+              Networking: 'bg-amber-100 text-amber-700',
+              'Q&A Session': 'bg-purple-100 text-purple-700',
+              Panel: 'bg-cyan-100 text-cyan-700',
+              Bootcamp: 'bg-emerald-100 text-emerald-700',
+            };
+
+            return (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  {upcoming.length > 0 ? (
+                    upcoming.map((event: any) => {
+                      const p = event.date ? event.date.split('-') : [];
+                      const d = p[2] || '';
+                      const mn = p[1] ? mNames[parseInt(p[1]) - 1] || p[1] : '';
+                      return (
+                        <div key={event.id} className="flex items-center gap-4 p-3 rounded-2xl hover:bg-slate-50/80 transition-all border border-transparent hover:border-slate-100 cursor-pointer group">
+                          <div className="flex flex-col items-center justify-center shrink-0 w-12 h-12 bg-slate-50 rounded-2xl border border-slate-100">
+                            <span className="text-sm font-black text-slate-800 leading-none">{d}</span>
+                            <span className="text-[7px] font-black uppercase tracking-widest text-slate-400 mt-0.5">{mn}</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition-colors truncate">{event.title}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="flex items-center gap-1 text-[10px] text-slate-500 font-medium">
+                                <Clock3 size={10} className="text-slate-400" />
+                                {event.time || 'All day'}
+                              </span>
+                            </div>
+                          </div>
+                          <span className={`px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest shrink-0 ${typeColors[event.eventType || event.category || 'Workshop'] || 'bg-indigo-100 text-indigo-700'}`}>
+                            {event.eventType || event.category || 'Workshop'}
+                          </span>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="text-center py-8">
+                      <Calendar className="mx-auto text-slate-300 mb-2" size={24} />
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">No upcoming events</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="border-t lg:border-t-0 lg:border-l border-slate-100 pt-4 lg:pt-0 lg:pl-6 space-y-3">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Recently Viewed</p>
+                  {rv.length > 0 ? (
+                    rv.slice(0, 5).map((rvItem: any, idx: number) => {
+                      const p = rvItem.date ? rvItem.date.split('-') : [];
+                      const d = p[2] || '';
+                      const mn = p[1] ? mNames[parseInt(p[1]) - 1] || p[1] : '';
+                      return (
+                        <div key={`rv-${rvItem.id}-${idx}`} className="flex items-center gap-3 p-2.5 rounded-2xl hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-all cursor-pointer group">
+                          <div className="flex flex-col items-center justify-center shrink-0 w-10 h-10 bg-slate-50 rounded-xl border border-slate-100">
+                            <span className="text-[11px] font-black text-slate-800 leading-none">{d || '--'}</span>
+                            <span className="text-[6px] font-black uppercase tracking-widest text-slate-400 mt-0.5">{mn || '---'}</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[11px] font-bold text-slate-900 group-hover:text-indigo-600 transition-colors truncate">{rvItem.title}</p>
+                            {rvItem.eventType && (
+                              <span className={`inline-block px-1.5 py-0.5 rounded-full text-[7px] font-black uppercase tracking-widest mt-0.5 ${typeColors[rvItem.eventType] || 'bg-slate-100 text-slate-600'}`}>
+                                {rvItem.eventType}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="text-center py-8">
+                      <Calendar className="mx-auto text-slate-300 mb-2" size={24} />
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">No recently viewed events</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+        </div>
       </div>
     );
   };
@@ -770,6 +874,12 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
                 }
               />
               <Route
+                path="/reviews"
+                element={
+                  <StudentReviews />
+                }
+              />
+              <Route
                 path="/tasks"
                 element={
                   <StudentTasks studentId={currentUser?.id || "default-user"} isApproved={isApproved} />
@@ -797,61 +907,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
               />
               <Route
                 path="/resources"
-                element={
-                  <div className="space-y-6">
-                    <h3 className="text-2xl font-black uppercase tracking-tighter mb-6 text-brand-charcoal">
-                      The Vault
-                    </h3>
-                    {resources.length === 0 ? (
-                      <p className="text-slate-400 text-sm font-medium text-center py-12">
-                        No resources available yet. Check back later.
-                      </p>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {resources.map((res) => {
-                          const cat = (res.category || '').toLowerCase();
-                          const icon = cat.includes('engineer') || cat.includes('tech') ? Download
-                            : cat.includes('product') ? Briefcase
-                            : cat.includes('career') || cat.includes('resume') ? CheckCircle2
-                            : cat.includes('interview') ? HelpCircle
-                            : ExternalLink;
-                          const color = cat.includes('engineer') ? 'text-indigo-600'
-                            : cat.includes('product') ? 'text-amber-600'
-                            : cat.includes('career') || cat.includes('resume') ? 'text-emerald-600'
-                            : cat.includes('interview') ? 'text-rose-600'
-                            : 'text-slate-600';
-                          const bg = cat.includes('engineer') ? 'bg-indigo-50'
-                            : cat.includes('product') ? 'bg-amber-50'
-                            : cat.includes('career') || cat.includes('resume') ? 'bg-emerald-50'
-                            : cat.includes('interview') ? 'bg-rose-50'
-                            : 'bg-slate-50';
-                          return (
-                            <a
-                              key={res.id}
-                              href={res.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="bg-white p-6 rounded-[32px] border border-slate-100 hover:shadow-xl hover:shadow-black/5 hover:-translate-y-1 hover:ring-4 transition-all duration-300 group cursor-pointer"
-                            >
-                              <div className={`w-12 h-12 ${bg} rounded-2xl flex items-center justify-center mb-5 transition-all duration-300 shadow-sm`}>
-                                {React.createElement(icon, {
-                                  size: 20,
-                                  className: `${color} transition-colors`
-                                })}
-                              </div>
-                              <p className="font-bold text-sm mb-1 text-brand-charcoal group-hover:text-indigo-600 transition-colors">
-                                {res.title}
-                              </p>
-                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                                {res.category}
-                              </p>
-                            </a>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                }
+                element={<ResourceDashboard isMentor={false} />}
               />
               <Route
                 path="/events"

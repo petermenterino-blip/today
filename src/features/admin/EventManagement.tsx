@@ -302,6 +302,33 @@ export const EventManagement: React.FC<EventManagementProps> = ({
     await updateEventInDatabase({ registrations: updated });
   };
 
+  const handleExportCsv = () => {
+    const headers = ['Student Name', 'Email', 'Program', 'Registration Date', 'Status', 'Attendance Status'];
+    const rows = (event.registrations || []).map(reg => [
+      reg.name,
+      reg.email,
+      reg.program,
+      reg.registrationDate,
+      reg.status,
+      reg.attendanceStatus
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `${(event.title || 'event').replace(/[^a-zA-Z0-9]/g, '_')}_registrations.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   // Section 5: Communications
   const handleSendReminder = async () => {
     try {
@@ -859,15 +886,25 @@ export const EventManagement: React.FC<EventManagementProps> = ({
                   Manage applications, attendance, and details
                 </p>
               </div>
-              <div className="relative w-full sm:w-72">
-                <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input 
-                  type="text"
-                  placeholder="Search participants..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-xs focus:outline-none"
-                />
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <button
+                  onClick={handleExportCsv}
+                  className="px-4 py-3 bg-white border border-slate-200 text-slate-700 rounded-2xl hover:bg-slate-50 transition-all flex items-center justify-center gap-2 text-[9px] font-black uppercase tracking-widest cursor-pointer"
+                  title="Export CSV"
+                >
+                  <Download size={14} />
+                  Export CSV
+                </button>
+                <div className="relative w-full sm:w-72">
+                  <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input 
+                    type="text"
+                    placeholder="Search participants..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-xs focus:outline-none"
+                  />
+                </div>
               </div>
             </div>
 

@@ -8,7 +8,7 @@ export function useFeedback() {
   const [selectedTask, setSelectedTask] = useState<TaskActivity | null>(null);
   const [feedbackResponse, setFeedbackResponse] = useState('');
 
-  const pendingTasks = taskActivities.filter(t => t.status === 'pending');
+  const pendingTasks = taskActivities.filter(t => t.status === 'pending' || t.status === 'submitted');
 
   const handleReviewTask = (task: TaskActivity) => {
     setSelectedTask(task);

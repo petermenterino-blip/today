@@ -8,17 +8,12 @@ export const eventRsvpService = {
       .eq('event_id', eventId)
       .eq('user_id', userId)
       .maybeSingle();
-
     if (existing) return true;
-
     const { error } = await supabase
       .from('event_attendees')
-      .insert({ event_id: eventId, user_id: userId, name });
-
+      .insert({ event_id: eventId, user_id: userId, name, registration_status: 'confirmed' });
     if (error) return false;
-
     try { localStorage.setItem('event_rsvp_sync', Date.now().toString()) } catch {}
-
     return true;
   },
 
@@ -28,11 +23,8 @@ export const eventRsvpService = {
       .delete()
       .eq('event_id', eventId)
       .eq('user_id', userId);
-
     if (error) return false;
-
     try { localStorage.setItem('event_rsvp_sync', Date.now().toString()) } catch {}
-
     return true;
   },
 
@@ -43,7 +35,6 @@ export const eventRsvpService = {
       .eq('event_id', eventId)
       .eq('user_id', userId)
       .maybeSingle();
-
     return !!data;
   },
 
@@ -52,7 +43,21 @@ export const eventRsvpService = {
       .from('event_attendees')
       .select('user_id')
       .eq('event_id', eventId);
-
     return (data || []).map(a => a.user_id);
+  },
+
+  async getAttendeeDetails(eventId: string) {
+    const { data } = await supabase
+      .from('event_attendees')
+      .select('*, profiles!inner(name, email)')
+      .eq('event_id', eventId);
+    return (data || []).map((a: any) => ({
+      userId: a.user_id,
+      name: a.profiles?.name || a.name || '',
+      email: a.profiles?.email || a.email || '',
+      registrationStatus: a.registration_status,
+      attendanceStatus: a.attendance_status,
+      registeredAt: a.registered_at,
+    }));
   },
 };

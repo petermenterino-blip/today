@@ -75,6 +75,7 @@ export const notificationStorage = {
         p_title: data.title,
         p_message: data.message,
         p_type: data.type || 'system',
+        p_link: data.link || null,
       }),
     );
 

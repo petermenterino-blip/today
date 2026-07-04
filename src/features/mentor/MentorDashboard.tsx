@@ -5,6 +5,7 @@ import {
   X, Loader2, Trash
 } from 'lucide-react';
 import { EventManagement } from '../admin/EventManagement';
+import EventListView from '../events/EventListView';
 import WhatsAppMessaging from '../messaging/WhatsAppMessaging';
 import { MentorScheduler } from './MentorScheduler';
 import GalleryManagement from '../admin/GalleryManagement';
@@ -15,7 +16,9 @@ import { ApplicationsTab } from './components/ApplicationsTab';
 import { VisitorBookingsTab } from './components/VisitorBookingsTab';
 import GrowthAuditTab from './components/GrowthAuditTab';
 import { ProgramProgressTab } from './components/ProgramProgressTab';
-import { ProgramsManager } from './components/ProgramsManager';
+import { ReviewsTab } from './components/ReviewsTab';
+import AnalyticsBI from './components/AnalyticsBI';
+import ResourceDashboard from '../resources/ResourceDashboard';
 import { useDashboard, MentorTab } from './hooks/useDashboard';
 import { tagService } from '../../services/tagService';
 import { notifySuccess } from '../../utils/toast';
@@ -96,19 +99,29 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
           upcomingSessions={d.upcomingSessions}
           allTags={d.allTags}
           setActiveTab={d.setActiveTab}
+          events={d.events}
+          eventsLoading={d.eventsLoading}
         />
       )}
 
       {d.activeTab === 'feedback' && (
-        <TasksTab
-          pendingTasks={d.pendingTasks}
-          selectedTask={d.selectedTask}
-          setSelectedTask={d.setSelectedTask}
-          feedbackResponse={d.feedbackResponse}
-          setFeedbackResponse={d.setFeedbackResponse}
-          handleReviewTask={d.handleReviewTask}
-          submitFeedback={d.submitFeedback}
-        />
+        <div className="space-y-8">
+          <ReviewsTab
+            mentors={[]}
+            students={d.studentProfiles}
+          />
+          <div className="border-t border-slate-100 pt-8">
+            <TasksTab
+              pendingTasks={d.pendingTasks}
+              selectedTask={d.selectedTask}
+              setSelectedTask={d.setSelectedTask}
+              feedbackResponse={d.feedbackResponse}
+              setFeedbackResponse={d.setFeedbackResponse}
+              handleReviewTask={d.handleReviewTask}
+              submitFeedback={d.submitFeedback}
+            />
+          </div>
+        </div>
       )}
 
       {d.activeTab === 'mentees' && (
@@ -215,46 +228,31 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
         <WhatsAppMessaging currentUserId={d.currentUser?.id || ''} currentUserName={d.currentUser?.name || 'Mentor'} role="mentor" />
       )}
 
-      {d.activeTab === 'events' && (
+      {d.activeTab === 'events' && <EventListView />}
+
+      {d.activeTab === 'programs' && (
         <div className="space-y-6 animate-in fade-in duration-500">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-slate-900">Events</h1>
-            <p className="text-xs text-slate-500 mt-1 font-medium">Manage workshops and events</p>
+            <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-slate-900">Programs</h1>
+            <p className="text-xs text-slate-500 mt-1 font-medium">Mentorship program templates and curricula</p>
           </div>
-          {d.events.length === 0 ? (
+          {d.programs.length === 0 ? (
             <div className="bg-white p-12 rounded-[32px] border border-slate-100 shadow-sm text-center">
-              <p className="text-sm text-slate-400 font-medium">No events created yet.</p>
-              <p className="text-[10px] text-slate-300 mt-2 font-bold uppercase tracking-widest">Use the Overview tab to create your first event.</p>
+              <p className="text-sm text-slate-400 font-medium">No programs created yet.</p>
+              <p className="text-[10px] text-slate-300 mt-2 font-bold uppercase tracking-widest">Use the Overview tab to design your first program.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {d.events.map((evt: any) => (
-                <div key={evt.id} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-md transition-all">
-                  {evt.image && <img src={evt.image} alt={evt.title} className="w-full h-32 object-cover rounded-2xl mb-4" />}
-                  <h3 className="text-sm font-black uppercase tracking-tight text-slate-900">{evt.title}</h3>
-                  <p className="text-[10px] text-slate-500 mt-1 font-medium">{evt.date} {evt.time && `at ${evt.time}`}</p>
-                  <p className="text-xs text-slate-600 mt-2 line-clamp-2">{evt.description}</p>
+              {d.programs.map((prg: any) => (
+                <div key={prg.id} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-md transition-all">
+                  <h3 className="text-sm font-black uppercase tracking-tight text-slate-900">{prg.title}</h3>
+                  <p className="text-[10px] text-slate-500 mt-1 font-medium">{prg.modules?.length || 0} modules</p>
+                  <p className="text-xs text-slate-600 mt-2 line-clamp-2">{prg.description}</p>
                 </div>
               ))}
             </div>
           )}
         </div>
-      )}
-
-      {d.activeTab === 'programs' && (
-        <ProgramsManager
-          programs={d.programs}
-          currentUser={d.currentUser}
-          addProgram={d.addProgram}
-          deleteProgram={d.deleteProgram}
-          updateProgram={d.updateProgram}
-          duplicateProgram={d.duplicateProgram}
-          archiveProgram={d.archiveProgram}
-          useEnrollments={d.useEnrollments}
-          enrollStudent={d.enrollStudent}
-          unenrollStudent={d.unenrollStudent}
-          updateEnrollmentStatus={d.updateEnrollmentStatus}
-        />
       )}
 
       {d.activeTab === 'sessions' && (
@@ -271,63 +269,11 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
       )}
 
       {d.activeTab === 'resources' && (
-        <div className="space-y-6 animate-in fade-in duration-500">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-slate-900">Resources</h1>
-            <p className="text-xs text-slate-500 mt-1 font-medium">Shared learning materials and links</p>
-          </div>
-          {d.resources.length === 0 ? (
-            <div className="bg-white p-12 rounded-[32px] border border-slate-100 shadow-sm text-center">
-              <p className="text-sm text-slate-400 font-medium">No resources shared yet.</p>
-              <p className="text-[10px] text-slate-300 mt-2 font-bold uppercase tracking-widest">Resources will appear here once you share them with students.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {d.resources.map((res: any) => (
-                <div key={res.id} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-md transition-all">
-                  <h3 className="text-sm font-black uppercase tracking-tight text-slate-900">{res.title}</h3>
-                  {res.url && <a href={res.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-indigo-600 font-bold hover:underline mt-1 block">{res.url}</a>}
-                  <p className="text-xs text-slate-600 mt-2">{res.description}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <ResourceDashboard isMentor={true} />
       )}
 
       {d.activeTab === 'analytics' && (
-        <div className="space-y-6 animate-in fade-in duration-500">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-slate-900">Analytics</h1>
-            <p className="text-xs text-slate-500 mt-1 font-medium">Student progress and engagement metrics</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
-              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Active Students</p>
-              <p className="text-4xl font-black text-slate-900">{d.activeStudentsCount}</p>
-            </div>
-            <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
-              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Pending Applications</p>
-              <p className="text-4xl font-black text-slate-900">{d.pendingApplications.length}</p>
-            </div>
-            <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
-              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Upcoming Sessions</p>
-              <p className="text-4xl font-black text-slate-900">{d.upcomingSessions.length}</p>
-            </div>
-          </div>
-          <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
-            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-4">Student Health Overview</p>
-            <div className="space-y-3">
-              {d.studentProfiles.filter((s: any) => s.healthStatus).map((s: any) => (
-                <div key={s.user_id || s.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl">
-                  <div className={`w-2.5 h-2.5 rounded-full ${s.healthStatus === 'active' ? 'bg-emerald-500' : s.healthStatus === 'needs_attention' ? 'bg-amber-500' : 'bg-red-500'}`} />
-                  <span className="text-sm font-bold text-slate-800 flex-1">{s.name}</span>
-                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">{s.healthStatus}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <AnalyticsBI currentUser={d.currentUser} />
       )}
 
       {d.activeTab === 'ai' && (

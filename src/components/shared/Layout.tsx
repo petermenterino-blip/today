@@ -82,6 +82,7 @@ const Layout: React.FC<LayoutProps> = ({ children, role, onLogout }) => {
     { label: 'Journal', path: '/student/journal', icon: BookOpen, roles: ['student'] },
     { label: 'Goals', path: '/student/goals', icon: Target, roles: ['student'] },
     { label: 'Tasks', path: '/student/tasks', icon: Activity, roles: ['student'] },
+    { label: 'Reviews', path: '/student/reviews', icon: MessageCircle, roles: ['student'] },
     { label: 'Forms', path: '/student/forms', icon: ClipboardList, roles: ['student'] },
     { label: 'Sessions', path: '/student/sessions', icon: Calendar, roles: ['student'] },
     { label: 'Messages', path: '/student/messages', icon: MessageCircle, roles: ['student'] },

@@ -3,10 +3,11 @@ import { motion } from 'motion/react';
 import {
   Users, Bot, Calendar, CheckCircle, Activity, FileText, ClipboardList,
   ChevronRight, MessageSquare, ArrowLeft, CalendarDays, Megaphone,
-  Send, Loader2, CheckCircle2, Sparkles as SparkleIcon, Plus
+  Send, Loader2, CheckCircle2, Sparkles as SparkleIcon, Plus, Clock3
 } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import type { MentorTab } from '../hooks/useDashboard';
+import { getRecentlyViewed } from '../../../utils/recentlyViewed';
 
 interface OverviewTabProps {
   handleTabChange: (tab: MentorTab) => void;
@@ -51,6 +52,8 @@ interface OverviewTabProps {
   upcomingSessions: any[];
   allTags: any[];
   setActiveTab: (tab: MentorTab) => void;
+  events: any[];
+  eventsLoading: boolean;
 }
 
 export const OverviewTab: React.FC<OverviewTabProps> = ({
@@ -66,7 +69,25 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   setIsSchedulingSession, sessionsFiltered, pendingApplications,
   pendingTasks, conversationsUnread, activeStudentsCount, upcomingSessions,
   allTags, setActiveTab,
+  events, eventsLoading,
 }) => {
+  const today = new Date().toISOString().split('T')[0];
+  const upcomingEvents = events
+    .filter((e: any) => e.date >= today && e.status === 'published')
+    .sort((a: any, b: any) => a.date.localeCompare(b.date) || (a.time || '00:00').localeCompare(b.time || '00:00'))
+    .slice(0, 5);
+  const recentlyViewed = getRecentlyViewed();
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const EVENT_TYPE_COLORS: Record<string, string> = {
+    Workshop: 'bg-indigo-100 text-indigo-700',
+    Webinar: 'bg-blue-100 text-blue-700',
+    Masterclass: 'bg-emerald-100 text-emerald-700',
+    Networking: 'bg-amber-100 text-amber-700',
+    'Q&A Session': 'bg-purple-100 text-purple-700',
+    Panel: 'bg-cyan-100 text-cyan-700',
+    Bootcamp: 'bg-emerald-100 text-emerald-700',
+    Other: 'bg-slate-100 text-slate-700',
+  };
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {(!programsLoading && programs.length === 0) ? (
@@ -564,6 +585,102 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* UPCOMING EVENTS & RECENTLY VIEWED */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm min-h-[320px]">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h3 className="text-lg font-black uppercase tracking-tighter text-slate-900">Upcoming Events</h3>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Workshops, masterclasses & networking sessions</p>
+            </div>
+            <button onClick={() => setActiveTab('events')} className="text-xs font-black uppercase tracking-wider text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
+              View All <ChevronRight size={14} />
+            </button>
+          </div>
+
+          {eventsLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="animate-spin text-slate-300" size={24} />
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {upcomingEvents.length > 0 ? (
+                upcomingEvents.map((event: any, i: number) => {
+                  const parts = event.date ? event.date.split('-') : [];
+                  const day = parts[2] || '';
+                  const monthName = parts[1] ? monthNames[parseInt(parts[1]) - 1] || parts[1] : '';
+                  return (
+                    <div
+                      key={event.id}
+                      className="flex items-center gap-4 p-3 rounded-2xl hover:bg-slate-50/80 transition-all border border-transparent hover:border-slate-100 cursor-pointer group"
+                    >
+                      <div className="flex flex-col items-center justify-center shrink-0 w-12 h-12 bg-slate-50 rounded-2xl border border-slate-100">
+                        <span className="text-sm font-black text-slate-800 leading-none">{day}</span>
+                        <span className="text-[7px] font-black uppercase tracking-widest text-slate-400 mt-0.5">{monthName}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition-colors truncate">{event.title}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="flex items-center gap-1 text-[10px] text-slate-500 font-medium">
+                            <Clock3 size={10} className="text-slate-400" />
+                            {event.time || 'All day'}
+                          </span>
+                        </div>
+                      </div>
+                      <span className={`px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest shrink-0 ${EVENT_TYPE_COLORS[event.eventType || event.category || 'Workshop'] || 'bg-indigo-100 text-indigo-700'}`}>
+                        {event.eventType || event.category || 'Workshop'}
+                      </span>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-center py-12">
+                  <CalendarDays className="mx-auto text-slate-300 mb-2" size={24} />
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">No upcoming events</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm min-h-[320px]">
+          <div className="mb-6">
+            <h3 className="text-lg font-black uppercase tracking-tighter text-slate-900">Recently Viewed</h3>
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Your recent event history</p>
+          </div>
+          <div className="space-y-3">
+            {recentlyViewed.length > 0 ? (
+              recentlyViewed.slice(0, 5).map((rv: any, i: number) => {
+                const parts = rv.date ? rv.date.split('-') : [];
+                const day = parts[2] || '';
+                const monthName = parts[1] ? monthNames[parseInt(parts[1]) - 1] || parts[1] : '';
+                return (
+                  <div key={`rv-${rv.id}-${i}`} className="flex items-center gap-3 p-2.5 rounded-2xl hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-all cursor-pointer group">
+                    <div className="flex flex-col items-center justify-center shrink-0 w-10 h-10 bg-slate-50 rounded-xl border border-slate-100">
+                      <span className="text-[11px] font-black text-slate-800 leading-none">{day || '--'}</span>
+                      <span className="text-[6px] font-black uppercase tracking-widest text-slate-400 mt-0.5">{monthName || '---'}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] font-bold text-slate-900 group-hover:text-indigo-600 transition-colors truncate">{rv.title}</p>
+                      {rv.eventType && (
+                        <span className={`inline-block px-1.5 py-0.5 rounded-full text-[7px] font-black uppercase tracking-widest mt-0.5 ${EVENT_TYPE_COLORS[rv.eventType] || 'bg-slate-100 text-slate-600'}`}>
+                          {rv.eventType}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-center py-12">
+                <Calendar className="mx-auto text-slate-300 mb-2" size={24} />
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">No recently viewed events</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
