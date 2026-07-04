@@ -1,9 +1,10 @@
+
+
 # RC2.5 — Performance Validation Report
 
 ## Methodology
 Source code analysis across bundle config, rendering patterns, query configuration, runtime behavior. No profiling tools used (browser-only analysis deferred to staging).
 
----
 
 ## 1. Bundle Size Analysis
 
@@ -18,7 +19,6 @@ Source code analysis across bundle config, rendering patterns, query configurati
 
 **Potential issue**: `jspdf` + `jspdf-autotable` + `xlsx` are heavy dependencies used only in Reports — they should be lazy-loaded but aren't using dynamic imports at the component level.
 
----
 
 ## 2. React Rendering Analysis
 
@@ -31,7 +31,6 @@ Source code analysis across bundle config, rendering patterns, query configurati
 | Navigation/Layout | ❌ No memo | ❌ |
 | **Verdict** | ⚠️ **Partial** — only 2 components memoized | |
 
----
 
 ## 3. TanStack Query Configuration
 
@@ -54,7 +53,6 @@ Source code analysis across bundle config, rendering patterns, query configurati
 
 **Verdict**: **Only 1/14 hooks has staleTime configured (7%).** All other hooks refetch on every component mount. This is the single highest-impact performance fix.
 
----
 
 ## 4. Network Request Analysis
 
@@ -68,7 +66,6 @@ Source code analysis across bundle config, rendering patterns, query configurati
 | Service worker caching | ❌ Not configured | ❌ |
 | **Verdict** | ⚠️ **Dashboard query blast is the main concern** | |
 
----
 
 ## 5. Realtime Subscriptions
 
@@ -81,7 +78,6 @@ Source code analysis across bundle config, rendering patterns, query configurati
 | Stale closure | ✅ Fixed (F5.3) — `[JSON.stringify(configs)]` | ✅ |
 | **Verdict** | **✅ All subscriptions configured correctly** | |
 
----
 
 ## 6. Lazy Loading Assessment
 
@@ -93,7 +89,6 @@ Source code analysis across bundle config, rendering patterns, query configurati
 | Images | ✅ `loading="lazy"` | ✅ |
 | **Verdict** | **✅ Route splitting good, component-level missing** | |
 
----
 
 ## Performance Score: 56/100
 
@@ -117,7 +112,6 @@ Wait — correcting calculation:
 
 **Total: 46/100** — NOT good. Corrected score below.
 
----
 
 ## Corrected Performance Score: 46/100
 

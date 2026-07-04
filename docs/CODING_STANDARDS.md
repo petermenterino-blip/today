@@ -1,8 +1,9 @@
+
+
 # Mentorino — Coding Standards
 
 Version: 1.0
 
----
 
 ## 1. Folder Structure
 
@@ -53,7 +54,6 @@ src/
   docs/             Documentation
 ```
 
----
 
 ## 2. Naming Conventions
 
@@ -97,7 +97,6 @@ import { useGoals } from '@/features/goals/useGoals'
 import type { Goal } from '@/types'
 ```
 
----
 
 ## 3. React Standards
 
@@ -158,7 +157,6 @@ export function GoalList({ studentId }: { studentId: string }) {
 }
 ```
 
----
 
 ## 4. TypeScript Standards
 
@@ -221,7 +219,6 @@ interface ServiceError {
 }
 ```
 
----
 
 ## 5. Service Patterns
 
@@ -327,7 +324,6 @@ function toSnakeCase(obj: Record<string, unknown>): Record<string, unknown> {
 - Service methods use `camelCase` but SQL columns use `snake_case` (transform at boundary)
 - Always filter `deleted_at IS NULL` for soft-deleted tables
 
----
 
 ## 6. TanStack Query Patterns
 
@@ -412,7 +408,6 @@ export function useUpdateGoal() {
 - Show toasts on success and error
 - Never use `useEffect` + `useState` for data fetching
 
----
 
 ## 7. Error Handling
 
@@ -443,7 +438,6 @@ if (error) throw new AppError('Failed to load goals', 'GOALS_FETCH_ERROR', 500)
 - Show user-friendly error messages via `sonner` toast
 - Log errors to Sentry (not console)
 
----
 
 ## 8. Validation
 
@@ -471,7 +465,6 @@ const GeminiRequestSchema = z.object({
 })
 ```
 
----
 
 ## 9. Testing Approach
 
@@ -508,7 +501,6 @@ describe('goalService', () => {
 })
 ```
 
----
 
 ## 10. Documentation Expectations
 
@@ -523,7 +515,6 @@ describe('goalService', () => {
 | Architecture decisions | `docs/` files | Per PR |
 | Setup instructions | `README.md` | Yes |
 
----
 
 ## 11. Git Workflow
 
@@ -535,7 +526,6 @@ describe('goalService', () => {
 | PR description | Summary + what changed + testing notes |
 | Commits per PR | Prefer squash merge to main |
 
----
 
 ## 12. Performance Standards
 

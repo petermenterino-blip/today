@@ -1,6 +1,7 @@
+
+
 # Performance Audit Report — Mentorino
 
----
 
 ## 1. Bundle Analysis
 
@@ -23,7 +24,6 @@
 | Vendor chunks (manualChunks) | COMPLETE | `vendor` and `vendor-ui` separated |
 | Component-level | NONE | No dynamic imports for heavy components |
 
----
 
 ## 2. Large Components
 
@@ -37,7 +37,6 @@
 | `src/components/shared/Layout.tsx` | 344 | Sidebar + header + mobile drawer |
 | `src/pages/Gallery.tsx` | 606 | localStorage-based, data URL handling |
 
----
 
 ## 3. Re-render Analysis
 
@@ -49,7 +48,6 @@
 | No `React.memo` on heavy components | LOW | Components re-render when parent re-renders |
 | No `useMemo` on derived data in dashboards | LOW | Array.filter/.map results recomputed every render |
 
----
 
 ## 4. Data Fetching
 
@@ -61,7 +59,6 @@
 | Waterfall queries | DETECTED | Some components fetch sequentially (e.g., user → profile → sessions) |
 | Polling (messaging) | INEFFICIENT | 2-second interval re-fetches everything |
 
----
 
 ## 5. Memoization
 
@@ -72,7 +69,6 @@
 | `useCallback` | MINIMAL | Used in event handlers in some hooks |
 | `useRef` | PRESENT | Used for scroll management, previous value tracking |
 
----
 
 ## 6. Expensive Operations
 
@@ -83,7 +79,6 @@
 | PDF generation (jsPDF) | `useAIAssistant.ts` | Synchronous PDF generation could block UI thread |
 | Excel generation (xlsx) | `AdminRevenue.tsx` | Synchronous file generation |
 
----
 
 ## 7. Recommendations (Measurable Impact Only)
 
@@ -95,7 +90,6 @@
 | MEDIUM | `React.memo` on MessageThread and ConversationList | Reduces re-renders on conversation switch |
 | LOW | Code-split Gallery.tsx heavy sections | Shaves ~50KB from initial bundle |
 
----
 
 ## Performance Readiness: NEEDS WORK
 

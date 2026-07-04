@@ -1,3 +1,5 @@
+
+
 # Mentorino — Application Flow & Business Logic
 
 ## Architecture Overview
@@ -33,7 +35,6 @@
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
----
 
 ## User Journey Flows
 
@@ -210,7 +211,6 @@ Mentor decision:
           → Student sees rejection status (no further action)
 ```
 
----
 
 ## Data Models (localStorage Keys)
 
@@ -245,7 +245,6 @@ Mentor decision:
 | `sidebar_collapsed` | boolean | UI preference |
 | `mentorino_seed_version` | string | Seed data version |
 
----
 
 ## Key Business Logic Rules
 

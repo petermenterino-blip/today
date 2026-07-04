@@ -3,6 +3,7 @@ import { Session } from '../interfaces/session.interface';
 import { ServiceResponse } from '../types';
 import { notify } from './notificationService';
 import { handleError } from '../lib/serviceHelper';
+import { timelineService } from './timelineService';
 
 const CAMEL_TO_SNAKE: Record<string, string> = {
   mentorId: 'mentor_id',
@@ -65,10 +66,18 @@ export const sessionService = {
     if (error) return { data: null, error: handleError(error).error };
     const created = rowToSession(data);
     notify.sessionScheduled(created.studentId, created.mentorId, created.title, created.startTime).catch(() => {});
+    timelineService.autoLogSessionScheduled(created.studentId, created.title, created.mentorId).catch(() => {});
     return { data: created, error: null };
   },
 
   async update(id: string, session: Partial<Session>): Promise<ServiceResponse<Session>> {
+    const { data: old, error: fetchError } = await supabase
+      .from('sessions')
+      .select('*')
+      .eq('id', id)
+      .single();
+    if (fetchError || !old) return { data: null, error: handleError(fetchError).error };
+
     const row = sessionToRow(session);
     const { data, error } = await supabase
       .from('sessions')
@@ -78,15 +87,34 @@ export const sessionService = {
       .single();
     if (error) return { data: null, error: handleError(error).error };
     if (!data) return { data: null, error: 'Session not found' };
-    return { data: rowToSession(data), error: null };
+
+    const updated = rowToSession(data);
+    if (session.startTime && session.startTime !== old.start_time) {
+      notify.sessionRescheduled(updated.studentId, updated.mentorId, updated.title, updated.startTime).catch(() => {});
+      timelineService.autoLogSessionRescheduled(updated.studentId, updated.title, updated.mentorId).catch(() => {});
+    }
+    return { data: updated, error: null };
   },
 
   async delete(id: string): Promise<ServiceResponse<void>> {
+    const { data: old, error: fetchError } = await supabase
+      .from('sessions')
+      .select('*')
+      .eq('id', id)
+      .single();
+    if (fetchError) return { data: undefined, error: handleError(fetchError).error };
+
     const { error } = await supabase
       .from('sessions')
       .delete()
       .eq('id', id);
     if (error) return { data: undefined, error: handleError(error).error };
+
+    if (old) {
+      const s = rowToSession(old);
+      notify.sessionCancelled(s.studentId, s.mentorId, s.title).catch(() => {});
+      timelineService.autoLogSessionCancelled(s.studentId, s.title, s.mentorId).catch(() => {});
+    }
     return { data: undefined, error: null };
   }
 };

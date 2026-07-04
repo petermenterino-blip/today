@@ -1,3 +1,5 @@
+
+
 # 📋 Today Implementation Plan 1 - GitHub Chat
 ## Mentorino - Critical Fixes Implementation Guide
 
@@ -6,13 +8,11 @@
 **Target Completion:** This Week (5 Days)  
 **Estimated Hours:** 35-40 hours (1 developer)
 
----
 
 ## 🎯 PHASE 1: FOUNDATION FIXES (Days 1-2)
 
 These are the core issues preventing data sync. Fix these first to unblock everything else.
 
----
 
 ### PHASE 1.1: Secure Edge Functions (Day 1 - 4 hours)
 
@@ -126,7 +126,6 @@ export function getTokenFromRequest(req: Request): string | null {
 
 **Time Estimate:** 1.5 hours
 
----
 
 #### Task 1.1.2: Secure Meet Edge Function
 
@@ -165,7 +164,6 @@ Deno.serve(async (req: Request) => {
 
 **Time Estimate:** 1.5 hours
 
----
 
 #### Task 1.1.3: Secure Calendar Edge Function
 
@@ -191,7 +189,6 @@ Deno.serve(async (req: Request) => {
 
 **Time Estimate:** 1 hour
 
----
 
 **Validation:**
 - [ ] Test each endpoint with valid JWT token - should work
@@ -199,7 +196,6 @@ Deno.serve(async (req: Request) => {
 - [ ] Test each endpoint with invalid token - should return 401
 - [ ] Redeploy to Supabase
 
----
 
 ### PHASE 1.2: Implement Real-Time Subscriptions (Day 1-2 - 8 hours)
 
@@ -281,7 +277,6 @@ export const useGoals = (studentId: string) => {
 
 **Time Estimate:** 1 hour
 
----
 
 #### Task 1.2.2: Update All Data Hooks with Real-Time
 
@@ -350,7 +345,6 @@ export const useGoals = (studentId: string) => {
 
 **Time Estimate:** 3-4 hours (30 minutes per hook)
 
----
 
 #### Task 1.2.3: Fix Query Invalidation on Mutations
 
@@ -394,7 +388,6 @@ const createTask = useMutation({
 
 **Time Estimate:** 2-3 hours
 
----
 
 **Validation Checklist:**
 - [ ] Create test file to verify subscriptions work
@@ -403,11 +396,9 @@ const createTask = useMutation({
 - [ ] Check Supabase logs for subscription connections
 - [ ] Verify no console errors
 
----
 
 ## 🎯 PHASE 2: FIX CRITICAL FEATURES (Days 2-3)
 
----
 
 ### PHASE 2.1: Fix Task Sync Between Dashboards (6 hours)
 
@@ -434,7 +425,6 @@ const addTask = useMutation({
 
 **Time Estimate:** 1 hour
 
----
 
 #### Task 2.1.2: Add Real-Time to Student Tasks Component
 
@@ -460,7 +450,6 @@ export const StudentTasks: React.FC = ({ studentId }) => {
 
 **Time Estimate:** 1 hour
 
----
 
 #### Task 2.1.3: Test Task Sync Scenario
 
@@ -494,7 +483,6 @@ student.navigateTo('/student/tasks');
 
 **Time Estimate:** 1 hour (setup + execution)
 
----
 
 ### PHASE 2.2: Fix Goal Sync (6 hours)
 
@@ -519,7 +507,6 @@ const updateMenteeGoal = useMutation({
 
 **Time Estimate:** 1 hour
 
----
 
 #### Task 2.2.2: Add Real-Time to Student Goals
 
@@ -546,7 +533,6 @@ export const StudentGoals: React.FC = ({ studentId }) => {
 
 **Time Estimate:** 1 hour
 
----
 
 #### Task 2.2.3: Test Goal Sync
 
@@ -559,11 +545,9 @@ export const StudentGoals: React.FC = ({ studentId }) => {
 
 **Time Estimate:** 1 hour
 
----
 
 ## 🎯 PHASE 3: INCOMPLETE FEATURE FIXES (Days 3-4)
 
----
 
 ### PHASE 3.1: Fix Messaging System (8 hours)
 
@@ -652,7 +636,6 @@ async getMessages(conversationId: string) {
 
 **Time Estimate:** 2 hours
 
----
 
 #### Task 3.1.2: Create useMessaging Hook
 
@@ -710,7 +693,6 @@ export const useMessaging = (userId: string) => {
 
 **Time Estimate:** 2 hours
 
----
 
 #### Task 3.1.3: Update Messaging Component
 
@@ -856,7 +838,6 @@ export const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({
 
 **Time Estimate:** 3-4 hours
 
----
 
 ### PHASE 3.2: Fix Events RSVP Persistence (4 hours)
 
@@ -931,7 +912,6 @@ export const eventRsvpService = {
 
 **Time Estimate:** 1 hour
 
----
 
 #### Task 3.2.2: Create useEventRsvp Hook
 
@@ -984,7 +964,6 @@ export const useEventRsvp = (eventId: string, userId: string) => {
 
 **Time Estimate:** 1 hour
 
----
 
 #### Task 3.2.3: Update Event Component
 
@@ -1019,7 +998,6 @@ const handleRsvp = async (status: 'attending' | 'not_attending' | 'maybe') => {
 
 **Time Estimate:** 1-2 hours
 
----
 
 ## ✅ VALIDATION & TESTING
 
@@ -1071,7 +1049,6 @@ Current: ❌ FAIL (status reverts on refresh)
 After Fix: ✅ PASS
 ```
 
----
 
 ## 📅 DAILY SCHEDULE
 
@@ -1083,7 +1060,6 @@ After Fix: ✅ PASS
 
 **Deliverable:** Edge functions secured, useRealtimeData hook created
 
----
 
 ### **Day 2 (8 hours):**
 - 08:00-10:00 - Finish Phase 1.2.2: Complete all hook updates (2 hours)
@@ -1095,7 +1071,6 @@ After Fix: ✅ PASS
 
 **Deliverable:** Real-time sync working, task/goal sync fixed
 
----
 
 ### **Day 3 (8 hours):**
 - 08:00-11:00 - Phase 3.1.1-3.1.2: Implement messaging (3 hours)
@@ -1106,19 +1081,16 @@ After Fix: ✅ PASS
 
 **Deliverable:** Messaging working, RSVP persisting
 
----
 
 ### **Day 4 (8 hours):**
 - Full day: Additional feature fixes or bug fixes discovered during testing
 
----
 
 ### **Day 5 (8 hours):**
 - Comprehensive testing
 - Performance testing
 - Documentation updates
 
----
 
 ## 🎯 SUCCESS CRITERIA
 
@@ -1141,7 +1113,6 @@ After Fix: ✅ PASS
 - [ ] No real-time sync delays
 - [ ] Production-ready for pilot launch
 
----
 
 ## 🚀 COMMIT MESSAGE TEMPLATE
 
@@ -1160,7 +1131,6 @@ Fixes: Security vulnerability - unprotected edge functions
 Related: #issue-number
 ```
 
----
 
 ## 📞 QUICK REFERENCE
 
@@ -1184,7 +1154,6 @@ curl -X POST http://localhost:54321/functions/v1/gemini \
 supabase functions list
 ```
 
----
 
 **Status:** Ready to implement  
 **Estimated Total Time:** 35-40 hours (5 days)  

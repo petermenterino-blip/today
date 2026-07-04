@@ -1,3 +1,5 @@
+
+
 # PRD — Mentorino Premium Mentorship Platform
 
 ## 1. Product Overview
@@ -8,7 +10,6 @@
 **Current State:** Client-side SPA with localStorage persistence, mock auth, seeded demo data  
 **Target State:** Full-stack solution (Supabase backend) connecting mentors with mentees through applications, scheduling, goal tracking, messaging, events, and analytics  
 
----
 
 ## 2. Problem Statement
 
@@ -16,7 +17,6 @@ Career transitions, academic guidance, and life coaching suffer from fragmented 
 
 Mentorino solves this by providing a **single unified platform** covering the entire mentorship lifecycle: application → enrollment → 1:1 sessions → goal tracking → messaging → events → analytics.
 
----
 
 ## 3. Target Audience
 
@@ -26,7 +26,6 @@ Mentorino solves this by providing a **single unified platform** covering the en
 | **Student (mentee)** | Career transitioner, recent grad, or professional seeking guidance | No structured program, hard to track progress, disconnected communication |
 | **Visitor** | Prospective applicant browsing the platform | No clear application pipeline, no visibility into program structure |
 
----
 
 ## 4. User Personas
 
@@ -45,7 +44,6 @@ Mentorino solves this by providing a **single unified platform** covering the en
 - **Needs:** Learn about programs, submit mentorship application, book consultation, browse public content
 - **Goals:** Evaluate fit, get accepted into the program
 
----
 
 ## 5. Functional Requirements (MoSCoW Prioritization)
 
@@ -113,7 +111,6 @@ Mentorino solves this by providing a **single unified platform** covering the en
 | F-43 | Real-time WebSocket messaging | Polling from localStorage |
 | F-44 | Public user signup | Accounts created by mentor upon approval |
 
----
 
 ## 6. User Stories
 
@@ -174,7 +171,6 @@ As a mentor, I want to view revenue analytics and export reports
 so that I can measure business performance.
 ```
 
----
 
 ## 7. Acceptance Criteria
 
@@ -213,7 +209,6 @@ Scenario: User sends a message
   And the recipient sees an unread count
 ```
 
----
 
 ## 8. Non-Functional Requirements
 
@@ -228,7 +223,6 @@ Scenario: User sends a message
 | NFR7 | Browser compatibility | Modern browsers | ES2020 target via Vite |
 | NFR8 | Offline resilience | Graceful degradation | Memory fallback if localStorage unavailable |
 
----
 
 ## 9. UI/UX Requirements
 
@@ -251,7 +245,6 @@ Scenario: User sends a message
 | Mentor Dashboard | `/mentor/*` | Students, applications, scheduler, analytics, events, messaging, forms, files, settings |
 | Admin Revenue | `/admin/revenue` | Revenue chart, transaction table, PDF/Excel export |
 
----
 
 ## 10. Technical Architecture
 
@@ -310,7 +303,6 @@ Scenario: User sends a message
 | **Video** | hls.js | hls.js |
 | **Auth** | Mock (localStorage) | Supabase Auth (JWT) |
 
----
 
 ## 11. Data Models (Key Entities)
 
@@ -332,7 +324,6 @@ Scenario: User sends a message
 | **Transaction** | `mentorino_transactions` | id, user_name, amount, date, product, status |
 | **Product** | `mentorino_products` | id, name, price, category, salesCount, status |
 
----
 
 ## 12. Current Implementation Status
 
@@ -359,7 +350,6 @@ Scenario: User sends a message
 | Supabase backend | ❌ Not implemented | Env vars declared, no integration |
 | Testing | ❌ Not implemented | No test files |
 
----
 
 ## 13. Constraints
 
@@ -371,7 +361,6 @@ Scenario: User sends a message
 | 4 | Single mentor architecture | Cannot scale to multi-mentor |
 | 5 | localStorage size limits (~5MB) | Media/file storage constrained |
 
----
 
 ## 14. Future Scope (Post-v1)
 
@@ -388,7 +377,6 @@ Scenario: User sends a message
 | Native mobile apps | P3 | React Native |
 | Video/audio calls (WebRTC) | P3 | Replace external links |
 
----
 
 ## 15. Glossary
 

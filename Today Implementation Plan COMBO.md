@@ -1,3 +1,5 @@
+
+
 # 📋 Today Implementation Plan COMBO
 ## Mentorino — Complete Analysis + Implementation Roadmap
 
@@ -5,7 +7,6 @@
 **Source 1:** Plan 1 — GITHUBchat (Implementation tasks & scheduling)  
 **Source 2:** Plan 2 — Claude Anti gravity (Deep codebase audit & bug findings)  
 
----
 
 ## TABLE OF CONTENTS
 
@@ -18,7 +19,6 @@
 7. [Daily Schedule](#7-daily-schedule)
 8. [Success Criteria](#8-success-criteria)
 
----
 
 ## 1. Executive Summary
 
@@ -66,7 +66,6 @@ Phase 1.3 (ID Normalization) ──► Phase 1.2 (Real-time) ──► Phase 2 (
         └── Phase 1.4 (Cross-tab Messaging)                  └── Phase 3 (All Features)
 ```
 
----
 
 ## 2. Bug Inventory — Merged & Prioritized
 
@@ -119,7 +118,6 @@ Phase 1.3 (ID Normalization) ──► Phase 1.2 (Real-time) ──► Phase 2 (
 | M11 | Realtime subscriptions fire in localStorage mode | Phase 4.5 |
 | M12 | All-or-nothing cache invalidation | Phase 4.6 |
 
----
 
 ## 3. Unified Implementation Roadmap
 
@@ -127,7 +125,6 @@ Phase 1.3 (ID Normalization) ──► Phase 1.2 (Real-time) ──► Phase 2 (
 
 The core infrastructure that everything else depends on. Fix these first.
 
----
 
 #### Phase 1.1: Secure Edge Functions (4 hours)
 *From Plan 1 Task 1.1*
@@ -144,7 +141,6 @@ The core infrastructure that everything else depends on. Fix these first.
 - [ ] Each endpoint without token → 401
 - [ ] Each endpoint with invalid token → 401
 
----
 
 #### Phase 1.2: Real-Time Subscriptions (6 hours)
 *From Plan 1 Task 1.2*
@@ -169,7 +165,6 @@ Plus fix mutation `onSuccess` callbacks in all hooks to properly invalidate quer
 - [ ] Student updates task → Mentor sees within 2s
 - [ ] No console errors
 
----
 
 #### Phase 1.3: ID Normalization (8 hours)
 *NEW — From Plan 2 finding C1*
@@ -196,7 +191,6 @@ Plus fix mutation `onSuccess` callbacks in all hooks to properly invalidate quer
 - [ ] Seed student (converted) data still works
 - [ ] Mentor can assign tasks to new student and student sees them
 
----
 
 #### Phase 1.4: Cross-Tab Messaging Sync (2 hours)
 *NEW — From Plan 2 finding H1*
@@ -214,13 +208,11 @@ Plus fix mutation `onSuccess` callbacks in all hooks to properly invalidate quer
 - [ ] Tab B (student): Message appears within 2s without manual refresh
 - [ ] Vice versa: Student sends, mentor sees
 
----
 
 ### PHASE 2: CORE SYNC FIXES (Days 2-3 · 16 hours)
 
 Fix all data synchronization between mentor and student dashboards.
 
----
 
 #### Phase 2.1: Fix Task Sync (4 hours)
 *From Plan 1 Task 2.1 + Plan 2 finding C7*
@@ -237,7 +229,6 @@ Fix all data synchronization between mentor and student dashboards.
 - [ ] Student completes task → Mentor sees completion within 2s
 - [ ] Task persists after refresh on both sides
 
----
 
 #### Phase 2.2: Fix Goal Sync (4 hours)
 *From Plan 1 Task 2.2 + Plan 2 finding C8*
@@ -253,7 +244,6 @@ Fix all data synchronization between mentor and student dashboards.
 - [ ] Student creates goal → Mentor sees in student detail view within 2s
 - [ ] Goal progress updates sync both ways
 
----
 
 #### Phase 2.3: Eliminate Dual Task Service (4 hours)
 *NEW — From Plan 2 finding C2*
@@ -276,7 +266,6 @@ Fix all data synchronization between mentor and student dashboards.
 - [ ] Old task data (from `taskStorage`) still accessible
 - [ ] No duplicate data or writes
 
----
 
 #### Phase 2.4: Convert Direct Reads to React Query (4 hours)
 *NEW — From Plan 2 findings H3, H6*
@@ -295,13 +284,11 @@ Fix all data synchronization between mentor and student dashboards.
 - [ ] Newly approved student appears in session dropdown immediately
 - [ ] Chart data updates automatically
 
----
 
 ### PHASE 3: FEATURE COMPLETION (Days 3-5 · 24 hours)
 
 Fix all broken or incomplete features.
 
----
 
 #### Phase 3.1: Fix Messaging System (6 hours)
 *From Plan 1 Task 3.1 + Plan 2 findings C9, M9*
@@ -319,7 +306,6 @@ Fix all broken or incomplete features.
 - [ ] Search shows "No results found" for non-matching queries
 - [ ] Sender name appears correctly on both sides
 
----
 
 #### Phase 3.2: Fix Events + RSVP (4 hours)
 *From Plan 1 Task 3.2 + Plan 2 findings C10, H4, M2, M7*
@@ -339,7 +325,6 @@ Fix all broken or incomplete features.
 - [ ] Duplicate registration prevented in both modes
 - [ ] Mentor sees updated attendee count without refresh
 
----
 
 #### Phase 3.3: Fix Sessions + Bookings (2 hours)
 *From Plan 2 findings M3, H5*
@@ -355,14 +340,12 @@ Fix all broken or incomplete features.
 - [ ] Mentor sees cancellation
 - [ ] Session list loads correctly for newly created students (after Phase 1.3)
 
----
 
 #### Phase 3.4: Fix Analytics (2 hours)
 *From Plan 2 H3 (covered in Phase 2.4)*
 
 Fully addressed by Phase 2.4 — converting to React Query hooks.
 
----
 
 #### Phase 3.5: Fix Growth Audit Visibility (3 hours)
 *NEW — From Plan 2 finding C3*
@@ -381,7 +364,6 @@ Fully addressed by Phase 2.4 — converting to React Query hooks.
 - [ ] Data persists after refresh
 - [ ] `database-sync` event fires properly
 
----
 
 #### Phase 3.6: Fix Custom Forms for Students (3 hours)
 *NEW — From Plan 2 finding C4*
@@ -399,7 +381,6 @@ Fully addressed by Phase 2.4 — converting to React Query hooks.
 - [ ] Student can edit submitted response
 - [ ] Mentor sees response in forms tab
 
----
 
 #### Phase 3.7: Fix Credential Delivery (2 hours)
 *NEW — From Plan 2 finding C5*
@@ -414,7 +395,6 @@ Fully addressed by Phase 2.4 — converting to React Query hooks.
 - [ ] Mentor can copy credentials
 - [ ] Mentor can re-view credentials later (not just toast)
 
----
 
 #### Phase 3.8: Fix Program Progress Visibility (3 hours)
 *NEW — From Plan 2 finding C6*
@@ -430,7 +410,6 @@ Fully addressed by Phase 2.4 — converting to React Query hooks.
 - [ ] Shows: completed lessons count, quiz scores, last accessed date
 - [ ] Progress updates when student completes new content
 
----
 
 #### Phase 3.9: Fix File Upload Fallback (2 hours)
 *NEW — From Plan 2 finding H2*
@@ -445,7 +424,6 @@ Fully addressed by Phase 2.4 — converting to React Query hooks.
 - [ ] File renders in both modes
 - [ ] 25MB size limit enforced in both modes
 
----
 
 #### Phase 3.10: Fix Video Playback (1 hour)
 *NEW — From Plan 2 finding H7*
@@ -459,7 +437,6 @@ Fully addressed by Phase 2.4 — converting to React Query hooks.
 - [ ] Video player doesn't crash
 - [ ] Progress tracking still works even if video fails
 
----
 
 #### Phase 3.11: Fix Profile Data Split (2 hours)
 *NEW — From Plan 2 finding H9*
@@ -473,7 +450,6 @@ Fully addressed by Phase 2.4 — converting to React Query hooks.
 - [ ] On load, Supabase data takes precedence if available
 - [ ] No data loss on mode switch
 
----
 
 #### Phase 3.12: Auto-Notifications (3 hours)
 *NEW — From Plan 2 finding M1*
@@ -490,12 +466,10 @@ Fully addressed by Phase 2.4 — converting to React Query hooks.
 - [ ] Task assigned → student gets notification
 - [ ] Event reminder → student gets notification
 
----
 
 #### Phase 3.13: Fix Bookings (1 hour)
 *Covered in Phase 3.3*
 
----
 
 #### Phase 3.14: Fix Voice Messages (2 hours)
 *NEW — From Plan 2 finding M4*
@@ -512,7 +486,6 @@ Fully addressed by Phase 2.4 — converting to React Query hooks.
 - [ ] Recipient can play back the recording
 - [ ] Falls back gracefully if mic unavailable
 
----
 
 #### Phase 3.15: Fix AI Insights (2 hours)
 *NEW — From Plan 2 finding M5*
@@ -527,7 +500,6 @@ Fully addressed by Phase 2.4 — converting to React Query hooks.
 - [ ] Loading state shown during API call
 - [ ] Error state shown on failure
 
----
 
 #### Phase 3.16: Student Edit for Forms + Feedback (2 hours)
 *NEW — From Plan 2 finding M8*
@@ -543,13 +515,11 @@ Fully addressed by Phase 2.4 — converting to React Query hooks.
 - [ ] Student can edit form responses
 - [ ] Mentor sees updated values
 
----
 
 ### PHASE 4: CLEANUP & CONFIG (Day 5 · 8 hours)
 
 Fix configuration issues, technical debt, and edge cases.
 
----
 
 #### Phase 4.1: Seed Auth Users in Supabase (2 hours)
 
@@ -557,7 +527,6 @@ Fix configuration issues, technical debt, and edge cases.
 |------|--------|
 | `supabase/seed/seed.sql` | MODIFY — Add `auth.users` inserts with proper UUIDs matching profiles |
 
----
 
 #### Phase 4.2: Configure Environment Variables (1 hour)
 
@@ -565,7 +534,6 @@ Fix configuration issues, technical debt, and edge cases.
 |------|--------|
 | `.env.local` | MODIFY — Add real Sentry DSN, PostHog key, Supabase service role key |
 
----
 
 #### Phase 4.3: Deprecate Store Tab (1 hour)
 
@@ -573,7 +541,6 @@ Fix configuration issues, technical debt, and edge cases.
 |------|--------|
 | `MentorDashboard.tsx` | MODIFY — Remove "Store" tab or add `HIDE_STORE` env flag |
 
----
 
 #### Phase 4.4: Consolidate Edge Function Directories (1 hour)
 
@@ -581,7 +548,6 @@ Fix configuration issues, technical debt, and edge cases.
 |------|--------|
 | `edge-functions/` | DELETE — Move any unique content to `supabase/functions/` |
 
----
 
 #### Phase 4.5: Guard Realtime in localStorage Mode (1 hour)
 
@@ -589,7 +555,6 @@ Fix configuration issues, technical debt, and edge cases.
 |------|--------|
 | `src/hooks/useRealtime.ts` | MODIFY — Check `isSupabaseAvailable()` before subscribing |
 
----
 
 #### Phase 4.6: Targeted Cache Invalidation (1 hour)
 
@@ -597,7 +562,6 @@ Fix configuration issues, technical debt, and edge cases.
 |------|--------|
 | `src/hooks/useDatabaseSync.ts` | MODIFY — Accept specific query keys to invalidate instead of all |
 
----
 
 #### Phase 4.7: Delete Stale localStorage on Version Bump (1 hour)
 
@@ -605,7 +569,6 @@ Fix configuration issues, technical debt, and edge cases.
 |------|--------|
 | `src/utils/seedData.ts` | MODIFY — Add migration logic to transform old ID formats to new ones |
 
----
 
 ## 4. File Change Summary
 
@@ -655,7 +618,6 @@ Fix configuration issues, technical debt, and edge cases.
 | Directory cleanup | Delete `edge-functions/` | 4.4 |
 | Realtime | `useRealtime.ts` | 4.5 |
 
----
 
 ## 5. Cross-Dashboard Sync Requirements
 
@@ -681,7 +643,6 @@ Gallery                    ✅ Manage photos                 ✅ View gallery
 
 **After all phases complete, every cell in the above matrix must be ✅.**
 
----
 
 ## 6. Testing Protocol
 
@@ -716,7 +677,6 @@ Every phase must pass these checks before moving to the next:
 | T13 — Real-Time | Open mentor in Tab A, student in Tab B → Make change in Tab A → Tab B updates within 2s | ✅ |
 | T14 — Voice Message | Student records voice → Sends → Mentor plays recording → Audio is real (not simulated) | ✅ |
 
----
 
 ## 7. Daily Schedule
 
@@ -769,7 +729,6 @@ Every phase must pass these checks before moving to the next:
 ```
 **Deliverable:** All 24 features working, config cleanup done
 
----
 
 ## 8. Success Criteria
 
@@ -813,7 +772,6 @@ Every phase must pass these checks before moving to the next:
 - [ ] `npm run dev` — zero warnings
 - [ ] Production build succeeds
 
----
 
 ## Quick Reference
 
@@ -843,7 +801,6 @@ Since all phases touch different files, conflicts should be minimal:
 - Reference issues fixed
 ```
 
----
 
 **Status:** Ready to implement  
 **Estimated Total Time:** 60-70 hours (5 days, 1 developer)  

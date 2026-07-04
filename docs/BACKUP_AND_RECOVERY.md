@@ -1,8 +1,9 @@
+
+
 # Mentorino — Backup & Disaster Recovery Strategy
 
 Version: 1.0
 
----
 
 ## 1. Overview
 
@@ -20,7 +21,6 @@ The strategy is designed to operate within free-tier limits while providing prod
 | Environment Secrets | Edge Functions + offline | ~2KB | **Critical** |
 | Documentation | GitHub | ~1MB | Medium |
 
----
 
 ## 2. Backup Schedule
 
@@ -32,7 +32,6 @@ The strategy is designed to operate within free-tier limits while providing prod
 | **Monthly** | Full backup | Manual + script | Offline (external drive) | 12 months |
 | **Continuous** | Source code | `git push` | GitHub | Forever |
 
----
 
 ## 3. Database Backup (Daily)
 
@@ -103,7 +102,6 @@ gzip mentorino-manual-$(date +%Y-%m-%d).dump
 
 Note: Supabase Auth metadata (`auth.users`) is backed up SEPARATELY via Supabase dashboard export.
 
----
 
 ## 4. Storage Backup (Weekly)
 
@@ -161,7 +159,6 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 ```
 
----
 
 ## 5. GitHub + Source Code Backup
 
@@ -185,7 +182,6 @@ git log --oneline origin/main -1
 gh repo view mentorino --json defaultBranch
 ```
 
----
 
 ## 6. Environment Secrets Backup
 
@@ -228,7 +224,6 @@ The encrypted file is stored:
 | GOOGLE_DRIVE_SERVICE_ACCOUNT | GitHub Actions secrets | GPG-encrypted file |
 | GOOGLE_DRIVE_BACKUP_FOLDER_ID | GitHub Actions secrets | GPG-encrypted file |
 
----
 
 ## 7. Disaster Recovery Procedures
 
@@ -326,7 +321,6 @@ This procedure is tested quarterly to ensure vendor portability.
 9. Verify against test suite
 ```
 
----
 
 ## 8. Monthly Offline Backup Procedure
 
@@ -362,7 +356,6 @@ This procedure is tested quarterly to ensure vendor portability.
 | Physical storage | Fireproof safe, offsite copy |
 | Label format | `MENTORINO-BACKUP-YYYY-MM` |
 
----
 
 ## 9. Backup Verification Schedule
 
@@ -375,7 +368,6 @@ This procedure is tested quarterly to ensure vendor portability.
 | Secret restore test | Quarterly | Decrypt secrets backup, verify against current |
 | Migration test | Quarterly | Restore to alternate PostgreSQL provider |
 
----
 
 ## 10. Recovery Time Objectives
 
@@ -388,7 +380,6 @@ This procedure is tested quarterly to ensure vendor portability.
 | Catastrophic (all infra lost) | < 48 hours | ~6 hours |
 | Migration to new provider | < 24 hours | ~4 hours |
 
----
 
 ## 11. Cost Analysis (Free Tier)
 
@@ -402,7 +393,6 @@ This procedure is tested quarterly to ensure vendor portability.
 
 Total monthly backup cost: **$0**
 
----
 
 ## 12. Supabase Auth Users Backup
 
@@ -425,7 +415,6 @@ Supabase Auth users (`auth.users` table) are NOT included in `pg_dump` schema ba
    - Profile data is restored from `profiles` table
    - Enrollment data is restored from `program_enrollments`, `sessions`, etc.
 
----
 
 ## 13. Monitoring Alerts
 

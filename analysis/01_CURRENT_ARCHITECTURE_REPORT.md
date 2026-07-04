@@ -1,3 +1,5 @@
+
+
 # Phase 1: Current Architecture Report
 
 ## Stack Overview

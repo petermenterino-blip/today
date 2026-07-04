@@ -1,14 +1,16 @@
 export interface StudentProfile {
-  id: string; // user ID
+  id: string;
   user_id?: string;
   name: string;
+  full_name?: string;
   email: string;
+  user_email?: string;
   status: 'applied' | 'active' | 'at_risk' | 'completed' | 'alumni';
   healthStatus: 'active' | 'needs_attention' | 'at_risk';
-  tags: string[]; // e.g., High Potential, Needs Support, Leadership
+  tags: string[];
   lastLogin?: string;
-  privateNotes?: string; // Mentor private notes
-  notes?: string; // General notes
+  privateNotes?: string;
+  notes?: string;
   growth_score?: number;
   mentor_id?: string;
   specialization?: string;
@@ -17,7 +19,31 @@ export interface StudentProfile {
     attendanceRate: number;
     goalCompletionRate: number;
     activityLevel: number;
-  }
+  };
+  avatar_url?: string;
+  phone?: string;
+  bio?: string;
+  linkedin_url?: string;
+  resume_link?: string;
+  goal_progress?: number;
+  application_status?: string;
+  created_at?: string;
+  updated_at?: string;
+  timezone?: string;
+  location?: string;
+  skills?: string[];
+  portfolio_url?: string;
+  github_url?: string;
+  program_id?: string;
+  batch?: string;
+  cohort?: string;
+  invited_at?: string;
+  first_login_at?: string;
+  onboarding_completed?: boolean;
+  preferred_meeting_time?: string;
+  learning_objectives?: string[];
+  focus_area?: string;
+  social_links?: Record<string, string>;
 }
 
 export interface StudentTimelineEvent {

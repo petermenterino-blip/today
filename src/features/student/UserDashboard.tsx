@@ -26,6 +26,8 @@ import {
   Loader2,
   ShieldCheck,
   BookOpen,
+  FileIcon,
+  Bell,
 } from "lucide-react";
 import {
   useNavigate,
@@ -61,6 +63,7 @@ import StudentForms from "./StudentForms";
 import StudentEditProfile from "./StudentEditProfile";
 import ResourceDashboard from "../resources/ResourceDashboard";
 import { StudentReviews } from "./StudentReviews";
+import StudentSharedFiles from "./StudentSharedFiles";
 
 interface UserDashboardProps {
   currentUser: User | null;
@@ -199,8 +202,9 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
     const programName = currentProgram ? currentProgram.title : "Not enrolled in a program.";
 
     const getMentorName = () => {
-      if (isApproved) return "Peter Mannarino";
-      return null;
+      if (!studentProfile?.mentor_id) return null;
+      const mentorProfile = studentProfiles.find(p => p.id === studentProfile.mentor_id);
+      return mentorProfile?.name || "Mentor assigned";
     };
     const mentorName = getMentorName() || "No mentor assigned";
 
@@ -537,6 +541,23 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
               </div>
             );
           })()}
+        </div>
+
+        {/* Shared Files */}
+        <div className="bg-white rounded-[32px] p-6 border border-slate-100 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-black uppercase tracking-tighter text-slate-900">Shared Files</h3>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Documents & resources</p>
+            </div>
+            <Link to="/student/files" className="text-xs font-black uppercase tracking-wider text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
+              View All <ArrowRight size={14} />
+            </Link>
+          </div>
+          <div className="text-center py-8">
+            <FileIcon className="mx-auto text-slate-300 mb-2" size={24} />
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Shared files will appear here</p>
+          </div>
         </div>
       </div>
     );
@@ -923,6 +944,10 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
               <Route
                 path="/profile"
                 element={<StudentEditProfile currentUser={currentUser} />}
+              />
+              <Route
+                path="/files"
+                element={<StudentSharedFiles userId={currentUser?.id || ''} />}
               />
               <Route path="*" element={<Navigate to="/student" replace />} />
             </Routes>

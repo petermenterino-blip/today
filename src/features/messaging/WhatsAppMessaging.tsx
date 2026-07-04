@@ -62,6 +62,8 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [mutedConversations] = useState<string[]>([]);
   const [allStudents, setAllStudents] = useState<StudentProfile[]>([]);
+  const [otherParticipantProfile, setOtherParticipantProfile] = useState<any>(null);
+  const [presenceMap, setPresenceMap] = useState<Record<string, { status: string; lastSeen?: string }>>({});
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -70,8 +72,21 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
     queryKey: ['messages', selectedConversation?.id],
     queryFn: () => messageService.getMessages(selectedConversation!.id),
     enabled: !!selectedConversation,
-    staleTime: 1000 * 60, // 1 minute
+    staleTime: 1000 * 60,
   });
+
+  useEffect(() => {
+    if (!selectedConversation || selectedConversation.isGroup) {
+      setOtherParticipantProfile(null);
+      return;
+    }
+    const otherUserId = selectedConversation.mentorId === currentUserId
+      ? selectedConversation.studentId
+      : selectedConversation.mentorId;
+    if (!otherUserId) return;
+    messageService.getConversationParticipantProfile(selectedConversation.id, otherUserId)
+      .then(setOtherParticipantProfile);
+  }, [selectedConversation, currentUserId]);
 
   const [avatarPreviews] = useState<Record<string, string>>(() => {
     const stored: Record<string, string> = {};
@@ -203,7 +218,40 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
         queryClient.invalidateQueries({ queryKey: ['messages', payload.new.conversation_id] });
       },
     },
+    {
+      table: 'conversations',
+      event: 'UPDATE',
+      callback: (payload: any) => {
+        const row = payload.new as any;
+        setConversations(prev => prev.map(c =>
+          c.id === row.id ? { ...c, unreadCount: row.unread_count || 0 } : c
+        ));
+      },
+    },
   ]);
+
+  useEffect(() => {
+    const userPresenceChannel = supabase.channel('user-presence');
+    userPresenceChannel
+      .on('presence', { event: 'sync' }, () => {
+        const state = userPresenceChannel.presenceState();
+        const presence: Record<string, { status: string; lastSeen?: string }> = {};
+        for (const [key, value] of Object.entries(state)) {
+          presence[key] = (value as any)[0] || { status: 'offline' };
+        }
+        setPresenceMap(presence);
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await userPresenceChannel.track({
+            user_id: currentUserId,
+            status: 'online',
+            lastSeen: new Date().toISOString(),
+          });
+        }
+      });
+    return () => { supabase.removeChannel(userPresenceChannel); };
+  }, [currentUserId]);
 
   useEffect(() => {
     const handleStorage = (e: StorageEvent) => {
@@ -246,6 +294,35 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
     setShowGroupInfo(false);
   };
 
+  const retrySendMessage = useCallback(async (message: Message) => {
+    if (!selectedConversation) return;
+    queryClient.setQueryData<Message[]>(['messages', selectedConversation.id], (old = []) =>
+      (old || []).map(m => m.id === message.id ? { ...m, status: 'sending' as const } : m)
+    );
+    try {
+      await messageService.sendMessage({
+        senderId: message.senderId,
+        senderName: message.senderName,
+        conversationId: message.conversationId,
+        content: message.content,
+        type: message.type,
+        audioUrl: message.audioUrl,
+        duration: message.duration,
+        fileName: message.fileName,
+        fileUrl: message.fileUrl,
+        fileSize: message.fileSize,
+        fileType: message.fileType,
+      });
+      queryClient.setQueryData<Message[]>(['messages', selectedConversation.id], (old = []) =>
+        (old || []).map(m => m.id === message.id ? { ...m, status: 'sent' as const } : m)
+      );
+    } catch {
+      queryClient.setQueryData<Message[]>(['messages', selectedConversation.id], (old = []) =>
+        (old || []).map(m => m.id === message.id ? { ...m, status: 'failed' as const, retryCount: (m.retryCount || 0) + 1 } : m)
+      );
+    }
+  }, [selectedConversation, queryClient]);
+
   const handleSendMessage = async (content: string) => {
     if (!content.trim() || !selectedConversation) return;
 
@@ -257,39 +334,59 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
       conversationId: selectedConversation.id,
       content: content.trim(),
       type: 'text',
-      status: 'sent',
+      status: 'sending',
       timestamp: new Date().toISOString(),
     };
 
     queryClient.setQueryData<Message[]>(['messages', selectedConversation.id], (old = []) => [...old, optimisticMessage]);
 
     try {
-      await messageService.sendMessage({
+      const sent = await messageService.sendMessage({
         senderId: currentUserId,
         senderName: currentUserName || (role === 'mentor' ? 'Mentor' : 'Student'),
         conversationId: selectedConversation.id,
         content: content.trim(),
         type: 'text',
       });
+      if (sent) {
+        queryClient.setQueryData<Message[]>(['messages', selectedConversation.id], (old = []) =>
+          (old || []).map(m => m.id === tempId ? { ...m, id: sent.id, status: 'sent' as const } : m)
+        );
+      }
+    } catch {
+      queryClient.setQueryData<Message[]>(['messages', selectedConversation.id], (old = []) =>
+        (old || []).map(m => m.id === tempId ? { ...m, status: 'failed' as const } : m)
+      );
+      setToast({ message: 'Message failed to send. Tap to retry.', type: 'error' });
     } finally {
-      queryClient.invalidateQueries({ queryKey: ['messages', selectedConversation.id] });
       loadConversations();
     }
   };
 
-  const handleSendVoiceMessage = async (audioUrl: string, duration: number) => {
+  const handleSendVoiceMessage = async (audioBlob: Blob, duration: number) => {
     if (!selectedConversation) return;
-
     const tempId = `temp_${Date.now()}`;
+
+    let uploadedUrl = '';
+    try {
+      const file = new File([audioBlob], `voice_${Date.now()}.webm`, { type: 'audio/webm' });
+      const storagePath = await storageService.uploadMessageAttachment(currentUserId, file);
+      const { data: { publicUrl } } = storageService.getPublicUrl('message-attachments', storagePath);
+      uploadedUrl = publicUrl;
+    } catch (err) {
+      setToast({ message: 'Voice upload failed.', type: 'error' });
+      return;
+    }
+
     const optimisticMessage: Message = {
       id: tempId,
       senderId: currentUserId,
       senderName: currentUserName || (role === 'mentor' ? 'Mentor' : 'Student'),
       conversationId: selectedConversation.id,
-      content: audioUrl,
+      content: 'Voice message',
       type: 'voice',
-      status: 'sent',
-      audioUrl,
+      status: 'sending',
+      audioUrl: uploadedUrl,
       duration,
       timestamp: new Date().toISOString(),
     };
@@ -297,19 +394,43 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
     queryClient.setQueryData<Message[]>(['messages', selectedConversation.id], (old = []) => [...old, optimisticMessage]);
 
     try {
-      await messageService.sendMessage({
+      const sent = await messageService.sendMessage({
         senderId: currentUserId,
         senderName: currentUserName || (role === 'mentor' ? 'Mentor' : 'Student'),
         conversationId: selectedConversation.id,
-        content: audioUrl,
+        content: 'Voice message',
         type: 'voice',
-        audioUrl,
+        audioUrl: uploadedUrl,
         duration,
       });
+      if (sent) {
+        queryClient.setQueryData<Message[]>(['messages', selectedConversation.id], (old = []) =>
+          (old || []).map(m => m.id === tempId ? { ...m, id: sent.id, status: 'sent' as const } : m)
+        );
+      }
+    } catch {
+      queryClient.setQueryData<Message[]>(['messages', selectedConversation.id], (old = []) =>
+        (old || []).map(m => m.id === tempId ? { ...m, status: 'failed' as const } : m)
+      );
     } finally {
-      queryClient.invalidateQueries({ queryKey: ['messages', selectedConversation.id] });
       loadConversations();
     }
+  };
+
+  const uploadFileWithRetry = async (file: File, maxRetries = 3): Promise<string> => {
+    let lastError: any;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const fileUrl = await storageService.uploadMessageAttachment(currentUserId, file);
+        return fileUrl;
+      } catch (err) {
+        lastError = err;
+        if (attempt < maxRetries) {
+          await new Promise(r => setTimeout(r, attempt * 1000));
+        }
+      }
+    }
+    throw lastError;
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -321,50 +442,59 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
       return;
     }
     if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-      setToast({ message: 'Unsupported file type. Allowed: PDF, DOCX, DOC, TXT, PNG, JPG, ZIP, PPT, PPTX, XLS, XLSX, audio, video.', type: 'error' });
+      setToast({ message: 'Unsupported file type.', type: 'error' });
       return;
     }
 
+    const tempId = `temp_${Date.now()}`;
+    const fileUrl = URL.createObjectURL(file);
+
+    const optimisticMessage: Message = {
+      id: tempId,
+      senderId: currentUserId,
+      senderName: currentUserName || (role === 'mentor' ? 'Mentor' : 'Student'),
+      conversationId: selectedConversation.id,
+      content: file.name,
+      type: 'file',
+      status: 'sending',
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+      fileUrl,
+      timestamp: new Date().toISOString(),
+    };
+
+    queryClient.setQueryData<Message[]>(['messages', selectedConversation.id], (old = []) => [...old, optimisticMessage]);
+
     try {
       setToast({ message: 'Uploading file...', type: 'info' });
+      const storageUrl = await uploadFileWithRetry(file);
 
-      const tempId = `temp_${Date.now()}`;
-      const optimisticMessage: Message = {
-        id: tempId,
-        senderId: currentUserId,
-        senderName: currentUserName || (role === 'mentor' ? 'Mentor' : 'Student'),
-        conversationId: selectedConversation.id,
-        content: file.name,
-        type: 'file',
-        status: 'sent',
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type,
-        timestamp: new Date().toISOString(),
-      };
-
-      queryClient.setQueryData<Message[]>(['messages', selectedConversation.id], (old = []) => [...old, optimisticMessage]);
-
-      const fileUrl = await storageService.uploadMessageAttachment(currentUserId, file);
-
-      await messageService.sendMessage({
+      const sent = await messageService.sendMessage({
         senderId: currentUserId,
         senderName: currentUserName || (role === 'mentor' ? 'Mentor' : 'Student'),
         conversationId: selectedConversation.id,
         content: file.name,
         type: 'file',
         fileName: file.name,
-        fileUrl,
+        fileUrl: storageUrl,
         fileSize: file.size,
         fileType: file.type,
       });
 
-      queryClient.invalidateQueries({ queryKey: ['messages', selectedConversation.id] });
-      loadConversations();
-      setToast({ message: 'File sent!', type: 'success' });
+      if (sent) {
+        queryClient.setQueryData<Message[]>(['messages', selectedConversation.id], (old = []) =>
+          (old || []).map(m => m.id === tempId ? { ...m, id: sent.id, status: 'sent' as const, fileUrl: storageUrl } : m)
+        );
+        setToast({ message: 'File sent!', type: 'success' });
+      }
     } catch {
-      queryClient.invalidateQueries({ queryKey: ['messages', selectedConversation.id] });
-      setToast({ message: 'File upload failed.', type: 'error' });
+      queryClient.setQueryData<Message[]>(['messages', selectedConversation.id], (old = []) =>
+        (old || []).map(m => m.id === tempId ? { ...m, status: 'failed' as const } : m)
+      );
+      setToast({ message: 'File upload failed. Tap to retry.', type: 'error' });
+    } finally {
+      loadConversations();
     }
   };
 

@@ -1,9 +1,10 @@
+
+
 # RC2.7 — Bug Triage Report
 
 ## Methodology
 All issues discovered during RC2 analysis phases (environment validation, workflow testing, UX review, security validation, performance validation). Classified by severity.
 
----
 
 ## Critical Bugs (Fix Immediately)
 
@@ -13,7 +14,6 @@ All issues discovered during RC2 analysis phases (environment validation, workfl
 | C2 | **No Google OAuth flow** on frontend — `googleAccessToken` never obtained | Frontend (no component found) | Calendar sync and Meet link generation completely non-functional | 2-3 days |
 | C3 | `custom_forms` and `form_templates` tables have **RLS enabled but zero policies** | `supabase/migrations/999_rls.sql` | Any authenticated user can read/write all form data | 0.5 day |
 
----
 
 ## High Bugs (Fix Before Internal Alpha)
 
@@ -27,7 +27,6 @@ All issues discovered during RC2 analysis phases (environment validation, workfl
 | H6 | Stale `application_status` after approval | `AuthContext.tsx` — depends on manual `user-profile-changed` event | Approved user may be stuck on pending page | 0.5 day |
 | H7 | Heavy libraries (jspdf, xlsx) imported eagerly | `pages/Reports` or equivalent | Bundle size includes PDF/Excel libs even if not used | 0.25 day |
 
----
 
 ## Medium Bugs (Document for Post-Alpha)
 
@@ -44,7 +43,6 @@ All issues discovered during RC2 analysis phases (environment validation, workfl
 | M9 | No audit logging for sensitive operations | Throughout | 2 days |
 | M10 | Edge function failures surface as generic toast | `services/edgeFunctionService.ts` | 0.5 day |
 
----
 
 ## Low Bugs (Document for Future)
 
@@ -58,7 +56,6 @@ All issues discovered during RC2 analysis phases (environment validation, workfl
 | L6 | No keyboard navigation / focus management | Throughout | 3 days |
 | L7 | `noUnusedLocals` not enabled in tsconfig | `tsconfig.json` | 0.25 day |
 
----
 
 ## Previously Fixed Issues (Verified)
 
@@ -87,7 +84,6 @@ These were addressed in F1-F6 sprints and remain fixed:
 | P19| React.memo missing on messaging components | F6.1 | ✅ Verified |
 | P20 | useMemo missing for filteredConversations | F6.2 | ✅ Verified |
 
----
 
 ## Bug Count Summary
 
@@ -99,7 +95,6 @@ These were addressed in F1-F6 sprints and remain fixed:
 | Low | 7 | 0 |
 | **Total** | **27** | **20** |
 
----
 
 ## Recommended Fix Order
 

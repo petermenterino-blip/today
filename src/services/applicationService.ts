@@ -1,8 +1,11 @@
 import { supabase } from '../lib/supabase';
 import { storageService } from './storageService';
 import { edgeFunctionService } from './edgeFunctionService';
+import { crmInitializationService } from './crmInitializationService';
 import { Application, ServiceResponse } from '../types';
 import { handleError } from '../lib/serviceHelper';
+
+const AUTH_SIGNUP_DISABLED = !import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 const APP_COLS = [
   'id', 'user_id', 'email', 'first_name', 'last_name', 'phone_number',
@@ -324,25 +327,53 @@ export const applicationService = {
     const email = app.email;
     const tempPassword = (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2, 18)) + '!Aa1';
 
-    const { error: signUpError, data: signUpData } = await supabase.auth.signUp({
-      email,
-      password: tempPassword,
-      options: {
-        data: { full_name: fullName, role: 'student' },
-      },
-    });
-    if (signUpError) return { data: null, error: signUpError.message };
+    let userId: string | null = null;
 
-    if (signUpData?.user) {
+    if (AUTH_SIGNUP_DISABLED) {
+      userId = app.user_id || crypto.randomUUID();
       await supabase.from('profiles').upsert({
-        id: signUpData.user.id,
+        id: userId,
         email,
         name: fullName,
         role: 'student',
         application_status: 'approved',
+        mentor_id: app.mentor_id || null,
         first_name: app.first_name || null,
         last_name: app.last_name || null,
+        status: 'active',
+        health_status: 'active',
+        growth_score: 0,
+        metrics: { attendanceRate: 0, goalCompletionRate: 0, activityLevel: 0 },
+        tags: [],
       });
+    } else {
+      const { error: signUpError, data: signUpData } = await supabase.auth.signUp({
+        email,
+        password: tempPassword,
+        options: {
+          data: { full_name: fullName, role: 'student' },
+        },
+      });
+      if (signUpError) return { data: null, error: signUpError.message };
+
+      if (signUpData?.user) {
+        userId = signUpData.user.id;
+        await supabase.from('profiles').upsert({
+          id: userId,
+          email,
+          name: fullName,
+          role: 'student',
+          application_status: 'approved',
+          mentor_id: app.mentor_id || null,
+          first_name: app.first_name || null,
+          last_name: app.last_name || null,
+          status: 'active',
+          health_status: 'active',
+          growth_score: 0,
+          metrics: { attendanceRate: 0, goalCompletionRate: 0, activityLevel: 0 },
+          tags: [],
+        });
+      }
     }
 
     const { error: updateError } = await supabase
@@ -350,6 +381,25 @@ export const applicationService = {
       .update({ status: 'invited', updated_at: new Date().toISOString() })
       .eq('id', id);
     if (updateError) return { data: null, error: updateError.message };
+
+    if (userId) {
+      try {
+        const programId = app.program_id || null;
+        const extras = typeof app.reason_for_applying === 'object' && app.reason_for_applying
+          ? app.reason_for_applying
+          : {};
+        crmInitializationService.initializeStudentCrm({
+          userId,
+          email,
+          name: fullName,
+          applicationId: id,
+          programId: programId || extras?.program_id || null,
+          focusArea: app.focus_area || extras?.focus_area || null,
+        });
+      } catch {
+        // CRM initialization failure does not block the approval
+      }
+    }
 
     try {
       await edgeFunctionService.sendEmail(email, 'welcome', {

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useCustomForms } from '../../hooks/useCustomForms';
-import { ClipboardList, ChevronRight, CheckCircle2, Clock, X, ArrowLeft, Send } from 'lucide-react';
+import { ClipboardList, ChevronRight, CheckCircle2, Clock, X, ArrowLeft, Send, Save, AlertCircle, RotateCcw, FileText } from 'lucide-react';
 import type { CustomForm, FormField as FormFieldType } from '../../types';
+import type { FormAssignment } from '../../services/customFormService';
 import { notifySuccess } from '../../utils/toast';
 
 interface StudentFormsProps {
@@ -10,19 +11,30 @@ interface StudentFormsProps {
   userName: string;
 }
 
+const STATUS_BADGES: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
+  awaiting: { label: 'Awaiting', color: 'bg-amber-50 text-amber-600', icon: <Clock size={12} /> },
+  in_progress: { label: 'In Progress', color: 'bg-blue-50 text-blue-600', icon: <FileText size={12} /> },
+  submitted: { label: 'Submitted', color: 'bg-indigo-50 text-indigo-600', icon: <CheckCircle2 size={12} /> },
+  reviewed: { label: 'Reviewed', color: 'bg-emerald-50 text-emerald-600', icon: <CheckCircle2 size={12} /> },
+  closed: { label: 'Closed', color: 'bg-slate-100 text-slate-500', icon: <X size={12} /> },
+};
+
 const StudentForms: React.FC<StudentFormsProps> = ({ userId, userName }) => {
-  const { forms, submissions, submitForm } = useCustomForms(userId);
-  const [selectedForm, setSelectedForm] = useState<CustomForm | null>(null);
+  const { assignedForms, submissions, submitForm, saveDraft } = useCustomForms(userId);
+  const [selectedForm, setSelectedForm] = useState<{ form: CustomForm; assignment?: FormAssignment } | null>(null);
   const [responses, setResponses] = useState<Record<string, any>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
 
-  const hasSubmitted = (formId: string) => submissions.some(s => s.form_id === formId);
+  const getSubmission = useCallback((formId: string) =>
+    submissions.find(s => s.form_id === formId), [submissions]);
 
-  const getSubmission = (formId: string) => submissions.find(s => s.form_id === formId);
+  const getAssignment = useCallback((formId: string) =>
+    assignedForms.find(a => a.id === formId)?.assignment, [assignedForms]);
 
-  const handleOpenForm = (form: CustomForm) => {
-    setSelectedForm(form);
-    const existing = getSubmission(form.id);
+  const handleOpenForm = (item: typeof assignedForms[0]) => {
+    setSelectedForm({ form: item, assignment: item.assignment });
+    const existing = getSubmission(item.id);
     setResponses(existing?.responses || {});
   };
 
@@ -35,7 +47,7 @@ const StudentForms: React.FC<StudentFormsProps> = ({ userId, userName }) => {
     setSubmitting(true);
     try {
       await submitForm({
-        form_id: selectedForm.id,
+        form_id: selectedForm.form.id,
         user_id: userId,
         user_name: userName,
         responses,
@@ -50,9 +62,29 @@ const StudentForms: React.FC<StudentFormsProps> = ({ userId, userName }) => {
     }
   };
 
+  const handleSaveDraft = async () => {
+    if (!selectedForm) return;
+    setSavingDraft(true);
+    try {
+      await saveDraft({
+        form_id: selectedForm.form.id,
+        user_id: userId,
+        user_name: userName,
+        responses,
+      });
+      notifySuccess('Draft saved');
+    } catch {
+      // error handled by service
+    } finally {
+      setSavingDraft(false);
+    }
+  };
+
   if (selectedForm) {
-    const existing = getSubmission(selectedForm.id);
-    const isReadonly = !!existing;
+    const { form, assignment } = selectedForm;
+    const existing = getSubmission(form.id);
+    const assignmentStatus = assignment?.status;
+    const isReadonly = !!existing || assignmentStatus === 'submitted' || assignmentStatus === 'reviewed' || assignmentStatus === 'closed';
 
     return (
       <div className="max-w-3xl mx-auto space-y-6">
@@ -65,21 +97,23 @@ const StudentForms: React.FC<StudentFormsProps> = ({ userId, userName }) => {
         </button>
 
         <div className="bg-white rounded-[40px] border border-slate-100 shadow-sm p-8 space-y-8">
-          <div>
-            <h2 className="text-3xl font-black uppercase tracking-tighter">{selectedForm.title}</h2>
-            {selectedForm.description && (
-              <p className="mt-2 text-sm text-slate-500 font-medium">{selectedForm.description}</p>
-            )}
-            {isReadonly && (
-              <div className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-widest">
-                <CheckCircle2 size={12} />
-                Submitted
-              </div>
+          <div className="flex items-start justify-between">
+            <div>
+              <h2 className="text-3xl font-black uppercase tracking-tighter">{form.title}</h2>
+              {form.description && (
+                <p className="mt-2 text-sm text-slate-500 font-medium">{form.description}</p>
+              )}
+            </div>
+            {assignmentStatus && (
+              <span className={`shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest ${STATUS_BADGES[assignmentStatus]?.color || 'bg-slate-50 text-slate-400'}`}>
+                {STATUS_BADGES[assignmentStatus]?.icon}
+                {STATUS_BADGES[assignmentStatus]?.label || assignmentStatus}
+              </span>
             )}
           </div>
 
           <div className="space-y-6">
-            {selectedForm.fields.map(field => (
+            {form.fields.map(field => (
               <div key={field.id}>
                 <FormFieldRenderer
                   field={field}
@@ -92,35 +126,40 @@ const StudentForms: React.FC<StudentFormsProps> = ({ userId, userName }) => {
           </div>
 
           {!isReadonly && (
-            <button
-              onClick={handleSubmit}
-              disabled={submitting}
-              className="flex items-center justify-center gap-2 w-full py-4 bg-black text-white rounded-[20px] font-black uppercase tracking-widest text-xs hover:bg-slate-800 transition-all disabled:opacity-50"
-            >
-              {submitting ? 'Submitting...' : 'Submit'}
-              <Send size={14} />
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={handleSaveDraft}
+                disabled={savingDraft}
+                className="flex items-center justify-center gap-2 px-8 py-4 border-2 border-slate-200 text-slate-600 rounded-[20px] font-black uppercase tracking-widest text-xs hover:border-slate-300 transition-all disabled:opacity-50"
+              >
+                {savingDraft ? 'Saving...' : 'Save Draft'}
+                <Save size={14} />
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={submitting}
+                className="flex items-center justify-center gap-2 flex-1 py-4 bg-black text-white rounded-[20px] font-black uppercase tracking-widest text-xs hover:bg-slate-800 transition-all disabled:opacity-50"
+              >
+                {submitting ? 'Submitting...' : 'Submit'}
+                <Send size={14} />
+              </button>
+            </div>
           )}
         </div>
       </div>
     );
   }
 
-  const formsWithSubmission = forms.map(f => ({
-    ...f,
-    submitted: hasSubmitted(f.id),
-  }));
-
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="mb-8">
         <h2 className="text-2xl font-black uppercase tracking-tighter">Custom Forms</h2>
         <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">
-          {formsWithSubmission.filter(f => f.submitted).length} of {forms.length} completed
+          {assignedForms.filter(f => f.assignment?.status === 'submitted' || f.assignment?.status === 'reviewed' || f.assignment?.status === 'closed').length} of {assignedForms.length} completed
         </p>
       </div>
 
-      {forms.length === 0 && (
+      {assignedForms.length === 0 && (
         <div className="bg-white rounded-[40px] border border-slate-100 shadow-sm p-12 text-center">
           <ClipboardList size={40} className="mx-auto text-slate-200 mb-4" />
           <p className="text-sm font-black uppercase tracking-wider text-slate-300">No forms assigned yet</p>
@@ -128,37 +167,35 @@ const StudentForms: React.FC<StudentFormsProps> = ({ userId, userName }) => {
       )}
 
       <div className="grid gap-4">
-        {formsWithSubmission.map(form => (
+        {assignedForms.map(item => (
           <motion.button
-            key={form.id}
-            onClick={() => handleOpenForm(form)}
+            key={item.id}
+            onClick={() => handleOpenForm(item)}
             className="bg-white rounded-[32px] border border-slate-100 shadow-sm p-6 text-left hover:border-indigo-200 hover:shadow-md transition-all group"
             whileHover={{ y: -2 }}
           >
             <div className="flex items-start justify-between">
               <div className="space-y-2">
-                <h3 className="text-lg font-black uppercase tracking-tighter">{form.title}</h3>
-                {form.description && (
-                  <p className="text-sm text-slate-500 font-medium line-clamp-2">{form.description}</p>
+                <h3 className="text-lg font-black uppercase tracking-tighter">{item.title}</h3>
+                {item.description && (
+                  <p className="text-sm text-slate-500 font-medium line-clamp-2">{item.description}</p>
                 )}
                 <div className="flex items-center gap-3">
                   <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                    {form.fields.length} field{form.fields.length !== 1 ? 's' : ''}
+                    {item.fields.length} field{item.fields.length !== 1 ? 's' : ''}
                   </span>
                 </div>
               </div>
               <div className="flex items-center gap-3 shrink-0">
-                {form.submitted ? (
-                  <span className="flex items-center gap-1.5 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-widest">
-                    <CheckCircle2 size={12} />
-                    Done
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1.5 px-4 py-2 bg-amber-50 text-amber-600 rounded-full text-[10px] font-black uppercase tracking-widest">
-                    <Clock size={12} />
-                    Pending
-                  </span>
-                )}
+                {item.assignment && (() => {
+                  const badge = STATUS_BADGES[item.assignment.status];
+                  return badge ? (
+                    <span className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest ${badge.color}`}>
+                      {badge.icon}
+                      {badge.label}
+                    </span>
+                  ) : null;
+                })()}
                 <ChevronRight size={18} className="text-slate-200 group-hover:text-slate-400 transition-colors" />
               </div>
             </div>

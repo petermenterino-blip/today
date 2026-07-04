@@ -1,9 +1,10 @@
+
+
 # Mentorino — Database Architecture
 
 Version: 1.0
 Based on ARCHITECTURE.md v1.0, AUDIT.md, and APPLICATION_FLOW.md
 
----
 
 ## 1. Naming Conventions
 
@@ -20,7 +21,6 @@ Based on ARCHITECTURE.md v1.0, AUDIT.md, and APPLICATION_FLOW.md
 | Unique Constraints | `uq_{table}_{columns}` | `uq_conversation_participants` |
 | Check Constraints | `ck_{table}_{rule}` | `ck_events_capacity_positive` |
 
----
 
 ## 2. UUID Strategy
 
@@ -31,7 +31,6 @@ Based on ARCHITECTURE.md v1.0, AUDIT.md, and APPLICATION_FLOW.md
 
 Rationale: UUIDs prevent enumeration attacks, scale horizontally, and are the Supabase standard.
 
----
 
 ## 3. Soft Delete Strategy
 
@@ -46,7 +45,6 @@ Tables with soft delete:
 Tables WITHOUT soft delete (append-only / immutable):
 `analytics_events`, `audit_logs`, `survey_responses`, `event_attendees`, `conversation_participants`
 
----
 
 ## 4. Audit Log Strategy
 
@@ -68,7 +66,6 @@ CREATE TABLE audit_logs (
 
 Triggers on sensitive tables (`applications`, `profiles`, `transactions`) push changes to `audit_logs`. The mentor views audit logs from the admin panel.
 
----
 
 ## 5. ER Diagram (Text)
 
@@ -126,7 +123,6 @@ auth.users (Supabase managed)
         └── announcements
 ```
 
----
 
 ## 6. Complete Table Definitions
 
@@ -824,7 +820,6 @@ Immutable audit trail for sensitive operations.
 
 Refer to Section 4 above for schema.
 
----
 
 ## 7. Storage Buckets
 
@@ -837,7 +832,6 @@ Refer to Section 4 above for schema.
 
 Maximum file size per upload: 10MB (Supabase Free limit: 5GB total storage)
 
----
 
 ## 8. Index Strategy Summary
 
@@ -850,7 +844,6 @@ Maximum file size per upload: 10MB (Supabase Free limit: 5GB total storage)
 | Full-Text | Optional: `to_tsvector('english', content)` on `journals.content` and `messages.content` |
 | Unique | All UNIQUE constraints enforce business rules |
 
----
 
 ## 9. PostgreSQL Configuration Notes (for portability)
 
@@ -861,7 +854,6 @@ Maximum file size per upload: 10MB (Supabase Free limit: 5GB total storage)
 - `JSONB` for flexible metadata fields
 - Migrations use sequential numbering for clarity
 
----
 
 ## 10. Migration Order
 

@@ -1,8 +1,9 @@
+
+
 # Mentorino - Official Architecture Specification
 
 Version: 1.0
 
----
 
 # Purpose
 
@@ -14,7 +15,6 @@ Do not change the architecture unless explicitly instructed.
 
 This document is the source of truth.
 
----
 
 # Product Overview
 
@@ -22,7 +22,6 @@ Mentorino is a premium mentorship platform connecting mentors and students throu
 
 The application is intended to become a production SaaS while remaining lightweight, serverless, and easy to maintain.
 
----
 
 # Primary Goals
 
@@ -44,7 +43,6 @@ Target Capacity
 * 30–50 Mentors
 * 200–300 Daily Active Users
 
----
 
 # Core Engineering Rules
 
@@ -71,7 +69,6 @@ Never introduce:
 
 No dedicated backend servers.
 
----
 
 ## Rule 2
 
@@ -99,7 +96,6 @@ Express
 
 PostgreSQL
 
----
 
 ## Rule 3
 
@@ -109,7 +105,6 @@ Do not over-engineer.
 
 Choose the simplest reliable solution.
 
----
 
 ## Rule 4
 
@@ -124,7 +119,6 @@ All implementation decisions must consider
 * Build limits
 * Monthly quotas
 
----
 
 # Official Technology Stack
 
@@ -139,7 +133,6 @@ All implementation decisions must consider
 * React Router
 * TanStack Query
 
----
 
 ## Hosting
 
@@ -155,7 +148,6 @@ Avoid using Vercel Functions whenever possible.
 
 The frontend should remain a Static SPA.
 
----
 
 ## Backend Platform
 
@@ -172,7 +164,6 @@ Use for
 
 Do not introduce another backend platform.
 
----
 
 ## AI
 
@@ -190,7 +181,6 @@ Gemini must only be called from secure backend execution.
 
 Never expose API Keys.
 
----
 
 ## Communication
 
@@ -203,7 +193,6 @@ Used for
 * Application Updates
 * Notifications
 
----
 
 ## Calendar
 
@@ -214,7 +203,6 @@ Used for
 * Session Scheduling
 * Calendar Sync
 
----
 
 ## Meetings
 
@@ -224,7 +212,6 @@ Used for
 
 * Meeting Link Creation
 
----
 
 ## Analytics
 
@@ -232,7 +219,6 @@ PostHog
 
 Track meaningful product events only.
 
----
 
 ## Monitoring
 
@@ -244,7 +230,6 @@ Used for
 * Crash Reports
 * Performance Monitoring
 
----
 
 # Official Architecture
 
@@ -278,7 +263,6 @@ Every feature must follow this flow.
 
 Never bypass the Service Layer.
 
----
 
 # Service Layer Rules
 
@@ -318,7 +302,6 @@ EmailService
 
 Components must never communicate directly with Supabase.
 
----
 
 # Folder Structure
 
@@ -362,7 +345,6 @@ Avoid giant folders.
 
 Avoid dumping unrelated code into shared directories.
 
----
 
 # Database Rules
 
@@ -383,7 +365,6 @@ Requirements
 
 Never duplicate data unnecessarily.
 
----
 
 # Authentication
 
@@ -399,7 +380,6 @@ Supported
 * JWT
 * Email Verification (optional)
 
----
 
 # Authorization
 
@@ -409,7 +389,6 @@ Never trust frontend permissions.
 
 Security belongs in the database.
 
----
 
 # Storage
 
@@ -423,7 +402,6 @@ Mentors
 
 Only access files they are authorized to view.
 
----
 
 # Realtime
 
@@ -441,7 +419,6 @@ Session Updates
 
 Do not create unnecessary subscriptions.
 
----
 
 # Edge Functions
 
@@ -471,7 +448,6 @@ Reading Lists
 
 Simple CRUD must communicate directly with Supabase using Row Level Security.
 
----
 
 # State Management
 
@@ -489,7 +465,6 @@ React Context
 
 Avoid unnecessary global state.
 
----
 
 # Security
 
@@ -523,7 +498,6 @@ Resend Keys
 
 Supabase Service Role Key
 
----
 
 # Performance
 
@@ -546,7 +520,6 @@ Repeated AI calls
 
 Large monolithic components
 
----
 
 # AI Usage
 
@@ -558,7 +531,6 @@ Never send duplicate requests.
 
 Never expose Gemini credentials to the browser.
 
----
 
 # Free Tier Optimization
 
@@ -597,7 +569,6 @@ Track meaningful events only.
 
 Avoid excessive event logging.
 
----
 
 # Backup Strategy
 
@@ -617,7 +588,6 @@ GitHub
 
 Vercel
 
----
 
 ## Database
 
@@ -631,7 +601,6 @@ Daily Automated Backup
 
 Google Drive
 
----
 
 ## Storage
 
@@ -645,7 +614,6 @@ Weekly Backup
 
 Google Drive
 
----
 
 ## Environment Variables
 
@@ -653,7 +621,6 @@ Maintain an encrypted offline backup.
 
 Never rely only on Vercel.
 
----
 
 ## Monthly Backup
 
@@ -664,7 +631,6 @@ Once every month
 
 Store outside the cloud.
 
----
 
 # Disaster Recovery
 
@@ -690,7 +656,6 @@ Continue operation
 
 The application must remain portable.
 
----
 
 # Vendor Lock-In Policy
 
@@ -700,7 +665,6 @@ Only Services communicate with Supabase.
 
 Future migration should require changing only the service layer.
 
----
 
 # Development Standards
 
@@ -725,7 +689,6 @@ No placeholder screens.
 
 No incomplete workflows.
 
----
 
 # Code Quality Standards
 
@@ -737,7 +700,6 @@ No incomplete workflows.
 * Use TypeScript strictly.
 * Prefer composition over large monolithic files.
 
----
 
 # Final Engineering Rule
 

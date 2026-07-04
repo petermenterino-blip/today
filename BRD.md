@@ -1,3 +1,5 @@
+
+
 # BRD — Mentorino Premium Mentorship Platform
 
 ## 1. Executive Summary
@@ -7,7 +9,6 @@
 **Target State:** Full-stack solution (Supabase backend) connecting mentors with mentees through applications, scheduling, goal tracking, messaging, events, and analytics.  
 **Core Differentiator:** Covers the entire mentorship lifecycle in one platform — from application through enrollment, sessions, progress tracking, communication, and analytics — eliminating fragmented tooling.
 
----
 
 ## 2. Business Objectives
 
@@ -23,7 +24,6 @@
 | 8 | Generate PDF reports for revenue, attendance, student health | Export actions per month | N/A | 10+ / month |
 | 9 | Reduce mentor administrative overhead | Time spent on admin tasks | Manual/spreadsheets | < 2 hrs/week |
 
----
 
 ## 3. Market Context & Opportunity
 
@@ -55,7 +55,6 @@ Mentorino replaces 4-6 tools with **one unified platform**:
 - **Primary:** Solo career coaches and mentors managing 5-50 students
 - **Secondary:** Small mentorship programs, bootcamps, and coaching practices
 
----
 
 ## 4. Stakeholders
 
@@ -66,7 +65,6 @@ Mentorino replaces 4-6 tools with **one unified platform**:
 | **Visitors (prospects)** | Prospective users | Clear value proposition, simple application, trust signals |
 | **Developer** | Technical implementer | Maintainable code, clear architecture, migration path to backend |
 
----
 
 ## 5. Functional Requirements
 
@@ -176,7 +174,6 @@ Mentorino replaces 4-6 tools with **one unified platform**:
 | FR9.5 | Excel/CSV export of transaction data | P2 | ✅ xlsx |
 | FR9.6 | Student growth trends over time | P3 | ❌ Not started |
 
----
 
 ## 6. Non-Functional Requirements
 
@@ -193,7 +190,6 @@ Mentorino replaces 4-6 tools with **one unified platform**:
 | NFR9 | Code quality — TypeScript strict mode | `tsc --noEmit` passes | ✅ Configured |
 | NFR10 | SEO — public pages indexable | Meta tags, semantic HTML | ⚠️ Partial |
 
----
 
 ## 7. Scope
 
@@ -221,7 +217,6 @@ Mentorino replaces 4-6 tools with **one unified platform**:
 - Google Calendar sync
 - Email notifications
 
----
 
 ## 8. Constraints
 
@@ -234,7 +229,6 @@ Mentorino replaces 4-6 tools with **one unified platform**:
 | 5 | Single mentor architecture | Cannot scale to multi-mentor without refactor | RBAC ready for role expansion |
 | 6 | Manual seed version management | Data resets on version bump | Version checks prevent unnecessary reseeding |
 
----
 
 ## 9. Assumptions
 
@@ -248,7 +242,6 @@ Mentorino replaces 4-6 tools with **one unified platform**:
 | 6 | Users access from modern browsers | Low — ES2020 target via Vite |
 | 7 | All times are America/New_York | Medium — hardcoded timezone via getNJDate() |
 
----
 
 ## 10. Risk Assessment
 
@@ -262,7 +255,6 @@ Mentorino replaces 4-6 tools with **one unified platform**:
 | Cross-tab messaging sync delays | Medium | Low | Custom events + event listeners handle sync |
 | Technical debt from frontend-only architecture | Medium | Medium | Service layer abstraction enables clean migration |
 
----
 
 ## 11. Data Migration Path
 
@@ -302,7 +294,6 @@ Component → Hook → React Query → Supabase Client → PostgreSQL
 | `whatsapp_messages_v4` | `messages` |
 | `mentorino_transactions` | `transactions` |
 
----
 
 ## 12. Technical Architecture (Current)
 
@@ -332,7 +323,6 @@ Frontend (React 19 + TypeScript + Vite)
 └── Utils: toast, dateUtils, progressUtils, seedData, queryClient
 ```
 
----
 
 ## 13. Key Business Logic Rules
 
@@ -369,7 +359,6 @@ Students have `healthStatus` computed from:
 - Components listen via `window.addEventListener` to refresh state
 - TanStack Query's refetchOnWindowFocus provides additional sync
 
----
 
 ## 14. Codebase Size & Complexity
 
@@ -387,7 +376,6 @@ Students have `healthStatus` computed from:
 | localStorage keys managed | 25+ |
 | Dependencies | 12 production, 4 dev |
 
----
 
 ## 15. Success Metrics & KPIs
 

@@ -1,9 +1,10 @@
+
+
 # RC2.2 — End-to-End Workflow Test Report
 
 ## Methodology
 Code path tracing through source files. Each step verified against service layer, hooks, and UI components.
 
----
 
 ## Workflow 1: Visitor → Application
 
@@ -21,7 +22,6 @@ Visitor lands on / → clicks "Apply" → /apply → fills form → submits
 
 **Issues**: None found. Application flow is complete.
 
----
 
 ## Workflow 2: Mentor Reviews Application
 
@@ -41,7 +41,6 @@ Mentor logs in → Dashboard → Applications list → Review → Approve/Reject
 - ⚠️ `approveApplication` previously leaked `password: tempPassword` in return (F3.1 fixed ✅)
 - ⚠️ No email notification sent on approval (frontend-only flow, resend function exists but not wired)
 
----
 
 ## Workflow 3: Student Invitation → Login
 
@@ -62,7 +61,6 @@ Student receives email → clicks link → /auth → Login → Redirected to /st
 - ❌ **No automated invitation email flow** in the frontend codebase. The `resend` edge function supports `welcome` and `application_update` templates, but the frontend never calls it.
 - ✅ Login → dashboard redirect works end-to-end via Supabase Auth.
 
----
 
 ## Workflow 4: Student Dashboard → Book Session
 
@@ -83,7 +81,6 @@ Student receives email → clicks link → /auth → Login → Redirected to /st
 - ❌ **Google Calendar + Meet integration is broken end-to-end.** Edge functions lack JWT auth AND the frontend has no Google OAuth flow to obtain `googleAccessToken`.
 - ⚠️ Booking CRUD works fine for local storage; it's the external API calls that fail.
 
----
 
 ## Workflow 5: Messaging
 
@@ -101,7 +98,6 @@ Student → Communications → View conversations → Send message → Realtime 
 
 **Issues**: None. Messaging is the most complete feature.
 
----
 
 ## Workflow 6: Journal
 
@@ -119,7 +115,6 @@ Student → Dashboard → Journal → Write entry → Save → View history
 
 **Issues**: None. All journal fixes verified.
 
----
 
 ## Workflow 7: Goals + Tasks
 
@@ -138,7 +133,6 @@ Student → Goals → Create goal → Add milestones → Track progress → Comp
 
 **Issues**: None found.
 
----
 
 ## Workflow 8: Notifications
 
@@ -155,7 +149,6 @@ System creates notification → Student sees badge → Clicks → Reads → Mark
 
 **Issues**: None found.
 
----
 
 ## Workflow 9: Full Student Journey (Complete)
 
@@ -179,7 +172,6 @@ Register → Apply → Approved → Login → Dashboard → Journal → Book Ses
 | Logout | ✅ | None |
 | **Overall** | **~75%** | **Booking + Calendar integration is the blocker** |
 
----
 
 ## Edge Case: Rejection Flow
 
@@ -196,7 +188,6 @@ Mentor rejects application → Student sees status → Cannot access student das
 
 **Edge case**: If `application_status` is null/undefined on a non-applicant user (e.g., admin), the optional chaining fix (F4.4) prevents crash.
 
----
 
 ## Summary
 

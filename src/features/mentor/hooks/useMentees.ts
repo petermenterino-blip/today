@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '../../../lib/supabase';
 import { useApplications } from '../../../hooks/useApplications';
 import { useTasks } from '../../../hooks/useTasks';
 import { useGoals } from '../../../hooks/useGoals';
 import { tagService } from '../../../services/tagService';
 import { studentService } from '../../../services/studentService';
 import { applicationService } from '../../../services/applicationService';
+import { crmInitializationService } from '../../../services/crmInitializationService';
 import { useRealtime } from '../../../hooks/useRealtime';
 import { notifySuccess, notifyError } from '../../../utils/toast';
 import type { User, StudentProfile, StudentTag } from '../../../types';
@@ -33,28 +35,61 @@ export function useMentees(currentUser: User | null) {
   const [newTagLabel, setNewTagLabel] = useState('');
   const [newTagColor, setNewTagColor] = useState('bg-blue-100 text-blue-700');
 
-  const mentees = applications.filter(app => app.status === 'approved' || app.status === 'invited');
+  const mentees = studentProfiles.map(profile => {
+    const app = applications.find(a => a.user_id === profile.user_id || a.user_email === profile.email);
+    const isApproved = app?.status === 'approved' || app?.status === 'invited' || profile.status === 'active';
+    return {
+      user_id: profile.user_id || profile.id,
+      id: profile.id,
+      full_name: profile.name || profile.full_name || profile.email || 'Unknown',
+      user_email: profile.email || profile.user_email || '',
+      focus_area: profile.specialization || profile.focus_area || app?.focus_area || 'Standard Program',
+      goal: app?.goal || '',
+      status: isApproved ? 'approved' : 'pending',
+      program_id: profile.program_id || app?.program_id || null,
+      application_status: profile.application_status || app?.status || null,
+      created_at: profile.created_at || app?.created_at || '',
+      updated_at: profile.updated_at || app?.updated_at || '',
+      top_strength: (app as any)?.top_strength || '',
+      needs_focus: (app as any)?.needs_focus || '',
+      phone: profile.phone || app?.phone || '',
+      linkedin_url: profile.linkedin_url || app?.linkedin_url || '',
+      resume_link: profile.resume_link || app?.resume_link || '',
+      health_status: profile.healthStatus || 'active',
+      last_login: profile.lastLogin || null,
+      invited_at: profile.invited_at || null,
+      first_login_at: profile.first_login_at || null,
+    };
+  }).filter((m, idx, self) => self.findIndex(s => s.user_id === m.user_id) === idx);
+
   const filteredMentees = mentees.filter(app => {
     const matchesSearch = app.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       app.user_email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (app.goal && app.goal.toLowerCase().includes(searchQuery.toLowerCase()));
+      (app.focus_area && app.focus_area.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (app.phone && app.phone.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesSearch;
   });
+
   const activeStudentsCount = studentProfiles.filter(p => p.status === 'active' || p.current_status === 'Active').length;
 
   useRealtime([
-    { table: 'student_profiles', callback: () => { studentService.getAll().then(setStudentProfiles); } },
+    { table: 'profiles', callback: () => { loadProfiles(); } },
     { table: 'tags', callback: () => { tagService.getAll().then(setAllTags); } },
   ]);
 
+  const loadProfiles = async () => {
+    const profiles = await studentService.getAll();
+    setStudentProfiles(profiles);
+  };
+
   useEffect(() => {
-    studentService.getAll().then(setStudentProfiles);
+    loadProfiles();
     tagService.getAll().then(setAllTags);
   }, []);
 
   useEffect(() => {
     if (selectedMenteeId) {
-      const profile = studentProfiles.find(p => p.user_id === selectedMenteeId);
+      const profile = studentProfiles.find(p => (p.user_id || p.id) === selectedMenteeId);
       setMenteeNotes(profile?.notes || '');
     }
   }, [selectedMenteeId, studentProfiles]);
@@ -71,14 +106,14 @@ export function useMentees(currentUser: User | null) {
   };
 
   const toggleMenteeTag = async (menteeId: string, tagId: string) => {
-    const profile = studentProfiles.find(p => p.user_id === menteeId);
+    const profile = studentProfiles.find(p => (p.user_id || p.id) === menteeId);
     if (!profile) return;
     const currentTags = profile.tags || [];
     const newTags = currentTags.includes(tagId)
       ? currentTags.filter(t => t !== tagId)
       : [...currentTags, tagId];
     await studentService.update(profile.user_id || profile.id, { tags: newTags } as any);
-    setStudentProfiles(prev => prev.map(p => p.user_id === menteeId ? { ...p, tags: newTags } : p));
+    setStudentProfiles(prev => prev.map(p => (p.user_id || p.id) === menteeId ? { ...p, tags: newTags } : p));
   };
 
   const handleUpdateNotes = async () => {
@@ -86,7 +121,7 @@ export function useMentees(currentUser: User | null) {
     setIsSavingNotes(true);
     try {
       await studentService.update(selectedMenteeId, { notes: menteeNotes } as any);
-      setStudentProfiles(prev => prev.map(p => p.user_id === selectedMenteeId ? { ...p, notes: menteeNotes } : p));
+      setStudentProfiles(prev => prev.map(p => (p.user_id || p.id) === selectedMenteeId ? { ...p, notes: menteeNotes } : p));
       notifySuccess('Summary notes updated');
     } catch {
       notifyError('Failed to save notes');
@@ -145,6 +180,54 @@ export function useMentees(currentUser: User | null) {
     }
   };
 
+  const handleAddStudent = async (email: string, name: string, programId?: string) => {
+    try {
+      const existing = await studentService.getAll();
+      const existingStudent = existing.find(s => s.email === email);
+      if (existingStudent) {
+        notifyError('A student with this email already exists');
+        return;
+      }
+
+      const tempPassword = crypto.randomUUID().slice(0, 12) + '!Aa1';
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password: tempPassword,
+        options: {
+          data: { full_name: name, role: 'student' },
+        },
+      });
+
+      if (signUpError) {
+        notifyError(signUpError.message);
+        return;
+      }
+
+      if (signUpData?.user) {
+        const userId = signUpData.user.id;
+        await supabase.from('profiles').upsert({
+          id: userId,
+          email,
+          name,
+          role: 'student',
+          status: 'active',
+          mentor_id: currentUser?.id,
+          health_status: 'active',
+          growth_score: 0,
+          metrics: { attendanceRate: 0, goalCompletionRate: 0, activityLevel: 0 },
+          tags: [],
+          program_id: programId || null,
+        });
+
+        await crmInitializationService.ensureStudentCrmExists(userId, currentUser?.id);
+        await loadProfiles();
+        notifySuccess(`Student ${name} added successfully. They will receive an email to set up their account.`);
+      }
+    } catch (err: any) {
+      notifyError(err?.message || 'Failed to add student');
+    }
+  };
+
   return {
     searchQuery, setSearchQuery,
     studentProfiles, setStudentProfiles,
@@ -168,5 +251,6 @@ export function useMentees(currentUser: User | null) {
     menteeGoals,
     handleAddTag, toggleMenteeTag, handleUpdateNotes, handleSaveStrengthFocus,
     handleAddGoal, handleUpdateGoal, handleDeleteGoal,
+    handleAddStudent,
   };
 }

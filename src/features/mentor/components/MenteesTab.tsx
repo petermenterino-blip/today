@@ -6,12 +6,14 @@ import {
   Plus, CheckCircle2, XCircle, Clock, X, FileSearch, MoreVertical,
   Trash, FileText, Zap, ExternalLink, Layout, Tag, History, File,
   CheckCircle, Sparkles as SparkleIcon, Eye, Award, Target, Edit2,
-  Send, AlertTriangle
+  Send, AlertTriangle, Edit3, Archive
 } from 'lucide-react';
 import { tagService } from '../../../services/tagService';
 import { customFormService } from '../../../services/customFormService';
 import { sharedFilesService } from '../../../services/sharedFilesService';
 import { timelineService } from '../../../services/timelineService';
+import { taskService } from '../../../services/taskService';
+import { notify } from '../../../services/notificationService';
 import { notifySuccess, notifyError } from '../../../utils/toast';
 import type { StudentTag, TaskActivity, StudentProfile, CustomForm, FormSubmission } from '../../../types';
 import type { Goal } from '../../../interfaces';
@@ -66,6 +68,7 @@ interface MenteesTabProps {
   handleAddGoal: (title: string, description?: string) => Promise<void>;
   handleUpdateGoal: (id: string, updates: Partial<Goal>) => Promise<void>;
   handleDeleteGoal: (id: string) => Promise<void>;
+  currentUser: any;
 }
 
 const menteeSubTabs = [
@@ -109,6 +112,7 @@ export const MenteesTab: React.FC<MenteesTabProps> = ({
   handleAddGoal,
   handleUpdateGoal,
   handleDeleteGoal,
+  currentUser,
 }) => {
   const [formsList, setFormsList] = useState<CustomForm[]>([]);
   const [formsLoading, setFormsLoading] = useState(false);
@@ -247,12 +251,9 @@ export const MenteesTab: React.FC<MenteesTabProps> = ({
     try {
       const form = formsList.find(f => f.id === formId);
       if (!form) return;
-      const assigned = form.assigned_to || [];
-      if (!assigned.includes(selectedMenteeId)) {
-        await customFormService.updateForm(formId, {
-          assigned_to: [...assigned, selectedMenteeId],
-        });
-      }
+      await customFormService.assignFormToStudent(formId, selectedMenteeId, currentUser?.id || '');
+      notify.formAssigned(selectedMenteeId, form.title).catch(() => {});
+      timelineService.autoLogFormSent(selectedMenteeId, form.title, currentUser?.id || '').catch(() => {});
       notifySuccess('Form sent to student');
       refreshForms();
     } catch {
@@ -424,7 +425,7 @@ export const MenteesTab: React.FC<MenteesTabProps> = ({
 
           const handleAddTask = async () => {
             if (!newTaskTitle.trim()) return;
-            await addTask({
+            const result = await addTask({
               user_id: mentee.user_id,
               user_name: mentee.full_name,
               program_id: mentee.program_id,
@@ -435,7 +436,48 @@ export const MenteesTab: React.FC<MenteesTabProps> = ({
             });
             setNewTaskTitle('');
             setNewTaskDueDate('');
+            if (result?.id || result) {
+              const mentorId = currentUser?.id || '';
+              notify.taskAssigned(mentee.user_id, mentorId, newTaskTitle).catch(() => {});
+              timelineService.autoLogTaskAssigned(mentee.user_id, newTaskTitle, mentorId).catch(() => {});
+            }
             notifySuccess('Task assigned successfully');
+          };
+
+          const handleDeleteTask = async (taskId: string, taskTitle: string) => {
+            try {
+              await taskService.delete(taskId);
+              notifySuccess(`Deleted "${taskTitle}"`);
+              const mentorId = currentUser?.id || '';
+              timelineService.autoLogTaskCompleted(mentee.user_id, taskTitle, mentorId).catch(() => {});
+              setMenteeSubTab('dashboard'); setMenteeSubTab('tasks');
+            } catch {
+              notifyError('Failed to delete task');
+            }
+          };
+
+          const handleArchiveTask = async (taskId: string, taskTitle: string) => {
+            try {
+              await taskService.updateStatus(taskId, 'archived');
+              notifySuccess(`Archived "${taskTitle}"`);
+              setMenteeSubTab('dashboard'); setMenteeSubTab('tasks');
+            } catch {
+              notifyError('Failed to archive task');
+            }
+          };
+
+          const handleEditTask = async (task: any) => {
+            const newTitle = prompt('Edit task title:', task.task_title);
+            if (!newTitle || newTitle === task.task_title) return;
+            try {
+              await taskService.update(task.id, { task_title: newTitle });
+              notifySuccess('Task updated');
+              const mentorId = currentUser?.id || '';
+              timelineService.autoLogTaskUpdated(mentee.user_id, newTitle, mentorId).catch(() => {});
+              setMenteeSubTab('dashboard'); setMenteeSubTab('tasks');
+            } catch {
+              notifyError('Failed to update task');
+            }
           };
 
           return (
@@ -582,11 +624,11 @@ export const MenteesTab: React.FC<MenteesTabProps> = ({
                           <div className="grid grid-cols-2 gap-4">
                             <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50">
                               <p className="text-[9px] font-black uppercase tracking-widest text-indigo-400 mb-1">Top Strength</p>
-                              <p className="text-sm font-bold text-indigo-900">Rapid Learning</p>
+                              <p className="text-sm font-bold text-indigo-900">{mentee.top_strength || 'Not specified'}</p>
                             </div>
                             <div className="p-4 bg-amber-50/50 rounded-2xl border border-amber-100/50">
                               <p className="text-[9px] font-black uppercase tracking-widest text-amber-400 mb-1">Needs Focus</p>
-                              <p className="text-sm font-bold text-amber-900">Networking</p>
+                              <p className="text-sm font-bold text-amber-900">{mentee.needs_focus || 'Not specified'}</p>
                             </div>
                           </div>
 
@@ -727,7 +769,7 @@ export const MenteesTab: React.FC<MenteesTabProps> = ({
                                   </div>
                                 </div>
                               </div>
-                              <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-2">
                                 <span className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest ${
                                   task.status === 'approved' ? 'bg-emerald-50 text-emerald-600' :
                                   task.status === 'rejected' ? 'bg-rose-50 text-rose-600' :
@@ -743,6 +785,29 @@ export const MenteesTab: React.FC<MenteesTabProps> = ({
                                     Evaluate
                                   </button>
                                 )}
+                                <button
+                                  onClick={() => handleEditTask(task)}
+                                  className="p-2 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-indigo-600 hover:border-indigo-200 transition-all"
+                                  title="Edit task"
+                                >
+                                  <Edit3 size={12} />
+                                </button>
+                                {task.status !== 'archived' && (
+                                  <button
+                                    onClick={() => handleArchiveTask(task.id, task.task_title)}
+                                    className="p-2 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-amber-600 hover:border-amber-200 transition-all"
+                                    title="Archive task"
+                                  >
+                                    <Archive size={12} />
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => handleDeleteTask(task.id, task.task_title)}
+                                  className="p-2 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-rose-600 hover:border-rose-200 transition-all"
+                                  title="Delete task"
+                                >
+                                  <Trash size={12} />
+                                </button>
                               </div>
                             </div>
                           ))}

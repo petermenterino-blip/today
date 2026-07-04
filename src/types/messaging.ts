@@ -5,7 +5,7 @@ export interface Message {
   conversationId: string;
   content: string;
   timestamp: string;
-  status: "sent" | "delivered" | "read";
+  status: "sending" | "sent" | "delivered" | "read" | "failed";
   type: "text" | "image" | "file" | "voice" | "system";
   audioUrl?: string;
   duration?: number;
@@ -13,6 +13,9 @@ export interface Message {
   fileUrl?: string;
   fileSize?: number;
   fileType?: string;
+  edited?: boolean;
+  deleted?: boolean;
+  retryCount?: number;
 }
 
 export interface Conversation {
@@ -20,6 +23,7 @@ export interface Conversation {
   studentId?: string;
   studentName?: string;
   mentorId: string;
+  mentorName?: string;
   lastMessage: string;
   lastMessageTime: string;
   unreadCount: number;

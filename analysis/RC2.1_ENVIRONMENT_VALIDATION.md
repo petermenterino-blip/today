@@ -1,9 +1,10 @@
+
+
 # RC2.1 — Environment Validation Report
 
 ## Validation Method
 Source code review + configuration analysis. Edge functions exist at `edge-functions/` (custom location, not `supabase/functions/`).
 
----
 
 ## 1. Migration Verification
 
@@ -19,7 +20,6 @@ Source code review + configuration analysis. Edge functions exist at `edge-funct
 
 **17 migrations, 43 tables, 120 RLS policies — all structurally sound.**
 
----
 
 ## 2. RLS Verification
 
@@ -33,7 +33,6 @@ Source code review + configuration analysis. Edge functions exist at `edge-funct
 | Admin override | ⚠️ | No explicit admin role bypass in most policies |
 | **Verdict** | **✅ PASS (minor)** | 2 tables have RLS enabled but zero policies |
 
----
 
 ## 3. Storage Buckets
 
@@ -45,7 +44,6 @@ Source code review + configuration analysis. Edge functions exist at `edge-funct
 | `gallery-images` | Public | 5MB | images | 3 | ✅ |
 | **Verdict** | **✅ PASS** | | | **15 policies total** | |
 
----
 
 ## 4. Edge Functions
 
@@ -61,7 +59,6 @@ Source code review + configuration analysis. Edge functions exist at `edge-funct
 
 **Deployment note**: Functions are in `edge-functions/` but Supabase expects `supabase/functions/`. Deployment requires manual config or symlink.
 
----
 
 ## 5. Edge Function Secrets
 
@@ -75,7 +72,6 @@ Source code review + configuration analysis. Edge functions exist at `edge-funct
 
 **All 5 secrets are environment-specific and not present in the repo.** Verified that `Deno.env.get()` calls exist in source. Actual values must be configured in Supabase dashboard or `.env.local` for local dev.
 
----
 
 ## 6. Google Calendar OAuth
 
@@ -87,7 +83,6 @@ Source code review + configuration analysis. Edge functions exist at `edge-funct
 | `googleAccessToken` in EF | ✅ | Passed in request body to calendar/meet functions |
 | **Verdict** | **❌ FAIL** | Frontend Google OAuth flow is not implemented in the codebase |
 
----
 
 ## 7. Google Meet Integration
 
@@ -99,7 +94,6 @@ Source code review + configuration analysis. Edge functions exist at `edge-funct
 | Session ID link | ✅ | Description includes `Mentorino session: ${sessionId}` |
 | **Verdict** | **✅ PASS (edge function only)** | Frontend integration depends on Google OAuth flow |
 
----
 
 ## 8. Resend Email Delivery
 
@@ -112,7 +106,6 @@ Source code review + configuration analysis. Edge functions exist at `edge-funct
 | Scheduled reminders | ✅ | `scheduled/index.ts` sends session reminders + inactivity alerts |
 | **Verdict** | **✅ PASS (code only)** | Depends on valid `RESEND_API_KEY` at runtime |
 
----
 
 ## Environment Scoring
 

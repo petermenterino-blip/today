@@ -1,6 +1,7 @@
+
+
 # Workflow Validation Report — Mentorino
 
----
 
 ## Workflow 1: Visitor → Application → Mentor Review → Approval → Student → Dashboard
 
@@ -23,7 +24,6 @@ Visitor → /apply → Application → /auth → Login → Pending → Mentor Re
 - **Applications tab is a TODO** — mentor cannot review via UI
 - **Rejected users get wrong message**
 
----
 
 ## Workflow 2: Student → Book Session → Attend → Goals → Tasks → Feedback → Notifications
 
@@ -45,7 +45,6 @@ Student → /booking → Book → Sessions → Goals → Tasks → /survey → F
 - Notifications lack automatic lifecycle triggers
 - Analytics dashboard is unimplemented
 
----
 
 ## Workflow 3: Messaging
 
@@ -64,7 +63,6 @@ Student → Messages → Send → Receive → Persist → Real-time update
 - 2-second polling is wasteful when there are no new messages
 - No delivery receipts or typing indicators
 
----
 
 ## Summary
 

@@ -3,6 +3,7 @@ import { storageService } from './storageService';
 import { safeQuery, safeMutate } from '../lib/supabaseFallback';
 import { interpretError } from '../lib/errorHandler';
 import { timelineService } from './timelineService';
+import { notify } from './notificationService';
 
 export interface SharedFileRecord {
   id: string;
@@ -85,6 +86,7 @@ export const sharedFilesService = {
     userId: string,
     file: File,
     onProgress?: (pct: number) => void,
+    mentorId?: string,
   ): Promise<SharedFileRecord | null> {
     if (!ALLOWED_TYPES.includes(file.type) && file.type) {
       throw new Error(`File type ${file.type} is not supported. Allowed: PDF, DOCX, PPTX, PNG, JPG, ZIP`);
@@ -133,7 +135,11 @@ export const sharedFilesService = {
     if (result.error || !result.data) throw new Error('Failed to save file record');
     
     timelineService.autoLogFileShared(userId, file.name).catch(() => {});
-    
+
+    if (mentorId) {
+      notify.fileShared(userId, mentorId, file.name).catch(() => {});
+    }
+
     return fromDb(result.data);
   },
 

@@ -64,9 +64,11 @@ export interface Application {
 
 export interface StudentProfile {
   user_id: string;
-  id?: string; // Compatibility with interfaces/student.interface.ts
+  id?: string;
   name?: string;
+  full_name?: string;
   email?: string;
+  user_email?: string;
   linkedin_url: string;
   resume_link: string;
   bio: string;
@@ -84,6 +86,25 @@ export interface StudentProfile {
     goalCompletionRate: number;
     activityLevel: number;
   };
+  avatar_url?: string;
+  phone?: string;
+  timezone?: string;
+  location?: string;
+  skills?: string[];
+  portfolio_url?: string;
+  github_url?: string;
+  program_id?: string;
+  batch?: string;
+  cohort?: string;
+  focus_area?: string;
+  invited_at?: string;
+  first_login_at?: string;
+  onboarding_completed?: boolean;
+  preferred_meeting_time?: string;
+  learning_objectives?: string[];
+  social_links?: Record<string, string>;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface TaskActivity {
@@ -91,7 +112,7 @@ export interface TaskActivity {
   user_id: string;
   mentor_id?: string;
   user_name: string;
-  status: 'pending' | 'in_progress' | 'submitted' | 'completed' | 'reviewed' | 'approved' | 'rejected';
+  status: 'pending' | 'in_progress' | 'submitted' | 'completed' | 'reviewed' | 'approved' | 'rejected' | 'archived';
   mentor_response?: string;
   created_at: string;
   program_id?: string;
@@ -155,6 +176,7 @@ export interface CustomForm {
   fields: FormField[];
   assigned_to: string[]; // user ids
   created_at: string;
+  created_by?: string;
 }
 
 export interface FormSubmission {
@@ -164,6 +186,8 @@ export interface FormSubmission {
   user_name: string;
   responses: Record<string, any>;
   submitted_at: string;
+  status?: string;
+  mentor_id?: string;
 }
 
 export interface DayAvailability {

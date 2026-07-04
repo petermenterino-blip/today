@@ -1,6 +1,7 @@
+
+
 # Production Readiness Report — Mentorino
 
----
 
 ## 1. Build Verification
 
@@ -10,7 +11,6 @@
 | `npm run build` | **PASS** | Build succeeds — 35 files output to dist/ |
 | `npm run preview` | **PASS** | Production preview starts on port 4173 |
 
----
 
 ## 2. Environment Variables
 
@@ -24,7 +24,6 @@
 
 **Issue:** `.env.local` is committed to the repo — needs to be in `.gitignore`.
 
----
 
 ## 3. Supabase Configuration
 
@@ -38,7 +37,6 @@
 | Realtime | CONFIGURED | Enabled for messages, notifications, sessions, bookings |
 | Seed data | PRESENT | `supabase/seed/seed.sql` with demo data |
 
----
 
 ## 4. Edge Functions
 
@@ -50,7 +48,6 @@
 | Resend | DEPLOYED | `RESEND_API_KEY` |
 | Scheduled | DEPLOYED | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY` |
 
----
 
 ## 5. Console Errors
 
@@ -62,7 +59,6 @@
 
 **Note:** The app shows a white screen on initial load. Investigation suggests this is due to the Supabase client `getSession()` call either timing out or throwing in the current environment. The `authLoading` state appears to stay `true`, keeping the user on the loading state. With real Supabase credentials configured and running, this should resolve.
 
----
 
 ## 6. Missing Production Dependencies
 
@@ -72,7 +68,6 @@
 | `posthog-js` | NOT INSTALLED | No analytics |
 | `react-error-boundary` | NOT INSTALLED | No error boundaries |
 
----
 
 ## 7. Deployment Readiness
 
@@ -85,7 +80,6 @@
 | CORS configured | YES | Functions have CORS headers |
 | CI/CD pipeline | NOT SETUP | No deployment scripts |
 
----
 
 ## 8. Pre-Deployment Checklist
 

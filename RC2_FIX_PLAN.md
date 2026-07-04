@@ -1,3 +1,5 @@
+
+
 # RC2 Implementation Plan — Fix All Blockers
 
 ## Sprint Structure
@@ -11,7 +13,6 @@
 | **RC2-F5** | Performance — Low Effort | P1 | 2h | Measurable improvement |
 | **RC2-F6** | Performance — Medium Effort | P0 | 5h | Rendering efficiency |
 
----
 
 ## RC2-F1 — Security: Edge Functions
 
@@ -72,7 +73,6 @@ if (profile?.role !== 'mentor') {
 **Files**: `edge-functions/resend/index.ts`
 **New env vars**: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (or reuse from scheduled)
 
----
 
 ## RC2-F2 — Security: RLS & Storage
 
@@ -243,7 +243,6 @@ create policy "Mentors can manage timeline"
 
 **Files**: `supabase/migrations/999_rls.sql`
 
----
 
 ## RC2-F3 — Security: Invitation & Auth
 
@@ -315,7 +314,6 @@ create policy "Mentors can read applications for their programs"
 
 **Files**: `supabase/migrations/999_rls.sql`
 
----
 
 ## RC2-F4 — Quality: Critical Bugs
 
@@ -367,7 +365,6 @@ create policy "Mentors can read applications for their programs"
 
 **Files**: `src/app/App.tsx` (line 68), `src/pages/Booking.tsx`
 
----
 
 ## RC2-F5 — Performance: Low Effort
 
@@ -403,7 +400,6 @@ configsRef.current = configs;
 
 **Files**: `src/hooks/useBookings.ts`, `src/hooks/useBookingsQuery.ts`, `src/hooks/useEvents.ts`, `src/hooks/useEventsQuery.ts`
 
----
 
 ## RC2-F6 — Performance: Medium Effort
 
@@ -453,7 +449,6 @@ useQuery({
 
 **Files**: All hooks in `src/hooks/`, `src/features/student/UserDashboard.tsx`, `src/features/mentor/hooks/useDashboard.ts`
 
----
 
 ## Execution Order
 

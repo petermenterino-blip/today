@@ -1,8 +1,9 @@
+
+
 # Mentorino — Development Rules
 
 Version: 1.0
 
----
 
 ## 1. Non-Negotiable Engineering Rules
 
@@ -134,7 +135,6 @@ BREAK UP WHEN:
   - A service exceeds 300 lines → split by entity
 ```
 
----
 
 ## 2. Architecture Rules
 
@@ -181,7 +181,6 @@ NEVER:
 | Global UI state | Zustand | Only for truly global state (sidebar, theme) |
 | Form state | React useState or refs | No form libraries until proven necessary |
 
----
 
 ## 3. Code Rules
 
@@ -221,7 +220,6 @@ NEVER:
 - Group imports: React → third-party → project → types
 - No circular imports (use shared types to break cycles)
 
----
 
 ## 4. Database Rules
 
@@ -253,7 +251,6 @@ NEVER:
 - Never SELECT * from large tables without LIMIT
 - Use pagination for list views (`.range()`)
 
----
 
 ## 5. Edge Function Rules
 
@@ -291,7 +288,6 @@ if (error || !user) return new Response('Unauthorized', { status: 401 })
 - Edge Functions that need DB access use service_role (inside Deno.env only)
 - Rate limiting applied per user per function
 
----
 
 ## 6. Security Rules
 
@@ -318,7 +314,6 @@ if (error || !user) return new Response('Unauthorized', { status: 401 })
 - File uploads: type + size check client-side AND server-side
 - SQL injection: prevented by Supabase client (parameterized queries)
 
----
 
 ## 7. Performance Rules
 
@@ -344,7 +339,6 @@ if (error || !user) return new Response('Unauthorized', { status: 401 })
 - No synchronous external API calls in series (parallelize where possible)
 - Use Deno's `cache` API for repeated computations
 
----
 
 ## 8. Migration Rules
 
@@ -390,7 +384,6 @@ No phase can start until the previous phase is complete and tested.
 5. Delete old file
 ```
 
----
 
 ## 9. Git Rules
 
@@ -422,7 +415,6 @@ chore: update dependencies
 - Build must pass before merge
 - No PR larger than 500 lines changed (enforced in CI v2)
 
----
 
 ## 10. Documentation Rules
 
@@ -441,7 +433,6 @@ chore: update dependencies
 - Secrets or passwords
 - Personal information
 
----
 
 ## 11. The Mentorino Checklist
 

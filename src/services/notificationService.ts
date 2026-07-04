@@ -24,6 +24,16 @@ export const notify = {
     await notificationStorage.create({ userId: mentorId, title: 'Session Scheduled', message: `"${sessionTitle}" scheduled for ${new Date(startTime).toLocaleDateString()}.`, type: 'session', read: false });
   },
 
+  async sessionRescheduled(studentId: string, mentorId: string, sessionTitle: string, startTime: string): Promise<void> {
+    await notificationStorage.create({ userId: studentId, title: 'Session Rescheduled', message: `"${sessionTitle}" rescheduled to ${new Date(startTime).toLocaleDateString()}.`, type: 'session', read: false });
+    await notificationStorage.create({ userId: mentorId, title: 'Session Rescheduled', message: `"${sessionTitle}" rescheduled to ${new Date(startTime).toLocaleDateString()}.`, type: 'session', read: false });
+  },
+
+  async sessionCancelled(studentId: string, mentorId: string, sessionTitle: string): Promise<void> {
+    await notificationStorage.create({ userId: studentId, title: 'Session Cancelled', message: `"${sessionTitle}" has been cancelled.`, type: 'session', read: false });
+    await notificationStorage.create({ userId: mentorId, title: 'Session Cancelled', message: `"${sessionTitle}" has been cancelled.`, type: 'session', read: false });
+  },
+
   async journalSubmitted(studentId: string, mentorId: string): Promise<void> {
     await notificationStorage.create({ userId: mentorId, title: 'New Journal Entry', message: `A student has submitted a new journal entry.`, type: 'journal', read: false });
   },
@@ -55,6 +65,30 @@ export const notify = {
 
   async reviewOverdue(studentId: string, reviewTitle: string): Promise<void> {
     await notificationStorage.create({ userId: studentId, title: 'Review Overdue', message: `"${reviewTitle}" is now overdue`, type: 'review', read: false });
+  },
+
+  // ── Form Notifications ──
+  async formAssigned(studentId: string, formTitle: string): Promise<void> {
+    await notificationStorage.create({ userId: studentId, title: 'New Form Assigned', message: `You have a new form to complete: "${formTitle}"`, type: 'form', read: false });
+  },
+
+  async formSubmitted(studentId: string, mentorId: string, formTitle: string): Promise<void> {
+    await notificationStorage.create({ userId: mentorId, title: 'Form Submitted', message: `Student submitted "${formTitle}"`, type: 'form', read: false });
+  },
+
+  // ── File Notifications ──
+  async fileShared(studentId: string, mentorId: string, fileName: string): Promise<void> {
+    await notificationStorage.create({ userId: studentId, title: 'New File Shared', message: `A new file has been shared with you: "${fileName}"`, type: 'file', read: false });
+    await notificationStorage.create({ userId: mentorId, title: 'File Shared', message: `File "${fileName}" was shared with student.`, type: 'file', read: false });
+  },
+
+  // ── Credential Notifications ──
+  async credentialIssued(studentId: string, credentialTitle: string): Promise<void> {
+    await notificationStorage.create({ userId: studentId, title: 'Credential Issued', message: `You have received a credential: "${credentialTitle}"`, type: 'credential', read: false });
+  },
+
+  async credentialRevoked(studentId: string, credentialTitle: string): Promise<void> {
+    await notificationStorage.create({ userId: studentId, title: 'Credential Revoked', message: `Your credential "${credentialTitle}" has been revoked.`, type: 'credential', read: false });
   },
 
   // ── Event Notifications ──

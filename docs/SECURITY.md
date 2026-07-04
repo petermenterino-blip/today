@@ -1,9 +1,10 @@
+
+
 # Mentorino — Security Architecture
 
 Version: 1.0
 Based on ARCHITECTURE.md v1.0
 
----
 
 ## 1. Security Principles
 
@@ -14,7 +15,6 @@ Based on ARCHITECTURE.md v1.0
 5. **Security in the Database** — RLS is the authorization boundary, not frontend role checks
 6. **Fail Secure** — Default deny for all database access; explicit policies grant specific access
 
----
 
 ## 2. Authentication
 
@@ -63,7 +63,6 @@ This flow requires the Supabase service_role key — used ONLY in a secure Edge 
 - Custom email verification
 - OAuth flows (deferred to P3)
 
----
 
 ## 3. Authorization — Row Level Security (RLS)
 
@@ -262,7 +261,6 @@ All other tables follow the same pattern established above:
 
 Full RLS policies for all 30 tables are in `supabase/migrations/999_rls.sql`.
 
----
 
 ## 4. JWT Security
 
@@ -275,7 +273,6 @@ Full RLS policies for all 30 tables are in `supabase/migrations/999_rls.sql`.
 | Refresh | Automatic via Supabase client `onAuthStateChange` |
 | Validation | Supabase verifies on every request; no client-side decode for auth decisions |
 
----
 
 ## 5. API Security
 
@@ -326,7 +323,6 @@ if (error || !user) return new Response('Unauthorized', { status: 401 })
 | Edge Functions | Application-level checks: max 10 requests/minute/user for Gemini |
 | Client | Debounce/cooldown on mutation buttons |
 
----
 
 ## 6. Storage Security
 
@@ -366,7 +362,6 @@ CREATE POLICY "Users can upload own avatar"
 - File names sanitized: alphanumeric + underscore only, UUID prefixed
 - Signed URLs with expiry for private files
 
----
 
 ## 7. Environment Variables & Secrets
 
@@ -393,7 +388,6 @@ CREATE POLICY "Users can upload own avatar"
 5. Encrypted offline backup maintained for all secrets
 6. `service_role` key rotated periodically
 
----
 
 ## 8. Input Validation
 
@@ -422,7 +416,6 @@ const GeminiRequestSchema = z.object({
 const parsed = GeminiRequestSchema.parse(body)
 ```
 
----
 
 ## 9. Audit Logs
 
@@ -436,7 +429,6 @@ All sensitive mutations are logged to `audit_logs`:
 | Session attendance change | `UPDATE on sessions.attendance_status` | `old → new` |
 | User deletion / soft-delete | `UPDATE on profiles.deleted_at` | `old_data`, `new_data` |
 
----
 
 ## 10. Disaster Recovery Security
 
@@ -448,7 +440,6 @@ All sensitive mutations are logged to `audit_logs`:
 | Storage breach | RLS on storage objects; no public buckets for sensitive data |
 | Edge Function vulnerability | JWT validation on all functions; no direct DB access from functions without auth |
 
----
 
 ## 11. Security Checklist (Pre-Launch)
 

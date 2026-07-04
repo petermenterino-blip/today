@@ -1,9 +1,10 @@
+
+
 # RC2.6 — Internal Alpha Checklist
 
 ## Purpose
 Checklist for internal alpha testers to validate all workflows before inviting external users.
 
----
 
 ## Mentor Checklist
 
@@ -75,7 +76,6 @@ Checklist for internal alpha testers to validate all workflows before inviting e
 - [ ] Can change password
 - [ ] Can configure availability (if applicable)
 
----
 
 ## Student Checklist
 
@@ -149,7 +149,6 @@ Checklist for internal alpha testers to validate all workflows before inviting e
 - [ ] Can change password
 - [ ] Profile changes persist
 
----
 
 ## Admin Checklist
 
@@ -159,7 +158,6 @@ Checklist for internal alpha testers to validate all workflows before inviting e
 - [ ] Can generate reports
 - [ ] Can manage programs and content
 
----
 
 ## Known Issues to Communicate to Alpha Testers
 

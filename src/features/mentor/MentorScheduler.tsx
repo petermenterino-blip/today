@@ -7,6 +7,8 @@ import {
 import { Session, StudentProfile } from '../../interfaces';
 import { Program } from '../../types';
 import { notificationStorage } from '../../services/notificationStorage';
+import { notify } from '../../services/notificationService';
+import { timelineService } from '../../services/timelineService';
 import { notifySuccess, notifyError } from '../../utils/toast';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { useCalendar } from './hooks/useCalendar';
@@ -343,29 +345,13 @@ export const MentorScheduler: React.FC<MentorSchedulerProps> = ({
       if (editingSession) {
         await updateSession(editingSession.id, sessionPayload);
         notifySuccess("Session updated successfully.");
-        await notificationStorage.create({
-          userId: formStudentId,
-          title: `Session Rescheduled: ${finalTitle}`,
-          message: `Your mentoring session "${finalTitle}" with ${currentUser?.full_name || currentUser?.name || 'Peter'} has been updated to ${new Date(startIso).toLocaleDateString()} at ${formStartTime}.`,
-          read: false, type: 'system', link: '/sessions',
-        });
+        notify.sessionRescheduled(formStudentId, currentUser!.id, finalTitle, startIso).catch(() => {});
+        timelineService.autoLogSessionRescheduled(formStudentId, finalTitle, currentUser!.id).catch(() => {});
       } else {
         await addSession(sessionPayload);
         notifySuccess("Session scheduled successfully.");
-        await notificationStorage.create({
-          userId: formStudentId,
-          title: `New Session Scheduled: ${finalTitle}`,
-          message: `You have a new mentoring session "${finalTitle}" scheduled with ${currentUser?.full_name || currentUser?.name || 'Peter'} on ${new Date(startIso).toLocaleDateString()} at ${formStartTime}.`,
-          read: false, type: 'system', link: '/sessions',
-        });
-        setTimeout(async () => {
-          await notificationStorage.create({
-            userId: formStudentId,
-            title: `Reminder: ${finalTitle}`,
-            message: `Reminder: Your session "${finalTitle}" starts in ${formReminderTime}.`,
-            read: false, type: 'system', link: '/sessions',
-          });
-        }, 5000);
+        notify.sessionScheduled(formStudentId, currentUser!.id, finalTitle, startIso).catch(() => {});
+        timelineService.autoLogSessionScheduled(formStudentId, finalTitle, currentUser!.id).catch(() => {});
       }
       setIsModalOpen(false);
       setEditingSession(null);
@@ -408,12 +394,8 @@ export const MentorScheduler: React.FC<MentorSchedulerProps> = ({
     try {
       await updateSession(sessionToMove.id, { startTime: newStart.toISOString(), endTime: newEnd.toISOString() });
       notifySuccess(`Rescheduled "${sessionToMove.title}" to ${newStart.toLocaleString()}`);
-      await notificationStorage.create({
-        userId: sessionToMove.studentId,
-        title: `Session Rescheduled: ${sessionToMove.title}`,
-        message: `Your session "${sessionToMove.title}" has been rescheduled to ${newStart.toLocaleDateString()} at ${startStr}.`,
-        read: false, type: 'system', link: '/sessions',
-      });
+      notify.sessionRescheduled(sessionToMove.studentId, currentUser!.id, sessionToMove.title, newStart.toISOString()).catch(() => {});
+      timelineService.autoLogSessionRescheduled(sessionToMove.studentId, sessionToMove.title, currentUser!.id).catch(() => {});
       refreshSessions();
     } catch (e: any) {
       notifyError(`Reschedule failed: ${e.message}`);
@@ -442,12 +424,8 @@ export const MentorScheduler: React.FC<MentorSchedulerProps> = ({
     try {
       await updateSession(session.id, { status: 'cancelled', attendanceStatus: 'missed' });
       notifySuccess(`Cancelled session "${session.title}".`);
-      await notificationStorage.create({
-        userId: session.studentId,
-        title: `Session Cancelled: ${session.title}`,
-        message: `Your mentoring session "${session.title}" scheduled for ${new Date(session.startTime).toLocaleDateString()} has been cancelled.`,
-        read: false, type: 'system', link: '/sessions',
-      });
+      notify.sessionCancelled(session.studentId, currentUser!.id, session.title).catch(() => {});
+      timelineService.autoLogSessionCancelled(session.studentId, session.title, currentUser!.id).catch(() => {});
       if (selectedSession?.id === session.id) setSelectedSession(null);
       refreshSessions();
     } catch (e: any) {
@@ -459,12 +437,8 @@ export const MentorScheduler: React.FC<MentorSchedulerProps> = ({
     try {
       await deleteSession(session.id);
       notifySuccess(`Deleted session "${session.title}".`);
-      await notificationStorage.create({
-        userId: session.studentId,
-        title: `Session Deleted: ${session.title}`,
-        message: `Your mentoring session "${session.title}" has been deleted.`,
-        read: false, type: 'system', link: '/sessions',
-      });
+      notify.sessionCancelled(session.studentId, currentUser!.id, session.title).catch(() => {});
+      timelineService.autoLogSessionCancelled(session.studentId, session.title, currentUser!.id).catch(() => {});
       if (selectedSession?.id === session.id) setSelectedSession(null);
       refreshSessions();
     } catch (e: any) {
@@ -1008,12 +982,8 @@ export const MentorScheduler: React.FC<MentorSchedulerProps> = ({
           const newEnd = new Date(newStart.getTime() + durationMs);
           updateSession(sessionToMove.id, { startTime: newStart.toISOString(), endTime: newEnd.toISOString() }).catch(() => {});
           notifySuccess(`Rescheduled "${sessionToMove.title}"`);
-          notificationStorage.create({
-            userId: sessionToMove.studentId,
-            title: `Session Rescheduled: ${sessionToMove.title}`,
-            message: `Your session "${sessionToMove.title}" has been rescheduled.`,
-            read: false, type: 'system', link: '/sessions',
-          });
+          notify.sessionRescheduled(sessionToMove.studentId, currentUser!.id, sessionToMove.title, newStart.toISOString()).catch(() => {});
+          timelineService.autoLogSessionRescheduled(sessionToMove.studentId, sessionToMove.title, currentUser!.id).catch(() => {});
           refreshSessions();
           setConfirmForceOverlap(null);
         }}

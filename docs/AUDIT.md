@@ -1,8 +1,9 @@
+
+
 # Mentorino — Audit & Gap Analysis
 
 Generated from codebase analysis against `ARCHITECTURE.md` v1.0.
 
----
 
 ## 0.1 File Structure Inventory
 
@@ -57,7 +58,6 @@ Generated from codebase analysis against `ARCHITECTURE.md` v1.0.
 | `components/GalleryManagement.tsx` | 546 | Could split |
 | `pages/Settings.tsx` | 576 | Could split |
 
----
 
 ## 0.2 Service Audit
 
@@ -117,7 +117,6 @@ Generated from codebase analysis against `ARCHITECTURE.md` v1.0.
 
 **Architecture rule**: "Every feature must have its own service" — partially satisfied. There are 24 services, but some are redundant (e.g., `taskService.ts` + `taskStorage.ts` both handle tasks with different interfaces).
 
----
 
 ## 0.3 Hook Audit
 
@@ -155,7 +154,6 @@ These duplicates should be consolidated to TanStack Query only, with the `useSta
 
 **None.** All hooks delegate to services. This is good — service abstraction is working.
 
----
 
 ## 0.4 Monolithic Files for Splitting
 
@@ -212,7 +210,6 @@ Could split into:
 - `CTASection`
 - `TestimonialsSection`
 
----
 
 ## 0.5 Database Tables Required
 
@@ -261,7 +258,6 @@ Could split into:
 | `ai_chat_history` | `AIChatMessage` | id, user_id, role, content, timestamp | types/index.ts |
 | `analytics_events` | (spec requirement) | id, user_id, event_type, properties (JSONB), created_at | ARCHITECTURE.md |
 
----
 
 ## 0.6 RLS Policy Requirements
 
@@ -300,7 +296,6 @@ Could split into:
 | `mentor` | Own data + read/write on assigned students' data |
 | `admin` | Full access (future) |
 
----
 
 ## 0.7 Current localStorage Keys
 
@@ -337,7 +332,6 @@ Complete list of 26+ keys:
 | `mentorino_seed_version` | seedData | Seed version marker |
 | `mentorino_purchases` | App.tsx | Store purchases |
 
----
 
 ## Key Gaps Summary
 

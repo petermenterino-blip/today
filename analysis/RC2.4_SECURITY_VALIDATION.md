@@ -1,9 +1,10 @@
+
+
 # RC2.4 — Security Validation Report
 
 ## Methodology
 Source code audit across all layers: authentication, authorization, RLS, edge functions, storage, session management.
 
----
 
 ## 1. Authentication
 
@@ -18,7 +19,6 @@ Source code audit across all layers: authentication, authorization, RLS, edge fu
 | Rate limiting | ❌ Not configured | No rate limiting on auth endpoints |
 | **Verdict** | **⚠️ Good, but 2 gaps** | |
 
----
 
 ## 2. Authorization (Route Protection)
 
@@ -41,7 +41,6 @@ if (user?.application_status === 'pending') return <Navigate to="/pending-approv
 ```
 This only checks the user object — if `application_status` is stale (not refreshed after approval), the user stays locked out. The `user-profile-changed` event listener in AuthContext attempts to handle this but relies on manual dispatch.
 
----
 
 ## 3. Row-Level Security (RLS)
 
@@ -58,7 +57,6 @@ This only checks the user object — if `application_status` is stale (not refre
 
 **Verdict**: 120 policies across 43 tables + 4 storage buckets. 2 tables have RLS enabled but zero policies — any authenticated user can access them.
 
----
 
 ## 4. Edge Function Security
 
@@ -74,7 +72,6 @@ This only checks the user object — if `application_status` is stale (not refre
 
 **For `gemini`**: An attacker could consume the `GEMINI_API_KEY` quota by making repeated calls with any fake auth header. This is a financial/resources risk.
 
----
 
 ## 5. Storage Permissions
 
@@ -87,7 +84,6 @@ This only checks the user object — if `application_status` is stale (not refre
 
 **Verdict**: All storage policies verified. The `docs_mentor_read_assigned` fix (F2.1) correctly joins through `program_enrollments → programs` now.
 
----
 
 ## 6. Session Handling
 
@@ -100,7 +96,6 @@ This only checks the user object — if `application_status` is stale (not refre
 | Session replay | ❌ Not prevented | No checks for token reuse |
 | **Verdict** | **⚠️ Basic** | |
 
----
 
 ## 7. Unauthorized Access Scenarios
 
@@ -115,7 +110,6 @@ This only checks the user object — if `application_status` is stale (not refre
 
 **Edge function note**: The 401 is returned correctly, but the "auth" check does NOT validate the JWT. The 401 is correct UX but the validation is not real.
 
----
 
 ## Security Score: 70/100
 

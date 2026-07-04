@@ -1,6 +1,7 @@
+
+
 # Security Audit Report — Mentorino
 
----
 
 ## Critical Issues
 
@@ -14,7 +15,6 @@
 
 **Fix:** Remove mock users from production build. Disable mock mode in production environment.
 
----
 
 ### C-2: No Registration/Signup Flow — Profile Created Without Auth User
 
@@ -26,7 +26,6 @@
 
 **Fix:** Either create a Supabase Auth user on approval, or implement an invitation email flow with password setup.
 
----
 
 ## High Issues
 
@@ -40,7 +39,6 @@
 
 **Fix:** Add `.env.local` to `.gitignore`. Use `.env.example` for template values only.
 
----
 
 ### H-2: Storage Bucket RLS Policy References Non-Existent Column
 
@@ -52,7 +50,6 @@
 
 **Fix:** Either add `mentor_id` to the `profiles` table, or fix the policy to use the correct column reference.
 
----
 
 ### H-3: Full User Profiles Stored in localStorage
 
@@ -64,7 +61,6 @@
 
 **Fix:** Store only session tokens; fetch profile data from server on each session.
 
----
 
 ## Medium Issues
 
@@ -74,7 +70,6 @@
 **Severity:** MEDIUM
 **Description:** All edge functions set `Access-Control-Allow-Origin: '*'`. While acceptable for Supabase Functions (which have their own auth gateway via the anon key), it broadens the attack surface.
 
----
 
 ### M-2: Google OAuth Tokens Transmitted in Request Body
 
@@ -82,7 +77,6 @@
 **Severity:** MEDIUM
 **Description:** Google OAuth access tokens are sent in the request body to the `calendar` and `meet` edge functions. Supabase Functions logs may capture these tokens.
 
----
 
 ### M-3: Missing Input Validation on Edge Functions
 
@@ -90,7 +84,6 @@
 **Severity:** MEDIUM
 **Description:** No input validation (e.g., zod schemas) on edge function request bodies. Malformed or malicious payloads could trigger unexpected behavior.
 
----
 
 ### M-4: TypeScript `as any` Casts Bypass Type Safety
 
@@ -98,7 +91,6 @@
 **Severity:** MEDIUM
 **Description:** Multiple `as any` casts throughout the codebase bypass TypeScript's type safety, potentially hiding type mismatches at compile time.
 
----
 
 ## Low Issues
 
@@ -114,7 +106,6 @@ No CSP, HSTS, or X-Frame-Options headers configured (Vite default).
 ### L-4: `admin` Role Missing from Frontend Types
 `UserRole` type in `src/types/index.ts` only includes `'student' | 'mentor' | 'visitor'` but `'admin'` is used in DB migration `001_profiles.sql`.
 
----
 
 ## Summary
 

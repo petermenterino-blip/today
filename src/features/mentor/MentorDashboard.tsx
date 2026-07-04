@@ -172,6 +172,7 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
           handleAddGoal={d.handleAddGoal}
           handleUpdateGoal={d.handleUpdateGoal}
           handleDeleteGoal={d.handleDeleteGoal}
+          currentUser={d.currentUser}
         />
       )}
       {d.activeTab === 'applications' && (

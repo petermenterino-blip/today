@@ -1,8 +1,9 @@
+
+
 # Prioritized Fix List — Pre-Pilot
 
 Must be fixed before inviting real users. Ordered by impact.
 
----
 
 ## Blocker (Must Fix Before Pilot)
 
@@ -20,7 +21,6 @@ Must be fixed before inviting real users. Ordered by impact.
 - **Fix:** Build `<ApplicationsTab>` component using existing `useApplicationReview` hook — filtering, approve/reject buttons, notes, info requests
 - **Estimate:** 1-2 days
 
----
 
 ## Critical (Fix Before Pilot)
 
@@ -48,7 +48,6 @@ Must be fixed before inviting real users. Ordered by impact.
 - **Fix:** Add `mentor_id` column to profiles migration or rewrite policy
 - **Estimate:** 0.25 day
 
----
 
 ## High (Strongly Recommended Before Pilot)
 
@@ -76,7 +75,6 @@ Must be fixed before inviting real users. Ordered by impact.
 - **Fix:** Add `<ErrorBoundary>` wrapping routes with fallback UI
 - **Estimate:** 0.5 day
 
----
 
 ## Medium (Fix Before Pilot If Time Allows)
 
@@ -105,7 +103,6 @@ Must be fixed before inviting real users. Ordered by impact.
 - **File:** `MentorDashboard.tsx`
 - **Issue:** Analytics tab renders empty `<div>` — either implement or hide
 
----
 
 ## Low (Post-Pilot)
 
@@ -116,7 +113,6 @@ Must be fixed before inviting real users. Ordered by impact.
 ### L-5: Re-enable HMR in vite.config.ts
 ### L-6: Add `admin` role to frontend UserRole type
 
----
 
 ## Effort Summary
 

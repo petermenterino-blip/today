@@ -1,3 +1,5 @@
+
+
 # DEPRECATED — Edge Functions
 
 This directory is **deprecated**. All edge function code has been consolidated into `supabase/functions/`.

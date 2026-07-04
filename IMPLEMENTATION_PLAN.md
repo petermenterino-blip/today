@@ -1,8 +1,9 @@
+
+
 # Mentorino — Implementation Plan
 
 Based on `ARCHITECTURE.md` v1.0
 
----
 
 ## Overview
 
@@ -11,7 +12,6 @@ Migrate the current client-side SPA (localStorage, mock auth, type-oriented) to 
 - **Current**: 28 pages, 19 components, 24 services, 13 hooks, ~73,000 lines, localStorage, mock auth
 - **Target**: Supabase PostgreSQL + Auth + RLS + Storage + Edge Functions, TanStack Query, feature-oriented folders, Vercel SPA hosting
 
----
 
 ## Phase 0 — Audit & Gap Analysis
 
@@ -44,7 +44,6 @@ Migrate the current client-side SPA (localStorage, mock auth, type-oriented) to 
 ### 0.7 Output
 - `docs/AUDIT.md` with full findings
 
----
 
 ## Phase 1 — Supabase Project & Schema
 
@@ -105,7 +104,6 @@ npm install @supabase/supabase-js
 - `createClient(supabaseUrl, supabaseAnonKey)`
 - Export typed `supabase` instance
 
----
 
 ## Phase 2 — Core Infrastructure
 
@@ -150,7 +148,6 @@ Create `supabase/migrations/900_auth_triggers.sql`:
 - Add password reset flow via `supabase.auth.resetPasswordForEmail`
 - Remove mock login debug panel
 
----
 
 ## Phase 3 — Service Migration (Data Layer)
 
@@ -211,7 +208,6 @@ Create `supabase/migrations/900_auth_triggers.sql`:
 5. Remove localStorage code for that domain
 6. Remove corresponding `MENTORINO_*` key references
 
----
 
 ## Phase 4 — Edge Functions
 
@@ -272,7 +268,6 @@ supabase secrets set GOOGLE_CLIENT_SECRET=...
 supabase secrets set RESEND_API_KEY=...
 ```
 
----
 
 ## Phase 5 — Folder Restructure
 
@@ -327,7 +322,6 @@ Each file moves in 1 commit:
 - Remove `src/pages/` after all pages moved to `src/features/` or `src/pages/`
 - Remove `src/hooks/` after feature-specific hooks moved to `src/features/*/`
 
----
 
 ## Phase 6 — TanStack Query Adoption
 
@@ -363,7 +357,6 @@ const createGoal = useMutation({
 - `src/lib/queryClient.ts` — default staleTime, retry, refetchOnWindowFocus
 - Add `QueryClientProvider` in `src/app/App.tsx`
 
----
 
 ## Phase 7 — Storage Migration
 
@@ -392,7 +385,6 @@ class StorageService {
 - Replace any `localStorage`-based file handling with `storageService.upload`
 - Update Application.tsx, profile editing, document uploads
 
----
 
 ## Phase 8 — Realtime Subscriptions
 
@@ -413,7 +405,6 @@ supabase
 
 ### 8.3 Cleanup subscriptions on unmount
 
----
 
 ## Phase 9 — Monitoring & Analytics
 
@@ -435,7 +426,6 @@ npm install posthog-js
 - Track events: `signup`, `login`, `session_booked`, `goal_created`, `journal_written`, `program_enrolled`, `application_submitted`, `message_sent`
 - Capture `$pageview` for meaningful pages only
 
----
 
 ## Phase 10 — Production Readiness
 
@@ -486,7 +476,6 @@ Verify against limits:
 - Alternate PostgreSQL provider instructions
 - Environment variable recovery
 
----
 
 ## Phase 11 — Cleanup & Docs
 
@@ -518,7 +507,6 @@ Verify against limits:
 npm run build   # zero errors, zero warnings
 ```
 
----
 
 ## Dependency Graph
 
@@ -543,7 +531,6 @@ Phase 10 (Production Readiness)
 Phase 11 (Cleanup & Docs)
 ```
 
----
 
 ## File Modification Count (Estimated)
 
@@ -563,7 +550,6 @@ Phase 11 (Cleanup & Docs)
 | 11 | 0 | 5 | 20+ |
 | **Total** | **~80** | **~120** | **~35** |
 
----
 
 ## Key Principles
 

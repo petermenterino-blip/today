@@ -7,6 +7,7 @@ function fromDbConversation(row: any): Conversation {
     studentId: row.student_id,
     studentName: row.student_name,
     mentorId: row.mentor_id,
+    mentorName: row.mentor_name || undefined,
     lastMessage: row.last_message || '',
     lastMessageTime: row.last_message_time || row.created_at,
     unreadCount: row.unread_count || 0,
@@ -18,6 +19,31 @@ function fromDbConversation(row: any): Conversation {
     adminId: row.admin_id,
     description: row.description,
   };
+}
+
+async function fetchProfileName(userId: string): Promise<string> {
+  try {
+    const { data } = await supabase
+      .from('profiles')
+      .select('name, role')
+      .eq('id', userId)
+      .single();
+    return data?.name || 'Unknown User';
+  } catch {
+    return 'Unknown User';
+  }
+}
+
+async function enrichConversation(c: Conversation): Promise<Conversation> {
+  if (!c.isGroup) {
+    if (!c.studentName) {
+      c.studentName = await fetchProfileName(c.studentId || '');
+    }
+    if (!c.mentorName) {
+      c.mentorName = await fetchProfileName(c.mentorId);
+    }
+  }
+  return c;
 }
 
 function fromDbMessage(row: any): Message {
@@ -75,7 +101,9 @@ export const messageService = {
       .order('last_message_time', { ascending: false });
 
     if (error) return [];
-    return (data || []).map(fromDbConversation);
+    const convs = (data || []).map(fromDbConversation);
+    const enriched = await Promise.all(convs.map(enrichConversation));
+    return enriched;
   },
 
   async getAllConversations(): Promise<Conversation[]> {
@@ -182,6 +210,71 @@ export const messageService = {
       .eq('conversation_id', conversationId);
   },
 
+  async getOtherParticipantProfile(conversationId: string, currentUserId: string): Promise<{ id: string; name: string; role: string; avatar_url?: string; email?: string } | null> {
+    try {
+      const { data: conv, error } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('id', conversationId)
+        .single();
+      if (error || !conv) return null;
+      const otherId = conv.mentor_id === currentUserId ? conv.student_id : conv.mentor_id;
+      if (!otherId) return null;
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id, name, role, avatar_url, email')
+        .eq('id', otherId)
+        .single();
+      if (!profile) return null;
+      return {
+        id: profile.id,
+        name: profile.name || 'Unknown User',
+        role: profile.role || 'student',
+        avatar_url: profile.avatar_url,
+        email: profile.email,
+      };
+    } catch {
+      return null;
+    }
+  },
+
+  async getConversationParticipantProfile(conversationId: string, participantId: string): Promise<{ id: string; name: string; role: string; avatar_url?: string; email?: string; bio?: string; phone?: string; specialization?: string; created_at?: string } | null> {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', participantId)
+        .single();
+      if (!profile) return null;
+      return {
+        id: profile.id,
+        name: profile.name || 'Unknown User',
+        role: profile.role || 'student',
+        avatar_url: profile.avatar_url,
+        email: profile.email,
+        bio: profile.bio,
+        phone: profile.phone,
+        specialization: profile.specialization,
+        created_at: profile.created_at,
+      };
+    } catch {
+      return null;
+    }
+  },
+
+  async getProfileByUserId(userId: string): Promise<any> {
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      return data || null;
+    } catch {
+      return null;
+    }
+  },
+
   async createConversation(studentId: string, studentName: string, mentorId: string): Promise<Conversation | null> {
     const { data: existing } = await supabase
       .from('conversations')
@@ -193,12 +286,15 @@ export const messageService = {
 
     if (existing) return fromDbConversation(existing);
 
+    const mentorProfile = await fetchProfileName(mentorId);
+
     const { data, error } = await supabase
       .from('conversations')
       .insert({
         student_id: studentId,
         student_name: studentName,
         mentor_id: mentorId,
+        mentor_name: mentorProfile === 'Unknown User' ? undefined : mentorProfile,
         last_message_time: new Date().toISOString(),
         participants: [studentId, mentorId],
       })

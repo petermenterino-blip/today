@@ -1,8 +1,9 @@
+
+
 # Mentorino — Architecture Review
 
 Version: 1.0
 
----
 
 ## Executive Summary
 
@@ -12,7 +13,6 @@ The most significant strengths are the service-layer abstraction, the clear phas
 
 **Overall Assessment**: The architecture is production-ready in concept. The codebase needs disciplined execution of the migration plan. Estimated: ~6-8 weeks of focused engineering for full migration.
 
----
 
 ## 1. Strengths
 
@@ -52,7 +52,6 @@ The routing structure (HashRouter, lazy-loaded routes) and UI patterns (Tailwind
 
 **Impact**: Migration is purely infrastructure — no product scope creep.
 
----
 
 ## 2. Weaknesses
 
@@ -108,7 +107,6 @@ Seed data lives in `src/utils/seedData.ts` (TypeScript) and will need to be repl
 
 **Recommendation**: During migration, the TypeScript seed should be the source of truth. SQL seed is generated FROM TypeScript seed. After Phase 3, delete TypeScript seed and use SQL seed exclusively.
 
----
 
 ## 3. Technology Validation
 
@@ -178,7 +176,6 @@ For this use case (mentorship insights, feedback, summaries), Gemini is:
 
 **Overall**: Low lock-in risk. The service layer abstraction is the key mitigation — only services know about Supabase.
 
----
 
 ## 4. Free Tier Strategy Review
 
@@ -231,7 +228,6 @@ For this use case (mentorship insights, feedback, summaries), Gemini is:
 6. **Implement pagination** on all list queries (never load >50 items at once)
 7. **Rate limit AI calls**: Max 5 Gemini calls per student per day
 
----
 
 ## 5. Risks & Mitigations
 
@@ -247,7 +243,6 @@ For this use case (mentorship insights, feedback, summaries), Gemini is:
 | 8 | Migrating auth users from mock to Supabase | **Medium** | Medium | Existing seeded users lose access | Pre-seed Supabase Auth with matching users; script the migration |
 | 9 | Post-MVP feature creep during migration | **High** | Medium | Scope expansion delays launch | Strictly enforce "Phase N-1 must be complete before Phase N" |
 
----
 
 ## 6. Contradictions Found Between Documents
 
@@ -298,7 +293,6 @@ IMPLEMENTATION_PLAN.md estimates ~80 created, ~120 modified, ~35 deleted. At 235
 
 **Resolution**: Use AUDIT.md. Consolidate redundant services before Phase 3. Target: ~20 canonical services.
 
----
 
 ## 7. Migration Risk Assessment
 
@@ -338,7 +332,6 @@ IMPLEMENTATION_PLAN.md estimates ~80 created, ~120 modified, ~35 deleted. At 235
 
 **Total Estimated**: ~6-8 weeks (full-time single developer)
 
----
 
 ## 8. Recommendations
 
@@ -371,7 +364,6 @@ IMPLEMENTATION_PLAN.md estimates ~80 created, ~120 modified, ~35 deleted. At 235
 16. **Real payment integration**: Stripe for consultations and store products
 17. **Offline support**: Service Worker + IndexedDB for basic offline access
 
----
 
 ## 9. Production Readiness Assessment
 
@@ -394,7 +386,6 @@ IMPLEMENTATION_PLAN.md estimates ~80 created, ~120 modified, ~35 deleted. At 235
 
 **Target Production Readiness Post-Migration**: 90%
 
----
 
 ## 10. Conclusion
 
