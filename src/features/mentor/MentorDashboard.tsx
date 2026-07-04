@@ -18,6 +18,7 @@ import GrowthAuditTab from './components/GrowthAuditTab';
 import { ProgramProgressTab } from './components/ProgramProgressTab';
 import { ReviewsTab } from './components/ReviewsTab';
 import AnalyticsBI from './components/AnalyticsBI';
+import AIDashboard from './components/AIDashboard';
 import ResourceDashboard from '../resources/ResourceDashboard';
 import { useDashboard, MentorTab } from './hooks/useDashboard';
 import { tagService } from '../../services/tagService';
@@ -277,60 +278,40 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
       )}
 
       {d.activeTab === 'ai' && (
-        <div className="space-y-6 animate-in fade-in duration-500">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-slate-900">AI Insights</h1>
-            <p className="text-xs text-slate-500 mt-1 font-medium">Intelligent recommendations and analysis</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
-              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Student Analysis</p>
-              <p className="text-3xl font-black text-slate-900">{d.studentProfiles.length}</p>
-              <p className="text-[10px] text-slate-500 mt-1 font-medium">Total students analyzed</p>
-            </div>
-            <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
-              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Session Intel</p>
-              <p className="text-3xl font-black text-slate-900">{d.sessions.length}</p>
-              <p className="text-[10px] text-slate-500 mt-1 font-medium">Sessions processed</p>
-            </div>
-            <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
-              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Applications</p>
-              <p className="text-3xl font-black text-slate-900">{d.applications.length}</p>
-              <p className="text-[10px] text-slate-500 mt-1 font-medium">Total applications</p>
-            </div>
-          </div>
-          <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
-            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-4">AI Assistant</p>
-            <div className="flex gap-3">
-              <input
-                type="text"
-                placeholder="Ask AI about your students, sessions, or programs..."
-                className="flex-1 px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-medium outline-none focus:border-black transition-all"
-                value={d.userInput}
-                onChange={(e) => d.setUserInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter' && !d.isAiLoading) d.handleAiChat(); }}
-              />
-              <button
-                onClick={d.handleAiChat}
-                disabled={d.isAiLoading || !d.userInput.trim()}
-                className="px-6 py-4 bg-black text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all disabled:opacity-50"
-              >
-                {d.isAiLoading ? 'Thinking...' : 'Ask'}
-              </button>
-            </div>
-            {d.chatHistory.length > 0 && (
-              <div className="mt-6 space-y-4 max-h-[300px] overflow-y-auto">
-                {d.chatHistory.map((msg: any, i: number) => (
-                  <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[80%] p-4 rounded-2xl text-sm ${msg.role === 'user' ? 'bg-black text-white' : 'bg-slate-50 text-slate-800 border border-slate-100'}`}>
-                      {msg.content}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+        <AIDashboard
+          chatHistory={d.chatHistory}
+          setChatHistory={d.setChatHistory}
+          userInput={d.userInput}
+          setUserInput={d.setUserInput}
+          isAiLoading={d.isAiLoading}
+          streamingContent={d.streamingContent}
+          chatEndRef={d.chatEndRef}
+          isGeneratingOverview={d.isGeneratingOverview}
+          aiOverviewText={d.aiOverviewText}
+          insights={d.insights}
+          isGeneratingInsights={d.isGeneratingInsights}
+          savedConversations={d.savedConversations}
+          pinnedConversationIds={d.pinnedConversationIds}
+          suggestedPrompts={d.suggestedPrompts}
+          recommendationsResult={d.recommendationsResult}
+          handleAiChat={d.handleAiChat}
+          handleQuickAction={d.handleQuickAction}
+          fetchAiInsights={d.fetchAiInsights}
+          generateAiOverview={d.generateAiOverview}
+          stopGeneration={d.stopGeneration}
+          saveConversation={d.saveConversation}
+          deleteConversation={d.deleteConversation}
+          renameConversation={d.renameConversation}
+          loadConversation={d.loadConversation}
+          togglePinned={d.togglePinned}
+          clearChat={d.clearChat}
+          searchConversations={d.searchConversations}
+          studentProfiles={d.studentProfiles}
+          sessions={d.sessions}
+          applications={d.applications}
+          programs={d.programs}
+          userId={d.currentUser?.id}
+        />
       )}
 
       {d.activeTab === 'gallery' && (
