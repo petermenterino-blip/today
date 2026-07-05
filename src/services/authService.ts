@@ -41,7 +41,7 @@ const getOrCreateProfileForUser = async (authUser: {
 
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('*')
+    .select('id,name,email,role,avatar_url,application_status,created_at')
     .eq('id', authUser.id)
     .single();
 
@@ -65,7 +65,7 @@ const getOrCreateProfileForUser = async (authUser: {
   if (createError?.code === '23505') {
     const { data: existingProfile } = await supabase
       .from('profiles')
-      .select('*')
+      .select('id,name,email,role,avatar_url,application_status,created_at')
       .eq('id', authUser.id)
       .single();
     return existingProfile || {
@@ -179,7 +179,7 @@ export const authService = {
 
     const { data: profile, error } = await supabase
       .from('profiles')
-      .select('*')
+      .select('id,name,email,role,avatar_url,application_status,created_at,phone,bio,specialization')
       .eq('id', userId)
       .single();
 
@@ -192,7 +192,7 @@ export const authService = {
       role: (profile?.role as UserRole) || 'visitor',
       application_status: profile?.application_status || null,
       created_at: profile?.created_at || new Date().toISOString(),
-      profile: profile || undefined,
+      profile: profile ? { ...profile, first_name: profile.name || '', last_name: '' } as any : undefined,
     };
 
     return { data: userData, error: null };
@@ -221,30 +221,42 @@ export const authService = {
   onAuthStateChange(callback: (user: User | null) => void): (() => void) | null {
     if (!hasSupabaseCredentials()) return null;
 
-    const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const pendingCallbacks = new Set<string>();
+
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         if (session?.user) {
+          const userId = session.user.id;
+          if (pendingCallbacks.has(userId)) return;
+          pendingCallbacks.add(userId);
+
           const userData: User = {
-            id: session.user.id,
+            id: userId,
             email: session.user.email || '',
             name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || '',
             role: (session.user.user_metadata?.role as UserRole) || 'visitor',
             created_at: session.user.created_at,
           };
 
-          try {
-            const profile = await getOrCreateProfileForUser(session.user);
-            userData.name = profile?.name || userData.name;
-            userData.role = (profile?.role as UserRole) || userData.role;
-            userData.application_status = profile?.application_status || null;
-          } catch {
-            // Profile fetch/creation may fail due to RLS or missing trigger.
-            // Continue with metadata-derived user — never nullify on SIGNED_IN.
-          }
-
+          // Fire callback synchronously with metadata-derived user
           callback(userData);
+
+          // Fire-and-forget profile enrichment
+          getOrCreateProfileForUser(session.user).then(profile => {
+            if (profile && (profile.name !== userData.name || (profile.role as UserRole) !== userData.role)) {
+              callback({
+                ...userData,
+                name: profile.name || userData.name,
+                role: (profile.role as UserRole) || userData.role,
+                application_status: profile.application_status || null,
+              });
+            }
+          }).catch(() => {}).finally(() => {
+            pendingCallbacks.delete(userId);
+          });
         }
       } else if (event === 'SIGNED_OUT') {
+        pendingCallbacks.clear();
         callback(null);
       }
     });

@@ -27,6 +27,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
   const loginInProgress = React.useRef(false);
+  const lastUserIdRef = React.useRef<string | null>(null);
+  const lastRoleRef = React.useRef<UserRole>('visitor');
 
   const clearError = useCallback(() => setAuthError(null), []);
 
@@ -35,6 +37,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       logger.info('AuthContext', 'Refreshing auth session');
       const profileRes = await authService.getCurrentUser();
       if (profileRes.data) {
+        lastUserIdRef.current = profileRes.data.id;
+        lastRoleRef.current = profileRes.data.role;
         setUser(profileRes.data);
         setRole(profileRes.data.role);
         logger.info('AuthContext', 'Session refreshed successfully', { role: profileRes.data.role });
@@ -65,9 +69,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const profileRes = await authService.getCurrentUser();
         if (mounted) {
           if (profileRes.data) {
+            lastUserIdRef.current = profileRes.data.id;
+            lastRoleRef.current = profileRes.data.role;
             setUser(profileRes.data);
             setRole(profileRes.data.role);
           } else {
+            lastUserIdRef.current = null;
+            lastRoleRef.current = 'visitor';
             setUser(null);
             setRole('visitor');
           }
@@ -86,13 +94,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
     initializeSession();
 
-    const unsubscribe = authService.onAuthStateChange((user) => {
+    const unsubscribe = authService.onAuthStateChange((incoming) => {
       if (!mounted || !initialized) return;
       if (loginInProgress.current) return;
-      if (user) {
-        setUser((user.role ? user : { ...user, role: 'visitor' }) as any);
-        setRole(user.role || 'visitor');
+      if (incoming) {
+        const nextRole = incoming.role || 'visitor';
+        if (lastUserIdRef.current === incoming.id && lastRoleRef.current === nextRole) return;
+        lastUserIdRef.current = incoming.id;
+        lastRoleRef.current = nextRole;
+        setUser(incoming as any);
+        setRole(nextRole);
       } else {
+        lastUserIdRef.current = null;
+        lastRoleRef.current = 'visitor';
         setUser(null);
         setRole('visitor');
       }
@@ -103,6 +117,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         const { data } = await authService.getCurrentUser();
         if (data && mounted) {
+          lastUserIdRef.current = data.id;
+          lastRoleRef.current = data.role;
           setUser(data);
           setRole(data.role);
         }
@@ -136,6 +152,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setAuthError(interpretError(error));
         throw new Error(error || 'Login failed');
       }
+      lastUserIdRef.current = data.id;
+      lastRoleRef.current = data.role || 'visitor';
       setUser(data.role ? data : { ...data, role: data.role || 'visitor' });
       setRole(data.role || 'visitor');
       return data;
@@ -167,6 +185,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       await authService.signOut();
     } catch {}
+    lastUserIdRef.current = null;
+    lastRoleRef.current = 'visitor';
     setUser(null);
     setRole('visitor');
     setAuthLoading(false);
