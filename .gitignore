@@ -35,3 +35,10 @@ tsconfig.tsbuildinfo
 # Build artifacts
 vite-err.txt
 vite-out.txt
+
+# Test artifacts
+playwright-report/
+test-results/
+
+# Schema dumps
+_schema_dump.sql
