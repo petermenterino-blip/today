@@ -38,7 +38,7 @@ export const ActivityTimelineWidget: React.FC<Props> = ({ activities, onStudentC
               >
                 <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-sm text-slate-600 border border-slate-200 text-[10px]">
                   {a.studentAvatar ? (
-                    <img src={a.studentAvatar} alt="" className="w-full h-full rounded-full object-cover" />
+                    <img src={a.studentAvatar} alt="" loading="lazy" className="w-full h-full rounded-full object-cover" />
                   ) : (
                     a.studentName.slice(0, 2).toUpperCase()
                   )}

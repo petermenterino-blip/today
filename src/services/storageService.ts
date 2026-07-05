@@ -21,13 +21,13 @@ class StorageService {
     return path;
   }
 
-  getPublicUrl(bucket: BucketName, path: string): { data: { publicUrl: string } } {
-    return supabase.storage.from(bucket).getPublicUrl(path);
-  }
-
-  async getPublicUrlFromPath(bucket: BucketName, path: string): Promise<string> {
+  async getPublicUrl(bucket: BucketName, path: string): Promise<string> {
     const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(path);
     return publicUrl;
+  }
+
+  async getPublicUrlFromPath(bucket: BucketName, path: string, expiresIn = 3600): Promise<string> {
+    return this.getSignedUrl(bucket, path, expiresIn);
   }
 
   async uploadAvatar(userId: string, file: File): Promise<string> {
@@ -77,10 +77,11 @@ class StorageService {
   async listFiles(bucket: BucketName, userId: string): Promise<{ name: string; url: string }[]> {
     const { data, error } = await supabase.storage.from(bucket).list(userId);
     if (error) throw error;
-    return (data || []).map(f => ({
+    const files = data || [];
+    return Promise.all(files.map(async f => ({
       name: f.name,
-      url: `${supabase.storage.from(bucket).getPublicUrl(`${userId}/${f.name}`).data.publicUrl}`,
-    }));
+      url: await this.getSignedUrl(bucket, `${userId}/${f.name}`, 3600),
+    })));
   }
 }
 

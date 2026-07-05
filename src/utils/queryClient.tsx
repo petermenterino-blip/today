@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
+import { STALE_TIMES } from '../constants/queryKeys';
 import { idleRecovery } from '../lib/idleRecovery';
 import { logger } from '../lib/logger';
 
@@ -20,8 +21,8 @@ const STALE_KEYS = [
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000,
-      gcTime: 10 * 60 * 1000,
+      staleTime: STALE_TIMES.normal,
+      gcTime: 30 * 60 * 1000,
       retry: 2,
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
       refetchOnWindowFocus: false,

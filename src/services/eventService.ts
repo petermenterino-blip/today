@@ -355,7 +355,7 @@ export const eventService = {
   },
 
   async getActivity(eventId: string): Promise<EventActivity[]> {
-    const { data } = await supabase.from('event_activity').select('*').eq('event_id', eventId).order('created_at', { ascending: false });
+    const { data } = await supabase.from('event_activity').select('id,event_id,user_id,action,description,metadata,created_at').eq('event_id', eventId).order('created_at', { ascending: false });
     return (data || []).map(activityRowToActivity);
   },
 
@@ -383,7 +383,7 @@ export const eventService = {
 
   // ── Export ──
   async exportAttendees(eventId: string): Promise<ServiceResponse<any[]>> {
-    const { data, error } = await supabase.from('event_attendees').select('*').eq('event_id', eventId);
+    const { data, error } = await supabase.from('event_attendees').select('id,event_id,user_id,name,email,status,attended,feedback_submitted,registered_at').eq('event_id', eventId);
     if (error) return { data: null, error: handleError(error).error };
     return { data: data || [], error: null };
   },

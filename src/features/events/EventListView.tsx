@@ -180,7 +180,7 @@ const EventListItem = memo<EventListItemProps>(({ event, onClick }) => (
       onClick={onClick}
       className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center gap-5"
     >
-      {event.image && <img src={event.image} alt="" className="w-20 h-20 rounded-2xl object-cover shrink-0" />}
+      {event.image && <img src={event.image} alt="" loading="lazy" className="w-20 h-20 rounded-2xl object-cover shrink-0" />}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
           <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[7px] font-black uppercase tracking-widest">

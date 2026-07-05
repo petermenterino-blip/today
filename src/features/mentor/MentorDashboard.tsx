@@ -1,26 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import {
   X, Loader2, Trash
 } from 'lucide-react';
-import { EventManagement } from '../admin/EventManagement';
-import EventListView from '../events/EventListView';
-import WhatsAppMessaging from '../messaging/WhatsAppMessaging';
-import { MentorScheduler } from './MentorScheduler';
-import GalleryManagement from '../admin/GalleryManagement';
-import { OverviewTab } from './components/OverviewTab';
-import { MenteesTab } from './components/MenteesTab';
-import { TasksTab } from './components/TasksTab';
-import { ApplicationsTab } from './components/ApplicationsTab';
-import { VisitorBookingsTab } from './components/VisitorBookingsTab';
-import GrowthAuditTab from './components/GrowthAuditTab';
-import { ProgramProgressTab } from './components/ProgramProgressTab';
-import { ReviewsTab } from './components/ReviewsTab';
-import AnalyticsBI from './components/AnalyticsBI';
 import ErrorBoundary from '../../components/shared/ErrorBoundary';
-import AIDashboard from './components/AIDashboard';
-import ResourceDashboard from '../resources/ResourceDashboard';
+
+const EventManagement = lazy(() => import('../admin/EventManagement').then(m => ({ default: m.EventManagement })));
+const EventListView = lazy(() => import('../events/EventListView'));
+const WhatsAppMessaging = lazy(() => import('../messaging/WhatsAppMessaging'));
+const MentorScheduler = lazy(() => import('./MentorScheduler').then(m => ({ default: m.MentorScheduler })));
+const GalleryManagement = lazy(() => import('../admin/GalleryManagement'));
+const OverviewTab = lazy(() => import('./components/OverviewTab').then(m => ({ default: m.OverviewTab })));
+const MenteesTab = lazy(() => import('./components/MenteesTab').then(m => ({ default: m.MenteesTab })));
+const TasksTab = lazy(() => import('./components/TasksTab').then(m => ({ default: m.TasksTab })));
+const ApplicationsTab = lazy(() => import('./components/ApplicationsTab').then(m => ({ default: m.ApplicationsTab })));
+const VisitorBookingsTab = lazy(() => import('./components/VisitorBookingsTab').then(m => ({ default: m.VisitorBookingsTab })));
+const GrowthAuditTab = lazy(() => import('./components/GrowthAuditTab'));
+const ProgramProgressTab = lazy(() => import('./components/ProgramProgressTab').then(m => ({ default: m.ProgramProgressTab })));
+const ReviewsTab = lazy(() => import('./components/ReviewsTab').then(m => ({ default: m.ReviewsTab })));
+const AnalyticsBI = lazy(() => import('./components/AnalyticsBI'));
+const AIDashboard = lazy(() => import('./components/AIDashboard'));
+const ResourceDashboard = lazy(() => import('../resources/ResourceDashboard'));
 import { useDashboard, MentorTab } from './hooks/useDashboard';
 import { tagService } from '../../services/tagService';
 import { notifySuccess } from '../../utils/toast';
@@ -56,12 +57,14 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
   if (d.selectedEventId) {
     return (
       <div className="animate-in fade-in duration-700">
-        <EventManagement
-          eventId={d.selectedEventId}
-          onBack={() => navigate('/mentor?tab=events')}
-          onEdit={(evt) => d.handleEditEventClick(evt)}
-          onDelete={(id) => { d.deleteEvent(id); navigate('/mentor?tab=events'); }}
-        />
+        <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}>
+          <EventManagement
+            eventId={d.selectedEventId}
+            onBack={() => navigate('/mentor?tab=events')}
+            onEdit={(evt) => d.handleEditEventClick(evt)}
+            onDelete={(id) => { d.deleteEvent(id); navigate('/mentor?tab=events'); }}
+          />
+        </Suspense>
       </div>
     );
   }
@@ -69,7 +72,7 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
   return (
     <div className={`animate-in fade-in duration-700 ${d.activeTab === 'messaging' ? 'h-full flex flex-col' : 'space-y-8'}`}>
       {d.activeTab === 'overview' && (
-        <OverviewTab
+        <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><OverviewTab
           handleTabChange={d.handleTabChange}
           getRecentActivityTimeline={d.getRecentActivityTimeline}
           handleOpenStudentProfile={d.handleOpenStudentProfile}
@@ -114,17 +117,17 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
           setActiveTab={d.setActiveTab}
           events={d.events}
           eventsLoading={d.eventsLoading}
-        />
+        /></Suspense>
       )}
 
       {d.activeTab === 'feedback' && (
         <div className="space-y-8">
-          <ReviewsTab
+          <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><ReviewsTab
             mentors={[]}
             students={d.studentProfiles}
-          />
+          /></Suspense>
           <div className="border-t border-slate-100 pt-8">
-            <TasksTab
+            <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><TasksTab
               pendingTasks={d.pendingTasks}
               selectedTask={d.selectedTask}
               setSelectedTask={d.setSelectedTask}
@@ -132,13 +135,13 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
               setFeedbackResponse={d.setFeedbackResponse}
               handleReviewTask={d.handleReviewTask}
               submitFeedback={d.submitFeedback}
-            />
+            /></Suspense>
           </div>
         </div>
       )}
 
       {d.activeTab === 'mentees' && (
-        <MenteesTab
+        <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><MenteesTab
           selectedMenteeId={d.selectedMenteeId}
           setSelectedMenteeId={d.setSelectedMenteeId}
           searchQuery={d.searchQuery}
@@ -185,10 +188,10 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
           handleUpdateGoal={d.handleUpdateGoal}
           handleDeleteGoal={d.handleDeleteGoal}
           currentUser={d.currentUser}
-        />
+        /></Suspense>
       )}
       {d.activeTab === 'applications' && (
-        <ApplicationsTab
+        <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><ApplicationsTab
           applications={d.applications}
           pendingApplications={d.pendingApplications}
           appSearch={d.appSearch}
@@ -231,18 +234,18 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
           refreshApps={d.refreshApps}
           updateAppStatus={d.updateAppStatus}
           filteredAppsForTab={d.filteredAppsForTab}
-        />
+        /></Suspense>
       )}
 
       {d.activeTab === 'bookings' && (
-        <VisitorBookingsTab />
+        <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><VisitorBookingsTab /></Suspense>
       )}
 
       {d.activeTab === 'messaging' && (
-        <WhatsAppMessaging currentUserId={d.currentUser?.id || ''} currentUserName={d.currentUser?.name || 'Mentor'} role="mentor" />
+        <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><WhatsAppMessaging currentUserId={d.currentUser?.id || ''} currentUserName={d.currentUser?.name || 'Mentor'} role="mentor" /></Suspense>
       )}
 
-      {d.activeTab === 'events' && <EventListView />}
+      {d.activeTab === 'events' && <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><EventListView /></Suspense>}
 
       {d.activeTab === 'programs' && (
         <div className="space-y-6 animate-in fade-in duration-500">
@@ -270,7 +273,7 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
       )}
 
       {d.activeTab === 'sessions' && (
-        <MentorScheduler
+        <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><MentorScheduler
           currentUser={d.currentUser}
           studentProfiles={d.studentProfiles}
           programs={d.programs}
@@ -279,21 +282,21 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
           updateSession={d.updateSession}
           deleteSession={d.deleteSession}
           refreshSessions={d.refreshSessions}
-        />
+        /></Suspense>
       )}
 
       {d.activeTab === 'resources' && (
-        <ResourceDashboard isMentor={true} />
+        <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><ResourceDashboard isMentor={true} /></Suspense>
       )}
 
       {d.activeTab === 'analytics' && (
         <ErrorBoundary>
-          <AnalyticsBI currentUser={d.currentUser} />
+          <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><AnalyticsBI currentUser={d.currentUser} /></Suspense>
         </ErrorBoundary>
       )}
 
       {d.activeTab === 'ai' && (
-        <AIDashboard
+        <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><AIDashboard
           chatHistory={d.chatHistory}
           setChatHistory={d.setChatHistory}
           userInput={d.userInput}
@@ -326,26 +329,26 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
           applications={d.applications}
           programs={d.programs}
           userId={d.currentUser?.id}
-        />
+        /></Suspense>
       )}
 
       {d.activeTab === 'gallery' && (
-        <GalleryManagement />
+        <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><GalleryManagement /></Suspense>
       )}
 
       {d.activeTab === 'growth-audit' && (
-        <GrowthAuditTab
+        <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><GrowthAuditTab
           studentProfiles={d.studentProfiles}
           taskActivities={d.taskActivities}
-        />
+        /></Suspense>
       )}
 
       {d.activeTab === 'program-progress' && (
-        <ProgramProgressTab
+        <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><ProgramProgressTab
           programs={d.programs}
           studentProfiles={d.studentProfiles}
           onNavigateToStudent={d.handleOpenStudentProfile}
-        />
+        /></Suspense>
       )}
 
       {/* Tag Management Modal */}
@@ -586,7 +589,7 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
                   <input type="text" placeholder="https://images.unsplash.com/..." className="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:border-black transition-all" value={d.newEventData.image || ''} onChange={e => d.setNewEventData(prev => ({ ...prev, image: e.target.value }))} />
                   {d.newEventData.image && (
                     <div className="mt-2 w-full h-24 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200">
-                      <img src={d.newEventData.image} alt="Banner preview" className="w-full h-full object-cover" referrerPolicy="no-referrer" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                      <img src={d.newEventData.image} alt="Banner preview" loading="lazy" className="w-full h-full object-cover" referrerPolicy="no-referrer" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                     </div>
                   )}
                 </div>
@@ -595,7 +598,7 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
                   <input type="text" placeholder="https://images.unsplash.com/..." className="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:border-black transition-all" value={d.newEventData.coverImage || ''} onChange={e => d.setNewEventData(prev => ({ ...prev, coverImage: e.target.value }))} />
                   {d.newEventData.coverImage && (
                     <div className="mt-2 w-full h-24 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200">
-                      <img src={d.newEventData.coverImage} alt="Cover preview" className="w-full h-full object-cover" referrerPolicy="no-referrer" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                      <img src={d.newEventData.coverImage} alt="Cover preview" loading="lazy" className="w-full h-full object-cover" referrerPolicy="no-referrer" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                     </div>
                   )}
                 </div>

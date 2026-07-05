@@ -148,10 +148,10 @@ export const sharedFilesService = {
       'sharedFilesService.getByUserId',
       () => supabase
         .from('shared_files')
-        .select('*')
+        .select('id,user_id,name,url,type,category,shared_at,storage_path,size')
         .eq('user_id', userId)
         .is('deleted_at', null)
-        .order('shared_at', { ascending: false }),
+        .order('shared_at', { ascending: false }).limit(50),
       [],
     );
     if (result.error) console.warn('sharedFilesService.getByUserId:', interpretError(result.error));
@@ -163,9 +163,9 @@ export const sharedFilesService = {
       'sharedFilesService.getAll',
       () => supabase
         .from('shared_files')
-        .select('*')
+        .select('id,user_id,name,url,type,category,shared_at,storage_path,size')
         .is('deleted_at', null)
-        .order('shared_at', { ascending: false }),
+        .order('shared_at', { ascending: false }).limit(50),
       [],
     );
     if (result.error) console.warn('sharedFilesService.getAll:', interpretError(result.error));

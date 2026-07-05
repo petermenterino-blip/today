@@ -22,6 +22,11 @@ export const QK = {
 } as const;
 
 export const STALE_TIMES = {
+  realTime: 30 * 1000,
+  frequent: 60 * 1000,
+  normal: 5 * 60 * 1000,
+  slow: 15 * 60 * 1000,
+  static: 30 * 60 * 1000,
   frequently: 0,
   default: 5 * 60 * 1000,
   rare: 30 * 60 * 1000,

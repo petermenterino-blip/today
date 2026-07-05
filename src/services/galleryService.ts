@@ -143,8 +143,7 @@ export const galleryService = {
 
   async uploadImage(userId: string, file: File): Promise<string> {
     const path = await storageService.uploadGalleryImage(userId, file);
-    const { data } = storageService.getPublicUrl('gallery-images', path);
-    return data.publicUrl;
+    return storageService.getPublicUrlFromPath('gallery-images', path);
   },
 
   async getActivityLog(): Promise<{ data: any[]; error: string | null }> {

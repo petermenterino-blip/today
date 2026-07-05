@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '../constants/queryKeys';
 import { journalStorage } from '../services/journalStorage';
 import { JournalEntry } from '../interfaces';
 import { useRealtimeData } from './useRealtimeData';
@@ -15,7 +16,7 @@ export const useJournals = (studentId?: string) => {
       studentId
         ? journalStorage.getByStudentId(studentId)
         : journalStorage.getAll(),
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.normal,
   });
 
   const addJournal = useMutation({

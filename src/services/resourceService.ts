@@ -8,7 +8,7 @@ import type {
 } from '../types/resources';
 
 const RESOURCE_SELECT = `
-  *,
+  id,title,description,url,category,file_type,file_size,file_path,thumbnail_url,duration,source_type,external_url,tags,program_ids,student_ids,status,visibility,featured,is_pinned,is_archived,version,views_count,downloads_count,favorites_count,completions_count,created_by,created_at,updated_at,deleted_at,
   creator:created_by(id, name:full_name, email),
   category_data:category(id, name, slug, icon, color)
 `;
@@ -240,10 +240,11 @@ export const resourceService = {
     return { data: path, error: null };
   },
 
-  async getFileUrl(path: string, bucket = 'mentor-resources') {
+  async getFileUrl(path: string, bucket = 'mentor-resources', expiresIn = 3600) {
     if (!path) return { data: null as string | null, error: 'No path provided' };
-    const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-    return { data: data.publicUrl, error: null };
+    const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, expiresIn);
+    if (error) return { data: null as string | null, error: error.message };
+    return { data: data.signedUrl, error: null };
   },
 
   async getSignedUrl(path: string, bucket = 'mentor-resources', expiresIn = 300) {

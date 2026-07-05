@@ -86,6 +86,22 @@ function configsEqual(a: ChannelEntry[], b: ChannelEntry[]): boolean {
   return true
 }
 
+const debounceTimers = new Map<string, ReturnType<typeof setTimeout>>()
+
+function debouncedInvalidate(queryClient: ReturnType<typeof useQueryClient>, queryKey: string[], delay = 2000) {
+  const key = queryKey.join('|')
+  const existing = debounceTimers.get(key)
+  if (existing) clearTimeout(existing)
+  debounceTimers.set(key, setTimeout(() => {
+    debounceTimers.delete(key)
+    try {
+      queryClient.invalidateQueries({ queryKey, refetchType: 'active' })
+    } catch (err) {
+      logger.error('realtimeManager', `Invalidation error for ${key}`, { error: String(err) })
+    }
+  }, delay))
+}
+
 export function useSharedRealtimeData(configs: ChannelEntry[]) {
   const queryClient = useQueryClient()
   const keysRef = useRef<string[]>([])
@@ -118,11 +134,7 @@ export function useSharedRealtimeData(configs: ChannelEntry[]) {
             filter: filter ? `${filter.column}=eq.${filter.value}` : undefined,
           },
           () => {
-            try {
-              queryClient.invalidateQueries({ queryKey })
-            } catch (err) {
-              logger.error('useSharedRealtimeData', `Invalidation error for ${table}`, { error: String(err) })
-            }
+            debouncedInvalidate(queryClient, queryKey, 2000)
           }
         )
         entry.handlers.add(handlerId)

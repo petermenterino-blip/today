@@ -63,7 +63,7 @@ export const customFormService = {
   async getAllForms(): Promise<CustomForm[]> {
     const { data, error } = await supabase
       .from('custom_forms')
-      .select('*')
+      .select('id,title,description,fields,assigned_to,created_by,created_at,updated_at,deleted_at')
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
@@ -74,7 +74,7 @@ export const customFormService = {
   async getFormById(id: string): Promise<CustomForm | null> {
     const { data, error } = await supabase
       .from('custom_forms')
-      .select('*')
+      .select('id,title,description,fields,assigned_to,created_by,created_at,updated_at,deleted_at')
       .eq('id', id)
       .is('deleted_at', null)
       .single();
@@ -151,7 +151,7 @@ export const customFormService = {
   async getAssignmentsByStudentId(studentId: string): Promise<FormAssignment[]> {
     const { data, error } = await supabase
       .from('form_assignments')
-      .select('*, custom_forms(*), student:profiles!form_assignments_student_id_fkey(name, full_name)')
+      .select('id,form_id,student_id,mentor_id,status,assigned_at,submitted_at,reviewed_at,closed_at,custom_forms(id,title,description,fields),student:profiles!form_assignments_student_id_fkey(id,name,full_name)')
       .eq('student_id', studentId)
       .order('assigned_at', { ascending: false });
 
@@ -165,7 +165,7 @@ export const customFormService = {
   async getAssignmentsByFormId(formId: string): Promise<FormAssignment[]> {
     const { data, error } = await supabase
       .from('form_assignments')
-      .select('*, custom_forms(*), student:profiles!form_assignments_student_id_fkey(name, full_name)')
+      .select('id,form_id,student_id,mentor_id,status,assigned_at,submitted_at,reviewed_at,closed_at,custom_forms(id,title,description,fields),student:profiles!form_assignments_student_id_fkey(id,name,full_name)')
       .eq('form_id', formId)
       .order('assigned_at', { ascending: false });
 
@@ -176,7 +176,7 @@ export const customFormService = {
   async getAssignmentsByMentorId(mentorId: string): Promise<FormAssignment[]> {
     const { data, error } = await supabase
       .from('form_assignments')
-      .select('*, custom_forms(*), student:profiles!form_assignments_student_id_fkey(name, full_name)')
+      .select('id,form_id,student_id,mentor_id,status,assigned_at,submitted_at,reviewed_at,closed_at,custom_forms(id,title,description,fields),student:profiles!form_assignments_student_id_fkey(id,name,full_name)')
       .eq('mentor_id', mentorId)
       .order('assigned_at', { ascending: false });
 
@@ -211,7 +211,7 @@ export const customFormService = {
   async getAllSubmissions(): Promise<FormSubmission[]> {
     const { data, error } = await supabase
       .from('form_submissions')
-      .select('*')
+      .select('id,form_id,user_id,user_name,responses,status,submitted_at,updated_at,created_at')
       .order('submitted_at', { ascending: false });
 
     if (error) return [];
@@ -221,7 +221,7 @@ export const customFormService = {
   async getSubmissionsByFormId(formId: string): Promise<FormSubmission[]> {
     const { data, error } = await supabase
       .from('form_submissions')
-      .select('*')
+      .select('id,form_id,user_id,user_name,responses,status,submitted_at,updated_at,created_at')
       .eq('form_id', formId)
       .order('submitted_at', { ascending: false });
 
@@ -232,7 +232,7 @@ export const customFormService = {
   async getSubmissionsByUserId(userId: string): Promise<FormSubmission[]> {
     const { data, error } = await supabase
       .from('form_submissions')
-      .select('*')
+      .select('id,form_id,user_id,user_name,responses,status,submitted_at,updated_at,created_at')
       .eq('user_id', userId)
       .order('submitted_at', { ascending: false });
 
@@ -278,7 +278,7 @@ export const customFormService = {
   }): Promise<FormSubmission | null> {
     const existing = await supabase
       .from('form_submissions')
-      .select('*')
+      .select('id,form_id,user_id,responses,status')
       .eq('form_id', submission.form_id)
       .eq('user_id', submission.user_id)
       .maybeSingle();

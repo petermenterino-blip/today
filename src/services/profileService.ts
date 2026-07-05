@@ -53,7 +53,7 @@ export const profileService = {
   async getProfile(userId: string): Promise<ServiceResponse<any>> {
     const { data, error } = await supabase
       .from('profiles')
-      .select('*')
+      .select('id,name,email,role,avatar_url,phone,bio,specialization,linkedin_url,settings,username,created_at,updated_at')
       .eq('id', userId)
       .single();
     if (error && error.code !== 'PGRST116') {
@@ -77,7 +77,7 @@ export const profileService = {
   async uploadAvatar(userId: string, file: File): Promise<ServiceResponse<string>> {
     try {
       const path = await storageService.uploadAvatar(userId, file);
-      const { data: { publicUrl } } = storageService.getPublicUrl('profile-avatars', path);
+      const publicUrl = await storageService.getPublicUrl('profile-avatars', path);
       return { data: publicUrl, error: null };
     } catch (err: any) {
       return { data: null, error: err.message };

@@ -243,8 +243,8 @@ const EventDetailView: React.FC<EventDetailViewProps> = ({ eventId, onBack, onEd
       <div className="relative bg-white rounded-[40px] overflow-hidden border border-slate-100 shadow-sm">
         {event.image && (
           <div className="relative h-56 md:h-72">
-            <img src={event.image} alt={event.title} className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+<img src={event.image} alt={event.title} loading="lazy" className="w-full h-full object-cover" />
+             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
           </div>
         )}
         <div className={`${event.image ? 'absolute bottom-0 left-0 right-0' : ''} p-8 md:p-10`}>
@@ -537,7 +537,7 @@ const EventDetailView: React.FC<EventDetailViewProps> = ({ eventId, onBack, onEd
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {(event.speakers || []).map((s) => (
                 <div key={s.id} className="flex items-start gap-4 p-5 bg-slate-50 rounded-2xl border border-slate-100">
-                  {s.avatarUrl ? <img src={s.avatarUrl} alt={s.name} className="w-14 h-14 rounded-full object-cover shrink-0" /> :
+                  {s.avatarUrl ? <img src={s.avatarUrl} alt={s.name} loading="lazy" className="w-14 h-14 rounded-full object-cover shrink-0" /> :
                     <div className="w-14 h-14 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-black text-lg shrink-0">{s.name.charAt(0)}</div>}
                   <div>
                     <h4 className="text-sm font-black text-slate-900">{s.name}</h4>

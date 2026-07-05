@@ -382,7 +382,7 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
       const ext = audioBlob.type.includes('wav') ? 'wav' : 'webm';
       const file = new File([audioBlob], `voice_${Date.now()}.${ext}`, { type: audioBlob.type || 'audio/webm' });
       const storagePath = await storageService.uploadMessageAttachment(currentUserId, file);
-      const { data: { publicUrl } } = storageService.getPublicUrl('message-attachments', storagePath);
+      const publicUrl = await storageService.getPublicUrlFromPath('message-attachments', storagePath);
       uploadedUrl = publicUrl;
     } catch (err) {
       setToast({ message: 'Voice upload failed.', type: 'error' });
@@ -480,7 +480,7 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
     try {
       setToast({ message: 'Uploading file...', type: 'info' });
       const storagePath = await uploadFileWithRetry(file);
-      const { data: { publicUrl } } = storageService.getPublicUrl('message-attachments', storagePath);
+      const publicUrl = await storageService.getPublicUrlFromPath('message-attachments', storagePath);
 
       const sent = await messageService.sendMessage({
         senderId: currentUserId,

@@ -20,7 +20,7 @@ export const notificationStorage = {
   async getAll(): Promise<Notification[]> {
     const result = await safeQuery(
       'notificationStorage.getAll',
-      () => supabase.from('notifications').select('*').order('created_at', { ascending: false }),
+      () => supabase.from('notifications').select('id,user_id,title,message,read,type,link,created_at').order('created_at', { ascending: false }).limit(50),
       [],
       'notifications',
     );
@@ -31,7 +31,7 @@ export const notificationStorage = {
   async getByUserId(userId: string): Promise<Notification[]> {
     const result = await safeQuery(
       'notificationStorage.getByUserId',
-      () => supabase.from('notifications').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
+      () => supabase.from('notifications').select('id,user_id,title,message,read,type,link,created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(50),
       [],
       `notifications:${userId}`,
     );
@@ -43,7 +43,7 @@ export const notificationStorage = {
     try {
       const { count, error } = await supabase
         .from('notifications')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
         .eq('user_id', userId)
         .eq('read', false);
       if (error) {
@@ -60,7 +60,7 @@ export const notificationStorage = {
   async getById(id: string): Promise<Notification | null> {
     const result = await safeQuery(
       'notificationStorage.getById',
-      () => supabase.from('notifications').select('*').eq('id', id).single(),
+      () => supabase.from('notifications').select('id,user_id,title,message,read,type,link,created_at').eq('id', id).single(),
       null,
     );
     if (result.error || !result.data) return null;

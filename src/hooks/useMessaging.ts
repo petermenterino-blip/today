@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '../constants/queryKeys';
 import { messageService } from '../services/messageService';
 import { useRealtimeData } from './useRealtimeData';
 import type { Message, Conversation } from '../types/messaging';
@@ -14,14 +15,14 @@ export const useMessaging = (userId: string, role: 'student' | 'mentor', convers
   const { data: conversations = [], isLoading: conversationsLoading, refetch: refetchConversations } = useQuery({
     queryKey: ['conversations', userId, role],
     queryFn: () => messageService.getConversations(userId, role),
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.realTime,
   });
 
   const { data: messages = [], isLoading: messagesLoading } = useQuery({
     queryKey: ['messages', conversationId],
     queryFn: () => messageService.getMessages(conversationId!),
     enabled: !!conversationId,
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.realTime,
   });
 
   const sendMessageMutation = useMutation({

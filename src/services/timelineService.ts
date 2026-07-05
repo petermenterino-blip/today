@@ -34,7 +34,7 @@ export const timelineService = {
       'timelineService.getByStudentId',
       () => supabase
         .from('student_timeline_events')
-        .select('*')
+        .select('id,student_id,type,title,description,timestamp,mentor_id,category,metadata')
         .eq('student_id', studentId)
         .order('timestamp', { ascending: false }),
       [],

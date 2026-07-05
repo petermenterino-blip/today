@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
+import { STALE_TIMES } from '../constants/queryKeys';
 import { reviewService } from '../services/reviewService';
 import { Review, ReviewPriority, ReviewStatus } from '../interfaces';
 import { useRealtimeData } from './useRealtimeData';
@@ -32,7 +33,7 @@ export function useReviews() {
       return data || [];
     },
     enabled: !!userId && (role === 'mentor' || role === 'student'),
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.normal,
   });
 
   const createReview = useMutation({

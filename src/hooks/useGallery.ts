@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import { GalleryItem, GalleryCategory } from '../interfaces/gallery.interface';
 import { galleryService } from '../services/galleryService';
 import { useRealtimeData } from './useRealtimeData';
-import { QK } from '../constants/queryKeys';
+import { QK, STALE_TIMES } from '../constants/queryKeys';
 
 export const useGallery = (options?: {
   visibility?: 'published' | 'draft' | 'archived';
@@ -25,7 +25,7 @@ export const useGallery = (options?: {
       const { data } = await galleryService.fetchAll(options);
       return data || [];
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.slow,
   });
 
   const addItem = useMutation({

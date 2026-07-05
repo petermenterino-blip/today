@@ -3,7 +3,7 @@ import { resourceService } from '../services/resourceService';
 import { useRealtimeData } from './useRealtimeData';
 import { useAuth } from '../context/AuthContext';
 import { notifySuccess, notifyError } from '../utils/toast';
-import { QK } from '../constants/queryKeys';
+import { QK, STALE_TIMES } from '../constants/queryKeys';
 import type {
   Resource, ResourceCategory, ResourceFilters, ResourceComment,
   ResourceVersion, ResourceAssignment, ResourceStats, RecentlyViewed
@@ -33,7 +33,7 @@ export const useResources = () => {
       const result = await resourceService.fetchAll(filters);
       return { data: result.data || [], count: result.count || 0 };
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.slow,
   });
 
   // ── Single resource ──
@@ -45,7 +45,7 @@ export const useResources = () => {
       return data;
     },
     enabled: !!id,
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.slow,
   });
 
   // ── Categories ──
@@ -55,7 +55,7 @@ export const useResources = () => {
       const { data } = await resourceService.fetchCategories();
       return data || [];
     },
-    staleTime: 10 * 60 * 1000,
+    staleTime: STALE_TIMES.slow,
   });
 
   // ── Favorites ──
@@ -67,7 +67,7 @@ export const useResources = () => {
       return data || [];
     },
     enabled: !!userId,
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.slow,
   });
 
   // ── Completions ──
@@ -79,7 +79,7 @@ export const useResources = () => {
       return data || [];
     },
     enabled: !!userId,
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.slow,
   });
 
   // ── Recently Viewed ──
@@ -91,7 +91,7 @@ export const useResources = () => {
       return (data || []) as RecentlyViewed[];
     },
     enabled: !!userId,
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.slow,
   });
 
   // ── Student resources ──
@@ -103,7 +103,7 @@ export const useResources = () => {
       return data || [];
     },
     enabled: !!userId && !isMentor,
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.slow,
   });
 
   // ── Stats ──
@@ -113,7 +113,7 @@ export const useResources = () => {
       const { data } = await resourceService.getStats();
       return data as ResourceStats;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.slow,
   });
 
   // ── Mutations ──

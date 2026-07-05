@@ -121,16 +121,24 @@ export const messageService = {
     return (data || []).map(fromDbConversation);
   },
 
-  async getMessages(conversationId: string): Promise<Message[]> {
-    const { data, error } = await supabase
+  async getMessages(conversationId: string, limit = 30, beforeCursor?: string): Promise<Message[]> {
+    let query = supabase
       .from('messages')
       .select(MESSAGE_FIELDS)
       .eq('conversation_id', conversationId)
       .is('deleted_at', null)
-      .order('created_at', { ascending: true });
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (beforeCursor) {
+      query = query.lt('created_at', beforeCursor);
+    }
+
+    const { data, error } = await query;
 
     if (error) return [];
-    return (data || []).map(fromDbMessage);
+    const msgs = (data || []).map(fromDbMessage);
+    return msgs.reverse();
   },
 
   async getAllMessages(): Promise<Message[]> {
@@ -138,10 +146,11 @@ export const messageService = {
       .from('messages')
       .select(MESSAGE_FIELDS)
       .is('deleted_at', null)
-      .order('created_at', { ascending: true });
+      .order('created_at', { ascending: false })
+      .limit(50);
 
     if (error) return [];
-    return (data || []).map(fromDbMessage);
+    return (data || []).map(fromDbMessage).reverse();
   },
 
   async sendMessage(msg: Omit<Message, 'id' | 'timestamp' | 'status'>): Promise<Message | null> {

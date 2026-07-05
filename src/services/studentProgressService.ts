@@ -40,7 +40,7 @@ export const studentProgressService = {
   },
 
   async getProgressBatch(userIds?: string[], programIds?: string[]): Promise<StudentProgress[]> {
-    let query = supabase.from('student_progress').select('*');
+    let query = supabase.from('student_progress').select('user_id,program_id,started_at,completed_at,lessons');
     if (userIds && userIds.length > 0) {
       query = query.in('user_id', userIds);
     }
@@ -67,7 +67,7 @@ export const studentProgressService = {
   async getProgress(userId: string, programId: string): Promise<StudentProgress | null> {
     const { data, error } = await supabase
       .from('student_progress')
-      .select('*')
+      .select('user_id,program_id,started_at,completed_at,lessons')
       .eq('user_id', userId)
       .eq('program_id', programId)
       .maybeSingle();

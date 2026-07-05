@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '../constants/queryKeys';
 import { customFormService } from '../services/customFormService';
 import { useRealtimeData } from './useRealtimeData';
 import type { CustomForm, FormSubmission } from '../types';
@@ -16,27 +17,27 @@ export const useCustomForms = (userId?: string, mentorId?: string) => {
   const { data: forms = [], isLoading: formsLoading } = useQuery({
     queryKey: ['customForms'],
     queryFn: () => customFormService.getAllForms(),
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.slow,
   });
 
   const { data: allSubmissions = [], isLoading: submissionsLoading } = useQuery({
     queryKey: ['formSubmissions'],
     queryFn: () => customFormService.getAllSubmissions(),
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.slow,
   });
 
   const { data: assignments = [], isLoading: assignmentsLoading } = useQuery({
     queryKey: ['formAssignments', userId],
     queryFn: () => userId ? customFormService.getAssignmentsByStudentId(userId) : Promise.resolve([]),
     enabled: !!userId,
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.slow,
   });
 
   const { data: mentorAssignments = [] } = useQuery({
     queryKey: ['formAssignments', 'mentor', mentorId],
     queryFn: () => mentorId ? customFormService.getAssignmentsByMentorId(mentorId) : Promise.resolve([]),
     enabled: !!mentorId,
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.slow,
   });
 
   const submissions = allSubmissions.filter(s => !userId || s.user_id === userId);

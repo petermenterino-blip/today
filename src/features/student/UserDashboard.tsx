@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, Suspense, lazy } from "react";
 import { studentService } from "../../services/studentService";
 import { programService } from "../../services/programService";
 import { useDatabaseSync } from "../../hooks/useDatabaseSync";
 import { useRealtime } from "../../hooks/useRealtime";
 import { studentProgressService } from "../../services/studentProgressService";
-import StudentProgramView from "./StudentProgramView";
 import { applicationService } from "../../services/applicationService";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "motion/react";
@@ -52,18 +51,19 @@ import { useSessions } from "../../hooks/useSessions";
 import { notifyError, notifySuccess } from "../../utils/toast";
 import { getRecentlyViewed } from "../../utils/recentlyViewed";
 
-import StudentJournal from "./StudentJournal";
-import StudentGoals from "./StudentGoals";
-import StudentSessions from "./StudentSessions";
-import StudentEvents from "./StudentEvents";
-import StudentTasks from "./StudentTasks";
-import WhatsAppMessaging from "../messaging/WhatsAppMessaging";
-import GrowthForm from "./GrowthForm";
-import StudentForms from "./StudentForms";
-import StudentEditProfile from "./StudentEditProfile";
-import ResourceDashboard from "../resources/ResourceDashboard";
-import { StudentReviews } from "./StudentReviews";
-import StudentSharedFiles from "./StudentSharedFiles";
+const StudentJournal = lazy(() => import("./StudentJournal"));
+const StudentGoals = lazy(() => import("./StudentGoals"));
+const StudentSessions = lazy(() => import("./StudentSessions"));
+const StudentEvents = lazy(() => import("./StudentEvents"));
+const StudentTasks = lazy(() => import("./StudentTasks"));
+const WhatsAppMessaging = lazy(() => import("../messaging/WhatsAppMessaging"));
+const GrowthForm = lazy(() => import("./GrowthForm"));
+const StudentForms = lazy(() => import("./StudentForms"));
+const StudentEditProfile = lazy(() => import("./StudentEditProfile"));
+const ResourceDashboard = lazy(() => import("../resources/ResourceDashboard"));
+const StudentReviews = lazy(() => import("./StudentReviews").then(m => ({ default: m.StudentReviews })));
+const StudentSharedFiles = lazy(() => import("./StudentSharedFiles"));
+const StudentProgramView = lazy(() => import("./StudentProgramView"));
 
 interface UserDashboardProps {
   currentUser: User | null;
@@ -859,85 +859,85 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
                       </button>
                     </div>
                     {formsTab === 'activities' ? (
-                      <GrowthForm />
+                      <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><GrowthForm /></Suspense>
                     ) : (
-                      <StudentForms userId={currentUser?.id || ''} userName={currentUser?.name || ''} />
+                      <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><StudentForms userId={currentUser?.id || ''} userName={currentUser?.name || ''} /></Suspense>
                     )}
                   </div>
                 }
               />
               <Route
                 path="/programs/:programId" 
-                element={<StudentProgramView currentUser={currentUser} />} 
+                element={<Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><StudentProgramView currentUser={currentUser} /></Suspense>} 
               />
               <Route
                 path="/journal"
                 element={
-                  <StudentJournal
+                  <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><StudentJournal
                     studentId={currentUser?.id || "default-user"}
-                  />
+                  /></Suspense>
                 }
               />
               <Route
                 path="/goals"
                 element={
-                  <StudentGoals studentId={currentUser?.id || "default-user"} />
+                  <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><StudentGoals studentId={currentUser?.id || "default-user"} /></Suspense>
                 }
               />
               <Route
                 path="/reviews"
                 element={
-                  <StudentReviews />
+                  <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><StudentReviews /></Suspense>
                 }
               />
               <Route
                 path="/tasks"
                 element={
-                  <StudentTasks studentId={currentUser?.id || "default-user"} isApproved={isApproved} />
+                  <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><StudentTasks studentId={currentUser?.id || "default-user"} isApproved={isApproved} /></Suspense>
                 }
               />
               <Route
                 path="/sessions"
                 element={
-                  <StudentSessions
+                  <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><StudentSessions
                     studentId={currentUser?.id || "default-user"}
-                  />
+                  /></Suspense>
                 }
               />
               <Route
                 path="/messages"
                 element={
                   <div className="h-full w-full flex-1 min-h-0 flex flex-col">
-                    <WhatsAppMessaging
+                    <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><WhatsAppMessaging
                       role="student"
                       currentUserId={currentUser?.id || "student-1"}
                       currentUserName={currentUser?.name}
-                    />
+                    /></Suspense>
                   </div>
                 }
               />
               <Route
                 path="/resources"
-                element={<ResourceDashboard isMentor={false} />}
+                element={<Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><ResourceDashboard isMentor={false} /></Suspense>}
               />
               <Route
                 path="/events"
                 element={
-                  <StudentEvents
+                  <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><StudentEvents
                     events={events}
                     loading={eventsLoading}
                     currentUserId={currentUser?.id || ''}
                     onAttend={attendEvent}
-                  />
+                  /></Suspense>
                 }
               />
               <Route
                 path="/profile"
-                element={<StudentEditProfile currentUser={currentUser} />}
+                element={<Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><StudentEditProfile currentUser={currentUser} /></Suspense>}
               />
               <Route
                 path="/files"
-                element={<StudentSharedFiles userId={currentUser?.id || ''} />}
+                element={<Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><StudentSharedFiles userId={currentUser?.id || ''} /></Suspense>}
               />
               <Route path="*" element={<Navigate to="/student" replace />} />
             </Routes>

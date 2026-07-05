@@ -18,7 +18,7 @@ export const transactionService = {
   async fetchByUserId(userId: string) {
     const { data, error } = await supabase
       .from('transactions')
-      .select('*')
+      .select('id,user_id,user_name,amount,product,status,created_at')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
     if (error) return { data: null, error: handleError(error).error };
@@ -44,7 +44,7 @@ export const transactionService = {
   async fetchAll() {
     const { data, error } = await supabase
       .from('transactions')
-      .select('*')
+      .select('id,user_id,user_name,amount,product,status,created_at')
       .order('created_at', { ascending: false });
     if (error) return { data: null, error: handleError(error).error };
     return { data: (data || []).map(rowToTransaction), error: null };

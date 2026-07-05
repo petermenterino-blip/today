@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
+import { STALE_TIMES } from '../constants/queryKeys';
 import { Booking } from '../types';
 import { bookingService } from '../services/bookingService';
 import { useRealtimeData } from './useRealtimeData';
@@ -18,7 +19,7 @@ export const useBookings = () => {
       if (error) throw error;
       return data || [];
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.normal,
   });
 
   const addBooking = useMutation({

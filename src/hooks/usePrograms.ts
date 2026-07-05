@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '../constants/queryKeys';
 import { Program } from '../types';
 import { programService } from '../services/programService';
 import { useRealtimeData } from './useRealtimeData';
@@ -14,7 +15,7 @@ export const usePrograms = () => {
       const { data } = await programService.fetchAll();
       return data || [];
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.slow,
   });
 
   const addProgram = useMutation({

@@ -43,7 +43,7 @@ export const credentialService = {
   async getByStudentId(studentId: string): Promise<Credential[]> {
     const { data, error } = await supabase
       .from('credentials')
-      .select('*')
+      .select('id,student_id,title,description,issued_by,issued_at,type')
       .eq('student_id', studentId)
       .order('issued_at', { ascending: false });
 

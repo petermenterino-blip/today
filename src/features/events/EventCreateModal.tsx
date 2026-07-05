@@ -308,7 +308,7 @@ const EventCreateModal: React.FC<EventCreateModalProps> = ({ isOpen, onClose, on
                   <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Banner Image URL</label>
                   <input type="text" placeholder="https://images.unsplash.com/..." value={form.image || ''} onChange={e => setForm(prev => ({ ...prev, image: e.target.value }))}
                     className="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:border-black transition-all" />
-                  {form.image && <img src={form.image} alt="" className="mt-2 h-24 w-full object-cover rounded-2xl border border-slate-200" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />}
+                  {form.image && <img src={form.image} alt="" loading="lazy" className="mt-2 h-24 w-full object-cover rounded-2xl border border-slate-200" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />}
                 </div>
                 <div>
                   <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Program</label>

@@ -17,6 +17,17 @@ export interface PlatformContext {
   timestamp: string;
 }
 
+const PROFILE_FIELDS = 'id,name,email,role,avatar_url,status,created_at,updated_at';
+const PROGRAM_FIELDS = 'id,title,description,mentor_id,status,created_at';
+const SESSION_FIELDS = 'id,student_id,mentor_id,title,description,status,scheduled_at,start_time,end_time,meeting_url,program_id';
+const APPLICATION_FIELDS = 'id,student_id,assigned_mentor,status,created_at,email,name';
+const REVIEW_FIELDS = 'id,student_id,mentor_id,rating,feedback,completed_at,scheduled_at,created_at';
+const GOAL_FIELDS = 'id,student_id,title,description,status,progress_percentage,created_at';
+const TASK_FIELDS = 'id,student_id,mentor_id,title,description,status,due_date,created_at';
+const RESOURCE_FIELDS = 'id,title,description,file_type,file_size,category,created_at,uploaded_by,status,visibility';
+const EVENT_FIELDS = 'id,title,description,organizer_id,start_date,end_date,status,image,location';
+const NOTIFICATION_FIELDS = 'id,user_id,title,message,read,type,link,created_at';
+
 export class ContextEngine {
   private cache = new Map<string, { data: any; expires: number }>();
   private cacheTTL = 30_000;
@@ -35,7 +46,7 @@ export class ContextEngine {
 
   async getMentorProfile(userId: string) {
     return this.fetchWithCache(`mentor:${userId}`, async () => {
-      const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
+      const { data } = await supabase.from('profiles').select(PROFILE_FIELDS).eq('id', userId).single();
       return data;
     });
   }
@@ -44,7 +55,7 @@ export class ContextEngine {
     return this.fetchWithCache(`programs:${mentorId}`, async () => {
       const { data } = await supabase
         .from('programs')
-        .select('*')
+        .select(PROGRAM_FIELDS)
         .eq('mentor_id', mentorId)
         .order('created_at', { ascending: false });
       return data || [];
@@ -56,7 +67,7 @@ export class ContextEngine {
       const { data } = await supabase
         .from('profiles')
         .select(`
-          *,
+          id,name,email,role,avatar_url,status,created_at,
           enrollments!inner(program_id,programs!inner(mentor_id))
         `)
         .eq('enrollments.programs.mentor_id', mentorId)
@@ -69,7 +80,7 @@ export class ContextEngine {
     return this.fetchWithCache(`sessions:${mentorId}`, async () => {
       const { data } = await supabase
         .from('sessions')
-        .select('*')
+        .select(SESSION_FIELDS)
         .eq('mentor_id', mentorId)
         .gte('scheduled_at', new Date().toISOString())
         .order('scheduled_at', { ascending: true })
@@ -82,7 +93,7 @@ export class ContextEngine {
     return this.fetchWithCache(`applications:${mentorId}`, async () => {
       const { data } = await supabase
         .from('applications')
-        .select('*')
+        .select(APPLICATION_FIELDS)
         .eq('assigned_mentor', mentorId)
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
@@ -94,7 +105,7 @@ export class ContextEngine {
     return this.fetchWithCache(`reviews:${mentorId}`, async () => {
       const { data } = await supabase
         .from('reviews')
-        .select('*')
+        .select(REVIEW_FIELDS)
         .eq('mentor_id', mentorId)
         .is('completed_at', null)
         .order('scheduled_at', { ascending: true });
@@ -106,7 +117,7 @@ export class ContextEngine {
     return this.fetchWithCache(`goals:${mentorId}`, async () => {
       const { data } = await supabase
         .from('goals')
-        .select('*')
+        .select(GOAL_FIELDS)
         .eq('mentor_id', mentorId)
         .order('created_at', { ascending: false });
       return data || [];
@@ -117,7 +128,7 @@ export class ContextEngine {
     return this.fetchWithCache(`tasks:${mentorId}`, async () => {
       const { data } = await supabase
         .from('tasks')
-        .select('*')
+        .select(TASK_FIELDS)
         .eq('mentor_id', mentorId)
         .order('created_at', { ascending: false });
       return data || [];
@@ -128,7 +139,7 @@ export class ContextEngine {
     return this.fetchWithCache(`resources:${mentorId}`, async () => {
       const { data } = await supabase
         .from('resources')
-        .select('*')
+        .select(RESOURCE_FIELDS)
         .eq('uploaded_by', mentorId)
         .order('created_at', { ascending: false });
       return data || [];
@@ -139,7 +150,7 @@ export class ContextEngine {
     return this.fetchWithCache(`events:${mentorId}`, async () => {
       const { data } = await supabase
         .from('events')
-        .select('*')
+        .select(EVENT_FIELDS)
         .eq('organizer_id', mentorId)
         .gte('start_date', new Date().toISOString())
         .order('start_date', { ascending: true });
@@ -151,7 +162,7 @@ export class ContextEngine {
     return this.fetchWithCache(`activity:${mentorId}`, async () => {
       const { data } = await supabase
         .from('activity_logs')
-        .select('*')
+        .select('id,actor_id,action,entity_type,entity_id,target_type,target_id,metadata,created_at')
         .eq('actor_id', mentorId)
         .order('created_at', { ascending: false })
         .limit(limit);
@@ -163,7 +174,7 @@ export class ContextEngine {
     return this.fetchWithCache(`notifications:${userId}`, async () => {
       const { data } = await supabase
         .from('notifications')
-        .select('*')
+        .select(NOTIFICATION_FIELDS)
         .eq('user_id', userId)
         .eq('read', false)
         .order('created_at', { ascending: false });
@@ -173,12 +184,12 @@ export class ContextEngine {
 
   async getStudentDetail(studentId: string, mentorId: string) {
     const [profile, sessions, goals, reviews, resources, applications] = await Promise.all([
-      supabase.from('profiles').select('*').eq('id', studentId).single(),
-      supabase.from('sessions').select('*').eq('student_id', studentId).eq('mentor_id', mentorId).order('scheduled_at', { ascending: false }),
-      supabase.from('goals').select('*').eq('student_id', studentId).order('created_at', { ascending: false }),
-      supabase.from('reviews').select('*').eq('student_id', studentId).order('created_at', { ascending: false }),
-      supabase.from('resource_completions').select('*, resources(*)').eq('user_id', studentId),
-      supabase.from('applications').select('*').eq('student_id', studentId).eq('assigned_mentor', mentorId),
+      supabase.from('profiles').select(PROFILE_FIELDS).eq('id', studentId).single(),
+      supabase.from('sessions').select(SESSION_FIELDS).eq('student_id', studentId).eq('mentor_id', mentorId).order('scheduled_at', { ascending: false }),
+      supabase.from('goals').select(GOAL_FIELDS).eq('student_id', studentId).order('created_at', { ascending: false }),
+      supabase.from('reviews').select(REVIEW_FIELDS).eq('student_id', studentId).order('created_at', { ascending: false }),
+      supabase.from('resource_completions').select('id,user_id,resource_id,completed_at,resources(id,title,file_type)').eq('user_id', studentId),
+      supabase.from('applications').select(APPLICATION_FIELDS).eq('student_id', studentId).eq('assigned_mentor', mentorId),
     ]);
 
     return {
@@ -193,9 +204,9 @@ export class ContextEngine {
 
   async getProgramDetail(programId: string, mentorId: string) {
     const [program, students, sessions] = await Promise.all([
-      supabase.from('programs').select('*').eq('id', programId).eq('mentor_id', mentorId).single(),
-      supabase.from('enrollments').select('*, profiles(*)').eq('program_id', programId),
-      supabase.from('sessions').select('*').eq('program_id', programId),
+      supabase.from('programs').select(PROGRAM_FIELDS).eq('id', programId).eq('mentor_id', mentorId).single(),
+      supabase.from('enrollments').select('id,student_id,program_id,enrolled_at,profiles(id,name,email,avatar_url)').eq('program_id', programId),
+      supabase.from('sessions').select(SESSION_FIELDS).eq('program_id', programId),
     ]);
 
     return {

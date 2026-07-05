@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '../constants/queryKeys';
 import { sessionService } from '../services/sessionService';
 import { Session } from '../interfaces';
 import { useRealtimeData } from './useRealtimeData';
@@ -14,7 +15,7 @@ export const useSessions = (userId?: string, role?: 'student' | 'mentor') => {
       const { data } = await sessionService.fetchAll();
       return data || [];
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.frequent,
   });
 
   const sessions = allSessions.filter(s => {

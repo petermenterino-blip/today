@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
+import { STALE_TIMES } from '../constants/queryKeys';
 import { taskService } from '../services/taskService';
 import { TaskActivity } from '../types';
 import { useRealtimeData } from './useRealtimeData';
@@ -15,7 +16,7 @@ export const useTasks = () => {
       const { data } = await taskService.fetchAll();
       return data || [];
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.normal,
   });
 
   const addTask = useMutation({

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
+import { STALE_TIMES } from '../constants/queryKeys';
 import { applicationService } from '../services/applicationService';
 import { Application } from '../types';
 import { useRealtimeData } from './useRealtimeData';
@@ -15,7 +16,7 @@ export const useApplications = () => {
       const { data } = await applicationService.fetchAll();
       return data?.data || [];
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.frequent,
   });
 
   const refresh = useCallback(async (params?: { search?: string; status?: string; discipline?: string; sortBy?: string; sortOrder?: string; page?: number; limit?: number }) => {

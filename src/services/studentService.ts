@@ -204,7 +204,7 @@ export const studentTimelineService = {
   async getByStudentId(studentId: string): Promise<StudentTimelineEvent[]> {
     const result = await safeQuery(
       'studentTimelineService.getByStudentId',
-      () => supabase.from('student_timeline_events').select('*').eq('student_id', studentId).order('timestamp', { ascending: false }),
+      () => supabase.from('student_timeline_events').select('id,student_id,type,title,description,timestamp').eq('student_id', studentId).order('timestamp', { ascending: false }),
       [],
     );
     if (result.error) console.warn('studentTimelineService.getByStudentId:', interpretError(result.error));

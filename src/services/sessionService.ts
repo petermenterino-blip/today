@@ -63,7 +63,7 @@ export const sessionService = {
     const { data, error } = await supabase
       .from('sessions')
       .insert(row)
-      .select()
+      .select(SESSION_FIELDS)
       .single();
     if (error) return { data: null, error: handleError(error).error };
     const created = rowToSession(data);
@@ -78,7 +78,7 @@ export const sessionService = {
       .from('sessions')
       .update(row)
       .eq('id', id)
-      .select()
+      .select(SESSION_FIELDS)
       .single();
     if (error) return { data: null, error: handleError(error).error };
     if (!data) return { data: null, error: 'Session not found' };

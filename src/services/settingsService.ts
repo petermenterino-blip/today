@@ -35,7 +35,7 @@ export const settingsService = {
   async getByMentorId(mentorId: string): Promise<MentorSettings | null> {
     const { data, error } = await supabase
       .from('mentor_settings')
-      .select('*')
+      .select('id,mentor_id,timezone,session_duration,buffer_time,notifications_enabled,default_meeting_url,working_days,available_hours_start,available_hours_end')
       .eq('mentor_id', mentorId)
       .maybeSingle();
 
@@ -74,7 +74,7 @@ export const dashboardLayoutService = {
   async getByUserId(userId: string): Promise<DashboardLayout | null> {
     const { data, error } = await supabase
       .from('dashboard_layouts')
-      .select('*')
+      .select('id,user_id,layout')
       .eq('user_id', userId)
       .maybeSingle();
 

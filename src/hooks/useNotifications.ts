@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '../constants/queryKeys';
 import { notificationStorage } from '../services/notificationStorage';
 import { useRealtimeData } from './useRealtimeData';
 import { Notification as NotificationType } from '../interfaces';
@@ -11,7 +12,7 @@ export const useNotifications = () => {
   const { data: notifications = [], isLoading: loading } = useQuery({
     queryKey: ['notifications'],
     queryFn: () => notificationStorage.getAll(),
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.frequent,
   });
 
   const unreadCount = notifications.filter(n => !n.read).length;

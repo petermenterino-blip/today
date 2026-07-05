@@ -87,9 +87,9 @@ const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
       storageService.getSignedUrl('mentor-resources', resource.file_path, 300)
         .then(url => { setFileUrl(url); setLoading(false); })
         .catch(() => {
-          const { data } = storageService.getPublicUrl('mentor-resources', resource.file_path);
-          if (data) { setFileUrl(data.publicUrl); setLoading(false); }
-          else { setError('Failed to load file'); setLoading(false); }
+          storageService.getPublicUrlFromPath('mentor-resources', resource.file_path, 300)
+            .then(url => { setFileUrl(url); setLoading(false); })
+            .catch(() => { setError('Failed to load file'); setLoading(false); });
         });
     } else if (resource.external_url) {
       setFileUrl(resource.external_url);
@@ -182,6 +182,7 @@ const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
         <img
           src={fileUrl}
           alt={resource.title}
+          loading="lazy"
           className={`${isFullscreen ? 'w-full h-full object-contain' : 'max-w-full max-h-[60vh] object-contain'} rounded-xl`}
         />
       ) : fileUrl && isVideo ? (

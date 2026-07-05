@@ -38,7 +38,7 @@ export const goalStorage = {
   async getAll(): Promise<Goal[]> {
     const result = await safeQuery(
       'goalStorage.getAll',
-      () => supabase.from('goals').select('*, goal_milestones(*)').order('created_at', { ascending: false }),
+      () => supabase.from('goals').select('id,student_id,title,description,status,progress_percentage,target_date,created_at,updated_at,blockers,notes,goal_milestones(id,title,completed)').order('created_at', { ascending: false }).limit(50),
       [],
       'goals',
     );
@@ -49,7 +49,7 @@ export const goalStorage = {
   async getByStudentId(studentId: string): Promise<Goal[]> {
     const result = await safeQuery(
       'goalStorage.getByStudentId',
-      () => supabase.from('goals').select('*, goal_milestones(*)').eq('student_id', studentId).order('created_at', { ascending: false }),
+      () => supabase.from('goals').select('id,student_id,title,description,status,progress_percentage,target_date,created_at,updated_at,blockers,notes,goal_milestones(id,title,completed)').eq('student_id', studentId).order('created_at', { ascending: false }).limit(50),
       [],
       `goals:${studentId}`,
     );
@@ -60,7 +60,7 @@ export const goalStorage = {
   async getById(id: string): Promise<Goal | null> {
     const result = await safeQuery(
       'goalStorage.getById',
-      () => supabase.from('goals').select('*, goal_milestones(*)').eq('id', id).single(),
+      () => supabase.from('goals').select('id,student_id,title,description,status,progress_percentage,target_date,created_at,updated_at,blockers,notes,goal_milestones(id,title,completed)').eq('id', id).single(),
       null,
     );
     if (result.error || !result.data) return null;

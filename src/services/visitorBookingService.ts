@@ -233,7 +233,7 @@ export const visitorBookingService = {
     try {
       const { data, error } = await supabase
         .from('visitor_bookings')
-        .select('*')
+        .select('id,name,email,phone,date,time,status,service_type,message,assigned_mentor_id,assigned_mentor_name,created_at,updated_at,deleted_at,metadata')
         .eq('id', id)
         .single();
       if (error) return { data: null, error: handleError(error).error };
@@ -364,7 +364,7 @@ export const visitorBookingService = {
     try {
       const { data, error } = await supabase
         .from('booking_notes')
-        .select('*')
+        .select('id,booking_id,mentor_id,content,created_at')
         .eq('booking_id', bookingId)
         .order('created_at', { ascending: false });
       if (error) return { data: null, error: handleError(error).error };
@@ -378,7 +378,7 @@ export const visitorBookingService = {
     try {
       const { data, error } = await supabase
         .from('booking_timeline')
-        .select('*')
+        .select('id,booking_id,action,description,metadata,created_by,created_at')
         .eq('booking_id', bookingId)
         .order('created_at', { ascending: true });
       if (error) return { data: null, error: handleError(error).error };

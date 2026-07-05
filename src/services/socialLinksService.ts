@@ -13,7 +13,7 @@ export const socialLinksService = {
   async fetchAll(): Promise<{ data: SocialLink[]; error: string | null }> {
     const { data, error } = await supabase
       .from('social_links')
-      .select('*')
+      .select('id,platform,url,enabled,sort_order,created_by')
       .order('sort_order', { ascending: true });
     if (error) return { data: [], error: error.message };
     return { data: data || [], error: null };

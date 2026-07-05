@@ -39,7 +39,7 @@ export const journalStorage = {
   async getAll(): Promise<JournalEntry[]> {
     const result = await safeQuery(
       'journalStorage.getAll',
-      () => supabase.from('journals').select('*').order('created_at', { ascending: false }),
+      () => supabase.from('journals').select('id,student_id,type,title,content,mood,wins,challenges,mentor_comments,reviewed_by_mentor,created_at,updated_at').order('created_at', { ascending: false }).limit(50),
       [],
       'journals',
     );
@@ -50,7 +50,7 @@ export const journalStorage = {
   async getByStudentId(studentId: string): Promise<JournalEntry[]> {
     const result = await safeQuery(
       'journalStorage.getByStudentId',
-      () => supabase.from('journals').select('*').eq('student_id', studentId).order('created_at', { ascending: false }),
+      () => supabase.from('journals').select('id,student_id,type,title,content,mood,wins,challenges,mentor_comments,reviewed_by_mentor,created_at,updated_at').eq('student_id', studentId).order('created_at', { ascending: false }).limit(50),
       [],
       `journals:${studentId}`,
     );
@@ -61,7 +61,7 @@ export const journalStorage = {
   async getById(id: string): Promise<JournalEntry | null> {
     const result = await safeQuery(
       'journalStorage.getById',
-      () => supabase.from('journals').select('*').eq('id', id).single(),
+      () => supabase.from('journals').select('id,student_id,type,title,content,mood,wins,challenges,mentor_comments,reviewed_by_mentor,created_at,updated_at').eq('id', id).single(),
       null,
     );
     if (result.error || !result.data) return null;

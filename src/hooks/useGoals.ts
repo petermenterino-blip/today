@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '../constants/queryKeys';
 import { goalStorage } from '../services/goalStorage';
 import { Goal } from '../interfaces';
 import { useRealtimeData } from './useRealtimeData';
@@ -15,7 +16,7 @@ export const useGoals = (studentId?: string) => {
       studentId
         ? goalStorage.getByStudentId(studentId)
         : goalStorage.getAll(),
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.normal,
   });
 
   const addGoal = useMutation({

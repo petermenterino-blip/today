@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import { NetworkEvent, EventSpeaker, EventComment, EventWaitlistEntry, EventFeedback, EventFile } from '../types';
 import { eventService } from '../services/eventService';
 import { useRealtimeData } from './useRealtimeData';
-import { QK } from '../constants/queryKeys';
+import { QK, STALE_TIMES } from '../constants/queryKeys';
 
 export const useEvents = () => {
   const queryClient = useQueryClient();
@@ -18,7 +18,7 @@ export const useEvents = () => {
       const { data } = await eventService.fetchAll();
       return data || [];
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.slow,
   });
 
   const addEvent = useMutation({

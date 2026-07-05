@@ -20,7 +20,7 @@ export const tagService = {
   async getAll(): Promise<StudentTag[]> {
     const { data, error } = await supabase
       .from('tags')
-      .select('*')
+      .select('id,label,color')
       .order('label', { ascending: true });
 
     if (error) return [];
@@ -30,7 +30,7 @@ export const tagService = {
   async getById(id: string): Promise<StudentTag | null> {
     const { data, error } = await supabase
       .from('tags')
-      .select('*')
+      .select('id,label,color')
       .eq('id', id)
       .single();
 
@@ -93,7 +93,7 @@ export const tagService = {
 
     const { data: tags } = await supabase
       .from('tags')
-      .select('*')
+      .select('id,label,color')
       .in('id', tagIds);
 
     return (tags || []).map(fromDbTag);

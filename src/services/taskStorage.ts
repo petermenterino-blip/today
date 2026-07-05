@@ -34,7 +34,7 @@ export const taskStorage = {
   async getAll(): Promise<ActionItem[]> {
     const result = await safeQuery(
       'taskStorage.getAll',
-      () => supabase.from('tasks').select('*').order('created_at', { ascending: false }),
+      () => supabase.from('tasks').select('id,student_id,mentor_id,title,description,due_date,status,created_at,updated_at').order('created_at', { ascending: false }).limit(50),
       [],
       'tasks',
     );
@@ -45,7 +45,7 @@ export const taskStorage = {
   async getByStudentId(studentId: string): Promise<ActionItem[]> {
     const result = await safeQuery(
       'taskStorage.getByStudentId',
-      () => supabase.from('tasks').select('*').eq('student_id', studentId).order('created_at', { ascending: false }),
+      () => supabase.from('tasks').select('id,student_id,mentor_id,title,description,due_date,status,created_at,updated_at').eq('student_id', studentId).order('created_at', { ascending: false }).limit(50),
       [],
       `tasks:${studentId}`,
     );
@@ -56,7 +56,7 @@ export const taskStorage = {
   async getByMentorId(mentorId: string): Promise<ActionItem[]> {
     const result = await safeQuery(
       'taskStorage.getByMentorId',
-      () => supabase.from('tasks').select('*').eq('mentor_id', mentorId).order('created_at', { ascending: false }),
+      () => supabase.from('tasks').select('id,student_id,mentor_id,title,description,due_date,status,created_at,updated_at').eq('mentor_id', mentorId).order('created_at', { ascending: false }),
       [],
       `tasks:mentor:${mentorId}`,
     );
@@ -67,7 +67,7 @@ export const taskStorage = {
   async getById(id: string): Promise<ActionItem | null> {
     const result = await safeQuery(
       'taskStorage.getById',
-      () => supabase.from('tasks').select('*').eq('id', id).single(),
+      () => supabase.from('tasks').select('id,student_id,mentor_id,title,description,due_date,status,created_at,updated_at').eq('id', id).single(),
       null,
     );
     if (result.error || !result.data) return null;

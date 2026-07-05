@@ -158,7 +158,7 @@ const EventCard: React.FC<EventCardProps> = ({
     >
       {event.image ? (
         <div className="relative h-44 sm:h-52 overflow-hidden">
-          <img src={event.image} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+          <img src={event.image} alt={event.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
           {event.featured && (
             <div className="absolute top-3 left-3 px-3 py-1 bg-amber-400 text-amber-900 text-[8px] font-black uppercase tracking-widest rounded-full shadow-lg flex items-center gap-1">

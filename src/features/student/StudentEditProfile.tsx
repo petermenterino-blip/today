@@ -99,7 +99,7 @@ const StudentEditProfile: React.FC<StudentEditProfileProps> = ({ currentUser }) 
         <div className="flex items-center gap-6">
           <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden">
             {form.avatar_url ? (
-              <img src={form.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+              <img src={form.avatar_url} alt="Avatar" loading="lazy" className="w-full h-full object-cover" />
             ) : (
               <User size={32} className="text-slate-300" />
             )}
