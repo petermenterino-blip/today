@@ -47,7 +47,7 @@ const AssignResourceModal: React.FC<AssignResourceModalProps> = ({ open, onClose
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, name:full_name, email')
+        .select('id, name, email')
         .eq('role', 'student')
         .order('full_name');
       if (data) setStudents(data as Student[]);

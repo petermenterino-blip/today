@@ -87,7 +87,7 @@ export function useOverviewStore() {
   const reviewDomain = useReviews();
   const { notifications, unreadCount, loading: notifLoading } = useNotifications();
 
-  const { data: resources = [] } = (useResources() as any).useResourceList?.({}) ?? { data: [] };
+  const resources = ((useResources() as any).useResourceList?.({})?.data?.data) ?? [];
   const resourcesLoading = false;
 
   const messaging = useMessaging(userId || '', 'mentor');
@@ -142,11 +142,14 @@ export function useOverviewStore() {
 
   useEffect(() => {
     if (!userId) return;
+    const channelName = `overview-mentor-status-${userId}`
     const channel = supabase
-      .channel('overview-mentor-status')
+      .channel(channelName)
       .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'profiles', filter: `id=eq.${userId}` }, () => { refreshMentorStatus(); })
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [userId]);
 
   const refreshMentorStatus = useCallback(async () => {

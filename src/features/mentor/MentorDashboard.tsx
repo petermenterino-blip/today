@@ -35,9 +35,19 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
   const navigate = useNavigate();
   const d = useDashboard({ currentUser });
 
-  const anyLoading = d.appsLoading || d.tasksLoading || d.bookingsLoading || d.eventsLoading;
+  const [showSkeleton, setShowSkeleton] = React.useState(true);
+  const loading = d.appsLoading || d.tasksLoading || d.bookingsLoading || d.eventsLoading;
+  const loadingRef = React.useRef(false);
 
-  if (anyLoading && d.activeTab === 'overview') {
+  if (loading) {
+    loadingRef.current = true;
+    if (!showSkeleton) setShowSkeleton(true);
+  } else if (loadingRef.current) {
+    loadingRef.current = false;
+    setTimeout(() => setShowSkeleton(false), 300);
+  }
+
+  if (showSkeleton && d.activeTab === 'overview') {
     return (
       <div className="animate-in fade-in duration-700 space-y-8">
         <div className="space-y-4">
@@ -73,7 +83,7 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
     <ErrorBoundary>
     <div className={`animate-in fade-in duration-700 ${d.activeTab === 'messaging' ? 'h-full flex flex-col' : 'space-y-8'}`}>
       {d.activeTab === 'overview' && (
-        <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><OverviewTab
+        <ErrorBoundary><Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><OverviewTab
           handleTabChange={d.handleTabChange}
           getRecentActivityTimeline={d.getRecentActivityTimeline}
           handleOpenStudentProfile={d.handleOpenStudentProfile}
@@ -118,31 +128,31 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
           setActiveTab={d.setActiveTab}
           events={d.events}
           eventsLoading={d.eventsLoading}
-        /></Suspense>
+        /></Suspense></ErrorBoundary>
       )}
 
       {d.activeTab === 'feedback' && (
         <div className="space-y-8">
-          <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><ReviewsTab
+          <ErrorBoundary><Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><ReviewsTab
             mentors={[]}
             students={d.studentProfiles}
-          /></Suspense>
+          /></Suspense></ErrorBoundary>
           <div className="border-t border-slate-100 pt-8">
-            <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><TasksTab
+            <ErrorBoundary><Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><TasksTab
               pendingTasks={d.pendingTasks}
               selectedTask={d.selectedTask}
               setSelectedTask={d.setSelectedTask}
               feedbackResponse={d.feedbackResponse}
               setFeedbackResponse={d.setFeedbackResponse}
               handleReviewTask={d.handleReviewTask}
-              submitFeedback={d.submitFeedback}
-            /></Suspense>
+            submitFeedback={d.submitFeedback}
+          /></Suspense></ErrorBoundary>
           </div>
         </div>
       )}
 
       {d.activeTab === 'mentees' && (
-        <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><MenteesTab
+        <ErrorBoundary><Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><MenteesTab
           selectedMenteeId={d.selectedMenteeId}
           setSelectedMenteeId={d.setSelectedMenteeId}
           searchQuery={d.searchQuery}
@@ -188,11 +198,11 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
           handleAddGoal={d.handleAddGoal}
           handleUpdateGoal={d.handleUpdateGoal}
           handleDeleteGoal={d.handleDeleteGoal}
-          currentUser={d.currentUser}
-        /></Suspense>
+            currentUser={d.currentUser}
+        /></Suspense></ErrorBoundary>
       )}
       {d.activeTab === 'applications' && (
-        <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><ApplicationsTab
+        <ErrorBoundary><Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><ApplicationsTab
           applications={d.applications}
           pendingApplications={d.pendingApplications}
           appSearch={d.appSearch}
@@ -234,19 +244,19 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
           handleApplicationAction={d.handleApplicationAction}
           refreshApps={d.refreshApps}
           updateAppStatus={d.updateAppStatus}
-          filteredAppsForTab={d.filteredAppsForTab}
-        /></Suspense>
+            filteredAppsForTab={d.filteredAppsForTab}
+        /></Suspense></ErrorBoundary>
       )}
 
       {d.activeTab === 'bookings' && (
-        <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><VisitorBookingsTab /></Suspense>
+        <ErrorBoundary><Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><VisitorBookingsTab /></Suspense></ErrorBoundary>
       )}
 
       {d.activeTab === 'messaging' && (
-        <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><WhatsAppMessaging currentUserId={d.currentUser?.id || ''} currentUserName={d.currentUser?.name || 'Mentor'} role="mentor" /></Suspense>
+        <ErrorBoundary><Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><WhatsAppMessaging currentUserId={d.currentUser?.id || ''} currentUserName={d.currentUser?.name || 'Mentor'} role="mentor" /></Suspense></ErrorBoundary>
       )}
 
-      {d.activeTab === 'events' && <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><EventListView /></Suspense>}
+      {d.activeTab === 'events' && <ErrorBoundary><Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><EventListView /></Suspense></ErrorBoundary>}
 
       {d.activeTab === 'programs' && (
         <div className="space-y-6 animate-in fade-in duration-500">
@@ -274,7 +284,7 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
       )}
 
       {d.activeTab === 'sessions' && (
-        <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><MentorScheduler
+        <ErrorBoundary><Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><MentorScheduler
           currentUser={d.currentUser}
           studentProfiles={d.studentProfiles}
           programs={d.programs}
@@ -283,11 +293,11 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
           updateSession={d.updateSession}
           deleteSession={d.deleteSession}
           refreshSessions={d.refreshSessions}
-        /></Suspense>
+        /></Suspense></ErrorBoundary>
       )}
 
       {d.activeTab === 'resources' && (
-        <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><ResourceDashboard isMentor={true} /></Suspense>
+        <ErrorBoundary><Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><ResourceDashboard isMentor={true} /></Suspense></ErrorBoundary>
       )}
 
       {d.activeTab === 'analytics' && (
@@ -297,7 +307,7 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
       )}
 
       {d.activeTab === 'ai' && (
-        <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><AIDashboard
+        <ErrorBoundary><Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><AIDashboard
           chatHistory={d.chatHistory}
           setChatHistory={d.setChatHistory}
           userInput={d.userInput}
@@ -330,26 +340,26 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
           applications={d.applications}
           programs={d.programs}
           userId={d.currentUser?.id}
-        /></Suspense>
+        /></Suspense></ErrorBoundary>
       )}
 
       {d.activeTab === 'gallery' && (
-        <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><GalleryManagement /></Suspense>
+        <ErrorBoundary><Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><GalleryManagement /></Suspense></ErrorBoundary>
       )}
 
       {d.activeTab === 'growth-audit' && (
-        <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><GrowthAuditTab
+        <ErrorBoundary><Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><GrowthAuditTab
           studentProfiles={d.studentProfiles}
           taskActivities={d.taskActivities}
-        /></Suspense>
+        /></Suspense></ErrorBoundary>
       )}
 
       {d.activeTab === 'program-progress' && (
-        <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><ProgramProgressTab
+        <ErrorBoundary><Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><ProgramProgressTab
           programs={d.programs}
           studentProfiles={d.studentProfiles}
           onNavigateToStudent={d.handleOpenStudentProfile}
-        /></Suspense>
+        /></Suspense></ErrorBoundary>
       )}
 
       {/* Tag Management Modal */}

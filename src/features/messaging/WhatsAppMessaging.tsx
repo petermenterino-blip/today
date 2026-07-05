@@ -241,7 +241,9 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
   ]);
 
   useEffect(() => {
-    const userPresenceChannel = supabase.channel('user-presence');
+    if (!currentUserId) return;
+    const channelName = `user-presence-${currentUserId}`;
+    const userPresenceChannel = supabase.channel(channelName);
     userPresenceChannel
       .on('presence', { event: 'sync' }, () => {
         const state = userPresenceChannel.presenceState();

@@ -9,7 +9,7 @@ import type {
 
 const RESOURCE_SELECT = `
   id,title,description,url,category,file_type,file_size,file_path,thumbnail_url,duration,source_type,external_url,tags,program_ids,student_ids,status,visibility,featured,is_pinned,is_archived,version,views_count,downloads_count,favorites_count,completions_count,created_by,created_at,updated_at,deleted_at,
-  creator:created_by(id, name:full_name, email),
+  creator:created_by(id, name, email),
   category_data:category(id, name, slug, icon, color)
 `;
 
@@ -432,7 +432,7 @@ export const resourceService = {
   async getResourceAssignments(resourceId: string) {
     const { data, error } = await supabase
       .from('resource_assignments')
-      .select(`*, student:student_id(id, name:full_name, email), program:program_id(id, title)`)
+      .select(`*, student:student_id(id, name, email), program:program_id(id, title)`)
       .eq('resource_id', resourceId);
     if (error) return { data: null as ResourceAssignment[] | null, error: handleError(error).error };
     return { data: data || [], error: null };
@@ -484,7 +484,7 @@ export const resourceService = {
   async getResourceCompletions(resourceId: string) {
     const { data, error } = await supabase
       .from('resource_completions')
-      .select('*, user:user_id(id, name:full_name, email)')
+      .select('*, user:user_id(id, name, email)')
       .eq('resource_id', resourceId);
     if (error) return { data: null, error: handleError(error).error };
     return { data: data || [], error: null };
@@ -557,7 +557,7 @@ export const resourceService = {
   async getComments(resourceId: string) {
     const { data, error } = await supabase
       .from('resource_comments')
-      .select(`*, user:user_id(id, name:full_name, email)`)
+      .select(`*, user:user_id(id, name, email)`)
       .eq('resource_id', resourceId)
       .is('deleted_at', null)
       .order('created_at', { ascending: true });
@@ -573,7 +573,7 @@ export const resourceService = {
     const { data, error } = await supabase
       .from('resource_comments')
       .insert({ resource_id: resourceId, user_id: userId, content, parent_id: parentId || null })
-      .select(`*, user:user_id(id, name:full_name, email)`)
+      .select(`*, user:user_id(id, name, email)`)
       .single();
     if (error) return { data: null as ResourceComment | null, error: handleError(error).error };
     return { data: data as ResourceComment, error: null };
@@ -584,7 +584,7 @@ export const resourceService = {
       .from('resource_comments')
       .update({ content, edited_at: new Date().toISOString() })
       .eq('id', commentId)
-      .select(`*, user:user_id(id, name:full_name, email)`)
+      .select(`*, user:user_id(id, name, email)`)
       .single();
     if (error) return { data: null as ResourceComment | null, error: handleError(error).error };
     return { data: data as ResourceComment, error: null };
@@ -658,7 +658,7 @@ export const resourceService = {
   async getActivity(resourceId: string) {
     const { data, error } = await supabase
       .from('resource_activity')
-      .select(`*, user:user_id(id, name:full_name)`)
+      .select(`*, user:user_id(id, name)`)
       .eq('resource_id', resourceId)
       .order('created_at', { ascending: false })
       .limit(50);

@@ -34,7 +34,7 @@ class IdleRecoveryManager {
   }
 
   configure(config: IdleRecoveryConfig) {
-    this.callbacks = config;
+    this.callbacks = { ...this.callbacks, ...config };
   }
 
   mount() {

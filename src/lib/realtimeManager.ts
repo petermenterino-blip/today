@@ -17,73 +17,11 @@ type SubscribeEntry = {
   callback: (payload: any) => void
 }
 
-type ChannelSub = {
-  channel: RealtimeChannel
-  tables: Set<string>
-  refCount: number
-  subscribed: boolean
-  handlers: Set<string>
-}
-
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const isSupabaseAvailable = !!(supabaseUrl && import.meta.env.VITE_SUPABASE_ANON_KEY)
 
-function makeChannelKey(table: string, filter?: string): string {
-  return filter ? `${table}|${filter}` : table
-}
-
-const sharedChannels = new Map<string, ChannelSub>()
-
-function getOrCreateChannel(table: string, filter?: { column: string; value: string }): { channel: RealtimeChannel; key: string } {
-  const filterStr = filter ? `${filter.column}=eq.${filter.value}` : undefined
-  const key = makeChannelKey(table, filterStr)
-  const existing = sharedChannels.get(key)
-  if (existing) {
-    existing.refCount++
-    return { channel: existing.channel, key }
-  }
-  const channelName = `rt-shared-${key}-${crypto.randomUUID().slice(0, 8)}`
-  const channel = supabase.channel(channelName)
-  sharedChannels.set(key, { channel, tables: new Set([table]), refCount: 1, subscribed: false, handlers: new Set() })
-  return { channel, key }
-}
-
-function releaseChannel(key: string) {
-  const entry = sharedChannels.get(key)
-  if (!entry) return
-  entry.refCount--
-  if (entry.refCount <= 0) {
-    try { supabase.removeChannel(entry.channel) } catch {}
-    sharedChannels.delete(key)
-  }
-}
-
-export function getActiveChannelCount(): number {
-  return sharedChannels.size
-}
-
-function ensureSubscribed(entry: ChannelSub) {
-  if (entry.subscribed) return
-  entry.channel.subscribe((status: string) => {
-    if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-      logger.warn('realtimeManager', `Channel error: ${status}`)
-    }
-  })
-  entry.subscribed = true
-}
-
-function configsEqual(a: ChannelEntry[], b: ChannelEntry[]): boolean {
-  if (a.length !== b.length) return false
-  for (let i = 0; i < a.length; i++) {
-    if (a[i].table !== b[i].table) return false
-    if (a[i].queryKey.length !== b[i].queryKey.length) return false
-    for (let j = 0; j < a[i].queryKey.length; j++) {
-      if (a[i].queryKey[j] !== b[i].queryKey[j]) return false
-    }
-    if (Boolean(a[i].filter) !== Boolean(b[i].filter)) return false
-    if (a[i].filter && b[i].filter && (a[i].filter!.column !== b[i].filter!.column || a[i].filter!.value !== b[i].filter!.value)) return false
-  }
-  return true
+function makeFilterStr(filter?: { column: string; value: string }): string | undefined {
+  return filter ? `${filter.column}=eq.${filter.value}` : undefined
 }
 
 const debounceTimers = new Map<string, ReturnType<typeof setTimeout>>()
@@ -102,115 +40,142 @@ function debouncedInvalidate(queryClient: ReturnType<typeof useQueryClient>, que
   }, delay))
 }
 
+function generateChannelName(kind: string, table: string): string {
+  return `rt-${kind}-${table}-${crypto.randomUUID().slice(0, 8)}`
+}
+
+export function getActiveChannelCount(): number {
+  return 0
+}
+
 export function useSharedRealtimeData(configs: ChannelEntry[]) {
   const queryClient = useQueryClient()
-  const keysRef = useRef<string[]>([])
-  const configsRef = useRef(configs)
-  const initializedRef = useRef(false)
+  const channelsRef = useRef<RealtimeChannel[]>([])
+  const configsKeyRef = useRef('')
 
-  if (!initializedRef.current || !configsEqual(configsRef.current, configs)) {
-    configsRef.current = configs
-  }
+  const currentKey = configs.map(c => `${c.table}|${c.queryKey.join(',')}|${c.filter?.column ?? ''}|${c.filter?.value ?? ''}`).join('||')
 
   useEffect(() => {
     if (!isSupabaseAvailable) return
-    const currentConfigs = configsRef.current
-    if (currentConfigs.length === 0) return
+    if (configs.length === 0) return
 
-    const keys: string[] = []
+    const channels: RealtimeChannel[] = []
 
-    for (const { table, queryKey, filter } of currentConfigs) {
-      const { channel, key } = getOrCreateChannel(table, filter)
-      const entry = sharedChannels.get(key)!
+    for (const { table, queryKey, filter } of configs) {
+      const filterStr = makeFilterStr(filter)
+      const channelName = generateChannelName('data', table)
+      const channel = supabase.channel(channelName)
 
-      const handlerId = `invalidate:${queryKey.join('|')}`
-      if (!entry.handlers.has(handlerId)) {
-        channel.on(
-          'postgres_changes' as any,
-          {
-            event: '*',
-            schema: 'public',
-            table,
-            filter: filter ? `${filter.column}=eq.${filter.value}` : undefined,
-          },
-          () => {
-            debouncedInvalidate(queryClient, queryKey, 2000)
-          }
-        )
-        entry.handlers.add(handlerId)
-      }
+      logger.debug('realtimeManager', `Channel created: ${channelName}`)
 
-      ensureSubscribed(entry)
-      keys.push(key)
+      channel.on(
+        'postgres_changes' as any,
+        {
+          event: '*',
+          schema: 'public',
+          table,
+          filter: filterStr,
+        },
+        () => {
+          debouncedInvalidate(queryClient, queryKey, 2000)
+        }
+      )
+
+      channel.subscribe((status: string) => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          logger.warn('realtimeManager', `Channel error: ${status} for ${channelName}`)
+        }
+        if (status === 'SUBSCRIBED') {
+          logger.debug('realtimeManager', `Subscribed: ${channelName}`)
+        }
+      })
+
+      channels.push(channel)
     }
 
-    keysRef.current = keys
-    initializedRef.current = true
+    channelsRef.current = channels
+    configsKeyRef.current = currentKey
 
     return () => {
-      for (const key of keysRef.current) {
-        releaseChannel(key)
+      for (const ch of channelsRef.current) {
+        const name = ch.topic || 'unknown'
+        logger.debug('realtimeManager', `Removing channel: ${name}`)
+        try { supabase.removeChannel(ch) } catch (err) {
+          logger.error('realtimeManager', `Error removing channel ${name}`, { error: String(err) })
+        }
       }
-      keysRef.current = []
+      channelsRef.current = []
     }
-  }, [queryClient])
+  }, [currentKey, queryClient])
 
   return null
 }
 
 export function useSharedSubscription(configs: SubscribeEntry[]) {
-  const keysRef = useRef<string[]>([])
-  const configsRef = useRef(configs)
-  configsRef.current = configs
+  const channelsRef = useRef<RealtimeChannel[]>([])
+
+  const configsKey = configs.map(c => `${c.table}|${c.event ?? '*'}|${c.filter ?? ''}`).join('||')
 
   useEffect(() => {
+    if (!isSupabaseAvailable) return
     if (configs.length === 0) return
 
-    const keys: string[] = []
+    const channels: RealtimeChannel[] = []
 
-    for (let i = 0; i < configsRef.current.length; i++) {
-      const { table, event = '*', filter, callback } = configsRef.current[i]
+    for (let i = 0; i < configs.length; i++) {
+      const { table, event = '*', filter, callback } = configs[i]
       const filterStr = filter || undefined
-      const key = makeChannelKey(table, filterStr)
-      const { channel } = getOrCreateChannel(table, undefined)
-      const entry = sharedChannels.get(key)!
+      const channelName = generateChannelName('sub', table)
+      const channel = supabase.channel(channelName)
 
-      const handlerId = `cb_${i}`
-      if (!entry.handlers.has(handlerId)) {
-        channel.on(
-          'postgres_changes' as any,
-          { event, schema: 'public', table, filter },
-          (payload: any) => {
-            try {
-              callback(payload)
-            } catch (err) {
-              logger.error('useSharedSubscription', `Callback error for ${table}`, { error: String(err) })
-            }
+      logger.debug('realtimeManager', `Channel created: ${channelName}`)
+
+      channel.on(
+        'postgres_changes' as any,
+        { event, schema: 'public', table, filter: filterStr },
+        (payload: any) => {
+          try {
+            callback(payload)
+          } catch (err) {
+            logger.error('useSharedSubscription', `Callback error for ${table}`, { error: String(err) })
           }
-        )
-        entry.handlers.add(handlerId)
-      }
+        }
+      )
 
-      ensureSubscribed(entry)
-      keys.push(key)
+      channel.subscribe((status: string) => {
+        if (status === 'SUBSCRIBED') {
+          logger.debug('realtimeManager', `Subscribed: ${channelName}`)
+        }
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          logger.warn('realtimeManager', `Channel error: ${status} for ${channelName}`)
+        }
+      })
+
+      channels.push(channel)
     }
 
-    keysRef.current = keys
+    channelsRef.current = channels
 
     return () => {
-      for (const key of keysRef.current) {
-        releaseChannel(key)
+      for (const ch of channelsRef.current) {
+        const name = ch.topic || 'unknown'
+        logger.debug('realtimeManager', `Removing channel: ${name}`)
+        try { supabase.removeChannel(ch) } catch (err) {
+          logger.error('realtimeManager', `Error removing channel ${name}`, { error: String(err) })
+        }
       }
-      keysRef.current = []
+      channelsRef.current = []
     }
-  }, [])
+  }, [configsKey])
 
   return {
     cleanup: useCallback(() => {
-      for (const key of keysRef.current) {
-        releaseChannel(key)
+      for (const ch of channelsRef.current) {
+        const name = ch.topic || 'unknown'
+        logger.debug('realtimeManager', `Cleanup removing channel: ${name}`)
+        try { supabase.removeChannel(ch) } catch {}
       }
-      keysRef.current = []
+      channelsRef.current = []
     }, []),
     reconnect: useCallback(() => {
       // Supabase handles reconnection natively — no-op

@@ -77,13 +77,13 @@ const ResourceAnalyticsPanel: React.FC<ResourceAnalyticsPanelProps> = ({ resourc
         const [
           stRes, vRes, dRes, fRes, cRes, aRes, mRes
         ] = await Promise.all([
-          supabase.from('profiles').select('id, name:full_name, email').eq('role', 'student'),
+          supabase.from('profiles').select('id, name, email').eq('role', 'student'),
           supabase.from('resource_views').select('user_id, resource_id'),
           supabase.from('resource_downloads').select('user_id, resource_id'),
           supabase.from('resource_favorites').select('user_id, resource_id'),
           supabase.from('resource_completions').select('user_id, resource_id'),
           supabase.from('resource_assignments').select('student_id, resource_id, program_id'),
-          supabase.from('profiles').select('id, name:full_name, email').eq('role', 'mentor'),
+          supabase.from('profiles').select('id, name, email').eq('role', 'mentor'),
         ]);
         if (stRes.data) setStudents(stRes.data);
         if (vRes.data) setViews(vRes.data);

@@ -37,6 +37,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       logger.info('AuthContext', 'Refreshing auth session');
       const profileRes = await authService.getCurrentUser();
       if (profileRes.data) {
+        if (lastUserIdRef.current === profileRes.data.id && lastRoleRef.current === profileRes.data.role) {
+          logger.debug('AuthContext', 'Session unchanged, skipping state update');
+          return;
+        }
         lastUserIdRef.current = profileRes.data.id;
         lastRoleRef.current = profileRes.data.role;
         setUser(profileRes.data);
@@ -69,15 +73,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const profileRes = await authService.getCurrentUser();
         if (mounted) {
           if (profileRes.data) {
-            lastUserIdRef.current = profileRes.data.id;
-            lastRoleRef.current = profileRes.data.role;
-            setUser(profileRes.data);
-            setRole(profileRes.data.role);
+            if (lastUserIdRef.current === profileRes.data.id && lastRoleRef.current === profileRes.data.role) {
+              logger.debug('AuthContext', 'Init: session unchanged, skipping state update');
+            } else {
+              lastUserIdRef.current = profileRes.data.id;
+              lastRoleRef.current = profileRes.data.role;
+              setUser(profileRes.data);
+              setRole(profileRes.data.role);
+            }
           } else {
-            lastUserIdRef.current = null;
-            lastRoleRef.current = 'visitor';
-            setUser(null);
-            setRole('visitor');
+            if (lastUserIdRef.current === null && lastRoleRef.current === 'visitor') {
+              logger.debug('AuthContext', 'Init: already visitor, skipping state update');
+            } else {
+              lastUserIdRef.current = null;
+              lastRoleRef.current = 'visitor';
+              setUser(null);
+              setRole('visitor');
+            }
           }
         }
       } catch (err: any) {
