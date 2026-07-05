@@ -81,6 +81,9 @@ function toDbMessage(data: Partial<Message>): Record<string, any> {
   return db;
 }
 
+const CONVERSATION_FIELDS = 'id,student_id,student_name,mentor_id,mentor_name,last_message,last_message_time,created_at,unread_count,pinned,archived,is_group,name,participants,admin_id,description';
+const MESSAGE_FIELDS = 'id,sender_id,sender_name,conversation_id,content,created_at,status,type,audio_url,duration,file_name,file_url,file_size,file_type';
+
 export const messageService = {
   async getConversations(userId: string, _role: 'student' | 'mentor'): Promise<Conversation[]> {
     const { data: participants, error: partError } = await supabase
@@ -94,7 +97,7 @@ export const messageService = {
 
     const { data, error } = await supabase
       .from('conversations')
-      .select('*')
+      .select(CONVERSATION_FIELDS)
       .in('id', convIds)
       .is('deleted_at', null)
       .order('pinned', { ascending: false })
@@ -109,7 +112,7 @@ export const messageService = {
   async getAllConversations(): Promise<Conversation[]> {
     const { data, error } = await supabase
       .from('conversations')
-      .select('*')
+      .select(CONVERSATION_FIELDS)
       .is('deleted_at', null)
       .order('pinned', { ascending: false })
       .order('last_message_time', { ascending: false });
@@ -121,7 +124,7 @@ export const messageService = {
   async getMessages(conversationId: string): Promise<Message[]> {
     const { data, error } = await supabase
       .from('messages')
-      .select('*')
+      .select(MESSAGE_FIELDS)
       .eq('conversation_id', conversationId)
       .is('deleted_at', null)
       .order('created_at', { ascending: true });
@@ -133,7 +136,7 @@ export const messageService = {
   async getAllMessages(): Promise<Message[]> {
     const { data, error } = await supabase
       .from('messages')
-      .select('*')
+      .select(MESSAGE_FIELDS)
       .is('deleted_at', null)
       .order('created_at', { ascending: true });
 
@@ -222,7 +225,7 @@ export const messageService = {
     try {
       const { data: conv, error } = await supabase
         .from('conversations')
-        .select('*')
+        .select('mentor_id, student_id')
         .eq('id', conversationId)
         .single();
       if (error || !conv) return null;
@@ -250,7 +253,7 @@ export const messageService = {
     try {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, name, role, avatar_url, email, bio, phone, specialization, created_at')
         .eq('id', participantId)
         .single();
       if (!profile) return null;
@@ -274,7 +277,7 @@ export const messageService = {
     try {
       const { data } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, name, email, role, avatar_url')
         .eq('id', userId)
         .single();
       return data || null;
@@ -286,7 +289,7 @@ export const messageService = {
   async createConversation(studentId: string, studentName: string, mentorId: string): Promise<Conversation | null> {
     const { data: existing } = await supabase
       .from('conversations')
-      .select('*')
+      .select(CONVERSATION_FIELDS)
       .eq('student_id', studentId)
       .eq('mentor_id', mentorId)
       .is('deleted_at', null)

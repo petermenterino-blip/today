@@ -3,16 +3,18 @@ import { useCallback } from 'react';
 import { Booking } from '../types';
 import { bookingService } from '../services/bookingService';
 import { useRealtimeData } from './useRealtimeData';
+import { useAuth } from '../context/AuthContext';
 
 export const useBookings = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   useRealtimeData([{ table: 'bookings', queryKey: ['bookings'] }]);
 
   const { data: bookings = [], isLoading: loading, error } = useQuery({
-    queryKey: ['bookings'],
+    queryKey: ['bookings', user?.id],
     queryFn: async () => {
-      const { data, error } = await bookingService.fetchAll();
+      const { data, error } = await bookingService.fetchAll(user?.id);
       if (error) throw error;
       return data || [];
     },

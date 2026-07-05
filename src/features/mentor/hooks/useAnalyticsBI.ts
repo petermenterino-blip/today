@@ -195,16 +195,16 @@ export function useAnalyticsBI({ currentUser }: UseAnalyticsBIProps) {
     if (!userId) return;
     try {
       const [enrRes, progRes, tlRes, revRes, revHistRes, attRes, rvRes, rdRes, rfRes, rcRes] = await Promise.all([
-        supabase.from('program_enrollments').select('*'),
-        supabase.from('student_progress').select('*'),
-        supabase.from('student_timeline_events').select('*').order('timestamp', { ascending: false }).limit(200),
-        supabase.from('reviews').select('*'),
-        supabase.from('review_history').select('*'),
-        supabase.from('event_attendees').select('*'),
-        supabase.from('resource_views').select('*'),
-        supabase.from('resource_downloads').select('*'),
-        supabase.from('resource_favorites').select('*'),
-        supabase.from('resource_completions').select('*'),
+        supabase.from('program_enrollments').select('id, program_id, student_id, status, enrolled_at'),
+        supabase.from('student_progress').select('id, program_id, completion_percentage, status').limit(500),
+        supabase.from('student_timeline_events').select('id, student_id, type, title, description, timestamp').order('timestamp', { ascending: false }).limit(200),
+        supabase.from('reviews').select('id, program_id, status, rating, title, created_at, updated_at, reviewee_id, student_id').limit(500),
+        supabase.from('review_history').select('id').limit(100),
+        supabase.from('event_attendees').select('id, event_id, user_id, status').limit(500),
+        supabase.from('resource_views').select('id, resource_id, user_id').limit(500),
+        supabase.from('resource_downloads').select('id, resource_id, user_id').limit(500),
+        supabase.from('resource_favorites').select('id, resource_id, user_id').limit(500),
+        supabase.from('resource_completions').select('id, resource_id, user_id').limit(500),
       ]);
       if (enrRes.data) setEnrollments(enrRes.data);
       if (progRes.data) setStudentProgress(progRes.data);
@@ -226,18 +226,7 @@ export function useAnalyticsBI({ currentUser }: UseAnalyticsBIProps) {
     loadAuxData();
   }, [loadAuxData]);
 
-  useRealtime([
-    { table: 'program_enrollments', callback: loadAuxData },
-    { table: 'student_progress', callback: loadAuxData },
-    { table: 'student_timeline_events', callback: loadAuxData },
-    { table: 'reviews', callback: loadAuxData },
-    { table: 'review_history', callback: loadAuxData },
-    { table: 'event_attendees', callback: loadAuxData },
-    { table: 'resource_views', callback: loadAuxData },
-    { table: 'resource_downloads', callback: loadAuxData },
-    { table: 'resource_favorites', callback: loadAuxData },
-    { table: 'resource_completions', callback: loadAuxData },
-  ]);
+  // Analytics page updates on refresh — no realtime needed to avoid 10-channel overhead
 
   const [filters, setFilters] = useState<FilterState>({
     program: '', mentor: '', student: '', status: '', growthScore: '', period: 'all',

@@ -96,21 +96,8 @@ export function useOverviewStore() {
   const activeTabRef = useRef('overview');
 
   useRealtimeData([
-    { table: 'applications', queryKey: ['applications'] },
-    { table: 'sessions', queryKey: ['sessions'] },
-    { table: 'profiles', queryKey: ['studentList'] },
-    { table: 'programs', queryKey: ['programs'] },
     { table: 'program_enrollments', queryKey: ['enrollments'] },
-    { table: 'goals', queryKey: ['goals'] },
-    { table: 'tasks', queryKey: ['tasks'] },
-    { table: 'journals', queryKey: ['journals'] },
-    { table: 'reviews', queryKey: ['reviews'] },
-    { table: 'events', queryKey: ['events'] },
     { table: 'event_attendees', queryKey: ['events'] },
-    { table: 'notifications', queryKey: ['notifications'] },
-    { table: 'resources', queryKey: ['resources'] },
-    { table: 'messages', queryKey: ['messages'] },
-    { table: 'conversations', queryKey: ['conversations'] },
     { table: 'gallery_items', queryKey: ['gallery'] },
   ]);
 
@@ -120,8 +107,9 @@ export function useOverviewStore() {
     const loadInitialData = async () => {
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('*')
-        .eq('role', 'student');
+        .select('id, user_id, name, email, mentor_id, status, current_status, health_status, last_login, goal_progress, specialization, avatar_url, role')
+        .eq('role', 'student')
+        .limit(200);
       if (profiles) {
         const studentProfilesData = profiles as any;
         const mentorProfiles = studentProfilesData.filter((p: any) => p.mentor_id === userId);

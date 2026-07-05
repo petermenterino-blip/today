@@ -50,6 +50,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     let mounted = true;
     let initialized = false;
+
+    const AUTH_INIT_TIMEOUT = 15000;
+    const timeoutId = setTimeout(() => {
+      if (mounted && !initialized) {
+        logger.warn('AuthContext', 'Auth init timed out, proceeding as visitor');
+        initialized = true;
+        setAuthLoading(false);
+      }
+    }, AUTH_INIT_TIMEOUT);
+
     const initializeSession = async () => {
       try {
         const profileRes = await authService.getCurrentUser();
@@ -67,6 +77,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           logger.error('AuthContext', 'Failed to initialize session', { error: err?.message });
         }
       } finally {
+        clearTimeout(timeoutId);
         if (mounted) {
           initialized = true;
           setAuthLoading(false);

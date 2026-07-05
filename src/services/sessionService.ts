@@ -22,6 +22,8 @@ const CAMEL_TO_SNAKE: Record<string, string> = {
   internalNotes: 'internal_notes',
 };
 
+const SESSION_FIELDS = 'id,student_id,mentor_id,title,description,start_time,end_time,status,attendance_status,meeting_url,recording_url,program_id,meeting_type,session_type,created_at';
+
 const SNAKE_TO_CAMEL: Record<string, string> = Object.fromEntries(
   Object.entries(CAMEL_TO_SNAKE).map(([k, v]) => [v, k])
 );
@@ -50,7 +52,7 @@ export const sessionService = {
   async fetchAll(): Promise<ServiceResponse<Session[]>> {
     const { data, error } = await supabase
       .from('sessions')
-      .select('*')
+      .select(SESSION_FIELDS)
       .order('start_time', { ascending: true });
     if (error) return { data: null, error: handleError(error).error };
     return { data: (data || []).map(rowToSession), error: null };

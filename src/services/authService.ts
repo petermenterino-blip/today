@@ -24,7 +24,68 @@ export interface UserProfileDetails {
 const hasSupabaseCredentials = (): boolean => {
   const url = import.meta.env.VITE_SUPABASE_URL;
   const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
-  return !!(url && key && url !== 'your_supabase_project_url');
+  if (!url || !key) return false;
+  if (url === 'your_supabase_project_url' || url.startsWith('http://localhost')) return false;
+  if (key === 'your_supabase_anon_key' || key === 'placeholder-for-CI') return false;
+  return true;
+};
+
+const getOrCreateProfileForUser = async (authUser: {
+  id: string;
+  email?: string | null;
+  created_at?: string;
+  user_metadata?: Record<string, any>;
+}) => {
+  const fallbackRole = (authUser.user_metadata?.role as UserRole) || 'student';
+  const fallbackName = authUser.user_metadata?.full_name || authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User';
+
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', authUser.id)
+    .single();
+
+  if (profile) return profile;
+  if (profileError && profileError.code !== 'PGRST116') throw profileError;
+
+  const { data: createdProfile, error: createError } = await supabase
+    .from('profiles')
+    .insert({
+      id: authUser.id,
+      email: authUser.email || '',
+      name: fallbackName,
+      role: fallbackRole,
+      created_at: authUser.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .select()
+    .single();
+
+  if (createError && createError.code !== '23505') throw createError;
+  if (createError?.code === '23505') {
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', authUser.id)
+      .single();
+    return existingProfile || {
+      id: authUser.id,
+      email: authUser.email || '',
+      name: fallbackName,
+      role: fallbackRole,
+      created_at: authUser.created_at || new Date().toISOString(),
+      application_status: null,
+    };
+  }
+
+  return createdProfile || {
+    id: authUser.id,
+    email: authUser.email || '',
+    name: fallbackName,
+    role: fallbackRole,
+    created_at: authUser.created_at || new Date().toISOString(),
+    application_status: null,
+  };
 };
 
 // ===================== Auth Service =====================
@@ -39,17 +100,13 @@ export const authService = {
     if (error) return { data: null, error: handleError(error).error };
     if (!data.user) return { data: null, error: 'Login failed' };
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', data.user.id)
-      .single();
+    const profile = await getOrCreateProfileForUser(data.user);
 
     const userData: User & { profile?: UserProfileDetails } = {
       id: data.user.id,
       email: data.user.email || email,
       name: profile?.name || data.user.user_metadata?.full_name || email.split('@')[0],
-      role: (profile?.role as UserRole) || 'visitor',
+      role: (profile?.role as UserRole) || (data.user.user_metadata?.role as UserRole) || 'visitor',
       application_status: profile?.application_status || null,
       created_at: data.user.created_at,
       profile: profile || undefined,
@@ -100,17 +157,13 @@ export const authService = {
     if (error) return { data: null, error: handleError(error).error };
     if (!session?.user) return { data: null, error: 'No active session' };
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', session.user.id)
-      .single();
+    const profile = await getOrCreateProfileForUser(session.user);
 
     const userData: User & { profile?: UserProfileDetails } = {
       id: session.user.id,
       email: session.user.email || '',
       name: profile?.name || session.user.user_metadata?.full_name || '',
-      role: (profile?.role as UserRole) || 'visitor',
+      role: (profile?.role as UserRole) || (session.user.user_metadata?.role as UserRole) || 'visitor',
       application_status: profile?.application_status || null,
       created_at: session.user.created_at,
       profile: profile || undefined,
@@ -171,25 +224,25 @@ export const authService = {
     const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         if (session?.user) {
-          try {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-              .single();
+          const userData: User = {
+            id: session.user.id,
+            email: session.user.email || '',
+            name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || '',
+            role: (session.user.user_metadata?.role as UserRole) || 'visitor',
+            created_at: session.user.created_at,
+          };
 
-            const userData: User = {
-              id: session.user.id,
-              email: session.user.email || '',
-              name: profile?.name || session.user.user_metadata?.full_name || '',
-              role: (profile?.role as UserRole) || 'visitor',
-              application_status: profile?.application_status || null,
-              created_at: session.user.created_at,
-            };
-            callback(userData);
+          try {
+            const profile = await getOrCreateProfileForUser(session.user);
+            userData.name = profile?.name || userData.name;
+            userData.role = (profile?.role as UserRole) || userData.role;
+            userData.application_status = profile?.application_status || null;
           } catch {
-            callback(null);
+            // Profile fetch/creation may fail due to RLS or missing trigger.
+            // Continue with metadata-derived user — never nullify on SIGNED_IN.
           }
+
+          callback(userData);
         }
       } else if (event === 'SIGNED_OUT') {
         callback(null);

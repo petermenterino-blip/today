@@ -6,7 +6,8 @@ const { mockSingle, mockFrom, mockSignIn, mockSignUp, mockSignOut, mockGetSessio
   const mOrder = vi.fn();
   const mEq = vi.fn(() => ({ single: mSingle, order: mOrder }));
   const mSelect = vi.fn(() => ({ eq: mEq }));
-  const mFrom = vi.fn(() => ({ select: mSelect }));
+  const mInsert = vi.fn(() => ({ select: () => ({ single: mSingle }) }));
+  const mFrom = vi.fn(() => ({ select: mSelect, insert: mInsert }));
 
   return {
     mockSingle: mSingle,
@@ -113,6 +114,42 @@ describe('authService', () => {
       const result = await authService.signIn('test@test.com', 'password');
 
       expect(result.error).toBe('Login failed');
+    });
+
+    it('uses metadata role when the profile row is missing', async () => {
+      mockSignIn.mockResolvedValue({
+        data: {
+          user: {
+            id: 'mentor-1',
+            email: 'mentor@mentorino.com',
+            created_at: '2025-01-01T00:00:00Z',
+            user_metadata: { full_name: 'Mentor User', role: 'mentor' },
+          },
+        },
+        error: null,
+      });
+
+      mockSingle
+        .mockResolvedValueOnce({
+          data: null,
+          error: { code: 'PGRST116', message: 'No rows found' },
+        })
+        .mockResolvedValueOnce({
+          data: {
+            id: 'mentor-1',
+            name: 'Mentor User',
+            email: 'mentor@mentorino.com',
+            role: 'mentor',
+            created_at: '2025-01-01T00:00:00Z',
+          },
+          error: null,
+        });
+
+      const result = await authService.signIn('mentor@mentorino.com', 'correct');
+
+      expect(result.error).toBeNull();
+      expect(result.data!.role).toBe('mentor');
+      expect(result.data!.name).toBe('Mentor User');
     });
   });
 

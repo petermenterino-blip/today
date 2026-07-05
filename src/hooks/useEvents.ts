@@ -10,13 +10,6 @@ export const useEvents = () => {
 
   useRealtimeData([
     { table: 'events', queryKey: [QK.events] },
-    { table: 'event_attendees', queryKey: [QK.events] },
-    { table: 'event_speakers', queryKey: [QK.events] },
-    { table: 'event_waitlist', queryKey: [QK.events] },
-    { table: 'event_comments', queryKey: [QK.events] },
-    { table: 'event_activity', queryKey: [QK.events] },
-    { table: 'event_feedbacks', queryKey: [QK.events] },
-    { table: 'event_files', queryKey: [QK.events] },
   ]);
 
   const { data: events = [], isLoading: loading } = useQuery({

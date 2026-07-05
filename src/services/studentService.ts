@@ -3,6 +3,8 @@ import type { StudentProfile, StudentTimelineEvent } from '../interfaces';
 import { safeQuery, safeMutate } from '../lib/supabaseFallback';
 import { interpretError } from '../lib/errorHandler';
 
+const STUDENT_LIST_FIELDS = 'id,name,email,status,health_status,last_login,growth_score,mentor_id,specialization,current_status,avatar_url,goal_progress,application_status,created_at,updated_at,program_id,tags,notes';
+
 function fromDbProfile(row: any): StudentProfile {
   return {
     id: row.id,
@@ -50,10 +52,10 @@ function fromDbProfile(row: any): StudentProfile {
 }
 
 export const studentService = {
-  async getAll(): Promise<StudentProfile[]> {
+  async getAll(limit = 200): Promise<StudentProfile[]> {
     const result = await safeQuery(
       'studentService.getAll',
-      () => supabase.from('profiles').select('*').eq('role', 'student'),
+      () => supabase.from('profiles').select(STUDENT_LIST_FIELDS).eq('role', 'student').limit(limit),
       [],
       'students',
     );
@@ -64,7 +66,7 @@ export const studentService = {
   async getByMentor(mentorId: string): Promise<StudentProfile[]> {
     const { data, error } = await supabase
       .from('profiles')
-      .select('*')
+      .select(STUDENT_LIST_FIELDS)
       .eq('role', 'student')
       .eq('mentor_id', mentorId);
     if (error) {
@@ -77,7 +79,7 @@ export const studentService = {
   async getById(id: string): Promise<StudentProfile | null> {
     const result = await safeQuery(
       'studentService.getById',
-      () => supabase.from('profiles').select('*').eq('id', id).eq('role', 'student').single(),
+      () => supabase.from('profiles').select(STUDENT_LIST_FIELDS).eq('id', id).eq('role', 'student').single(),
       null,
     );
     if (result.error || !result.data) return null;
@@ -87,9 +89,10 @@ export const studentService = {
   async getByStatus(status: StudentProfile['status']): Promise<StudentProfile[]> {
     const { data, error } = await supabase
       .from('profiles')
-      .select('*')
+      .select(STUDENT_LIST_FIELDS)
       .eq('role', 'student')
-      .eq('status', status);
+      .eq('status', status)
+      .limit(200);
     if (error) {
       console.warn('studentService.getByStatus:', interpretError(error));
       return [];
@@ -174,9 +177,10 @@ export const studentService = {
   async searchStudents(query: string): Promise<StudentProfile[]> {
     const { data, error } = await supabase
       .from('profiles')
-      .select('*')
+      .select(STUDENT_LIST_FIELDS)
       .eq('role', 'student')
-      .or(`name.ilike.%${query}%,email.ilike.%${query}%,phone.ilike.%${query}%,specialization.ilike.%${query}%`);
+      .or(`name.ilike.%${query}%,email.ilike.%${query}%,phone.ilike.%${query}%,specialization.ilike.%${query}%`)
+      .limit(50);
     if (error) {
       console.warn('studentService.searchStudents:', interpretError(error));
       return [];

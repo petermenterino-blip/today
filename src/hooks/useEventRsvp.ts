@@ -8,7 +8,7 @@ export const useEventRsvp = (eventId: string, userId: string | undefined) => {
     queryKey: ['event-rsvp', eventId, userId],
     queryFn: () => eventRsvpService.getRegistration(eventId, userId!),
     enabled: !!userId && !!eventId,
-    staleTime: 0,
+    staleTime: 5 * 60 * 1000,
   });
 
   const register = useMutation({

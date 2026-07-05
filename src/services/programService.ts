@@ -2,6 +2,8 @@ import { supabase } from '../lib/supabase';
 import { Program, ServiceResponse } from '../types';
 import { handleError } from '../lib/serviceHelper';
 
+const PROGRAM_FIELDS = 'id,title,description,duration,mentor_id,image,category,difficulty,outcomes,progress,status,student_count,visibility,skills_covered,prerequisites,max_students,created_at,updated_at';
+
 const CAMEL_TO_SNAKE: Record<string, string> = {
   mentor: 'mentor_id',
   image: 'cover_image',
@@ -42,7 +44,7 @@ export const programService = {
   async fetchAll(): Promise<ServiceResponse<Program[]>> {
     const { data, error } = await supabase
       .from('programs')
-      .select('*')
+      .select(PROGRAM_FIELDS)
       .order('title');
     if (error) return { data: null, error: handleError(error).error };
     return { data: (data || []).map(rowToProgram), error: null };

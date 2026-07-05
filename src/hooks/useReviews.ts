@@ -32,7 +32,7 @@ export function useReviews() {
       return data || [];
     },
     enabled: !!userId && (role === 'mentor' || role === 'student'),
-    staleTime: 15 * 1000,
+    staleTime: 5 * 60 * 1000,
   });
 
   const createReview = useMutation({

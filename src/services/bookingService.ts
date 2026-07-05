@@ -77,11 +77,18 @@ function bookingToRow(b: Partial<Booking>): Record<string, any> {
 }
 
 export const bookingService = {
-  async fetchAll(): Promise<ServiceResponse<Booking[]>> {
-    const { data, error } = await supabase
+  async fetchAll(userId?: string, limit = 50, offset = 0): Promise<ServiceResponse<Booking[]>> {
+    let query = supabase
       .from('bookings')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .select('id, user_id, mentor_id, user_name, program_id, date, time, type, status, meeting_link, notes, attendance, created_at')
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (userId) {
+      query = query.or(`user_id.eq.${userId},mentor_id.eq.${userId}`);
+    }
+
+    const { data, error } = await query;
     if (error) return { data: null, error: handleError(error).error };
     return { data: (data || []).map(rowToBooking), error: null };
   },

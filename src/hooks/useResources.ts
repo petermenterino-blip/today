@@ -33,7 +33,7 @@ export const useResources = () => {
       const result = await resourceService.fetchAll(filters);
       return { data: result.data || [], count: result.count || 0 };
     },
-    staleTime: 10 * 1000,
+    staleTime: 5 * 60 * 1000,
   });
 
   // ── Single resource ──
@@ -45,7 +45,7 @@ export const useResources = () => {
       return data;
     },
     enabled: !!id,
-    staleTime: 30 * 1000,
+    staleTime: 5 * 60 * 1000,
   });
 
   // ── Categories ──
@@ -67,7 +67,7 @@ export const useResources = () => {
       return data || [];
     },
     enabled: !!userId,
-    staleTime: 30 * 1000,
+    staleTime: 5 * 60 * 1000,
   });
 
   // ── Completions ──
@@ -79,7 +79,7 @@ export const useResources = () => {
       return data || [];
     },
     enabled: !!userId,
-    staleTime: 30 * 1000,
+    staleTime: 5 * 60 * 1000,
   });
 
   // ── Recently Viewed ──
@@ -91,7 +91,7 @@ export const useResources = () => {
       return (data || []) as RecentlyViewed[];
     },
     enabled: !!userId,
-    staleTime: 10 * 1000,
+    staleTime: 5 * 60 * 1000,
   });
 
   // ── Student resources ──
@@ -103,7 +103,7 @@ export const useResources = () => {
       return data || [];
     },
     enabled: !!userId && !isMentor,
-    staleTime: 30 * 1000,
+    staleTime: 5 * 60 * 1000,
   });
 
   // ── Stats ──
@@ -113,7 +113,7 @@ export const useResources = () => {
       const { data } = await resourceService.getStats();
       return data as ResourceStats;
     },
-    staleTime: 10 * 1000,
+    staleTime: 5 * 60 * 1000,
   });
 
   // ── Mutations ──

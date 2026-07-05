@@ -21,7 +21,7 @@ export const useMessaging = (userId: string, role: 'student' | 'mentor', convers
     queryKey: ['messages', conversationId],
     queryFn: () => messageService.getMessages(conversationId!),
     enabled: !!conversationId,
-    staleTime: 60 * 1000,
+    staleTime: 5 * 60 * 1000,
   });
 
   const sendMessageMutation = useMutation({
