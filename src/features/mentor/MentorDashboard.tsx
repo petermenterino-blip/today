@@ -70,6 +70,7 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
   }
 
   return (
+    <ErrorBoundary>
     <div className={`animate-in fade-in duration-700 ${d.activeTab === 'messaging' ? 'h-full flex flex-col' : 'space-y-8'}`}>
       {d.activeTab === 'overview' && (
         <Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><OverviewTab
@@ -649,6 +650,7 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
         </div>
       )}
     </div>
+    </ErrorBoundary>
   );
 };
 

@@ -1,17 +1,22 @@
 -- Fix infinite RLS recursion on profiles table
--- The is_mentor() helper was querying profiles inside a profiles policy,
--- causing infinite recursion. Now reads from auth.users metadata instead.
+-- The original is_mentor() helper (language sql) was inlined into the RLS policy,
+-- so querying profiles inside a profiles policy caused infinite recursion.
+-- Using plpgsql prevents inlining, and security definer bypasses RLS so we can
+-- safely read profiles.role (the authoritative role source) instead of
+-- auth.users.raw_user_meta_data (which is only set at signup and never synced).
 
 create or replace function public.is_mentor()
 returns boolean
-language sql
+language plpgsql
 stable
 security definer
 set search_path = public, auth
 as $$
-  select exists (
-    select 1 from auth.users
+begin
+  return exists (
+    select 1 from public.profiles
     where id = auth.uid()
-    and raw_user_meta_data->>'role' = 'mentor'
+    and role = 'mentor'
   );
+end;
 $$;

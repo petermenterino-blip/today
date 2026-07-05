@@ -105,6 +105,7 @@ export function useOverviewStore() {
     if (!userId) return;
 
     const loadInitialData = async () => {
+      try {
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, user_id, name, email, mentor_id, status, current_status, health_status, last_login, goal_progress, specialization, avatar_url, role')
@@ -131,6 +132,9 @@ export function useOverviewStore() {
 
       const { data: enrolls } = await supabase.from('program_enrollments').select('*, programs!inner(*)');
       if (enrolls) setEnrollments(enrolls);
+      } catch (err) {
+        console.error('[useOverviewStore] loadInitialData failed:', err);
+      }
     };
 
     loadInitialData();

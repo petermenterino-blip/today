@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from '../context/AuthContext';
 import Layout from '../components/shared/Layout';
 import ProtectedRoute from '../components/shared/ProtectedRoute';
 import ScrollToTop from '../components/shared/ScrollToTop';
+import ErrorBoundary from '../components/shared/ErrorBoundary';
 
 const LandingPage = lazy(() => import('../pages/Landing'));
 const ApplicationPage = lazy(() => import('../pages/Application'));
@@ -48,6 +49,7 @@ const AppContent: React.FC = () => {
       <Toaster richColors position="top-right" />
       <ScrollToTop />
       <Layout role={role} onLogout={logout}>
+        <ErrorBoundary>
         <Suspense fallback={
           <div className="flex items-center justify-center min-h-[60vh]">
             <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
@@ -96,6 +98,7 @@ const AppContent: React.FC = () => {
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>
+        </ErrorBoundary>
       </Layout>
     </Router>
   );

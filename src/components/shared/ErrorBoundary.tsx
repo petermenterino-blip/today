@@ -1,74 +1,31 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
 
 type EBProps = { children: ReactNode; fallback?: ReactNode };
-type EBState = { hasError: boolean; error: Error | null; isRecoverable: boolean };
-
-function isRecoverableError(error: Error): boolean {
-  const msg = error?.message || '';
-  if (msg.includes('Failed to fetch')) return true;
-  if (msg.includes('NetworkError')) return true;
-  if (msg.includes('network')) return true;
-  if (msg.includes('ERR_CONNECTION')) return true;
-  if (msg.includes('timeout')) return true;
-  if (msg.includes('timed out')) return true;
-  if (msg.includes('JWT') || msg.includes('jwt')) return true;
-  if (msg.includes('token')) return true;
-  if (msg.includes('load metadata')) return true;
-  if (msg.includes('auth')) return true;
-  if (msg.includes('session')) return true;
-  if (msg.includes('refresh')) return true;
-  if (msg.includes('realtime')) return true;
-  if (msg.includes('channel')) return true;
-  if (msg.includes('Cannot read properties of null')) return true;
-  if (msg.includes('Cannot read properties of undefined')) return true;
-  if (msg.includes('is not a function')) return true;
-  return false;
-}
+type EBState = { hasError: boolean; error: Error | null; };
 
 export default class ErrorBoundary extends Component<EBProps, EBState> {
   declare props: EBProps;
   declare state: EBState;
-  private recoveryTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(props: EBProps) {
     super(props);
-    this.state = { hasError: false, error: null, isRecoverable: false };
+    this.state = { hasError: false, error: null };
   }
 
   static getDerivedStateFromError(error: Error): Partial<EBState> {
-    return {
-      hasError: true,
-      error,
-      isRecoverable: isRecoverableError(error),
-    };
+    return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, _info: ErrorInfo) {
     console.error('ErrorBoundary caught:', error, _info);
   }
 
-  componentWillUnmount() {
-    if (this.recoveryTimer) {
-      clearTimeout(this.recoveryTimer);
-    }
-  }
-
   handleRetry = () => {
-    try {
-      this.recoveryTimer = setTimeout(() => {
-        (this as any).setState({ hasError: false, error: null, isRecoverable: false });
-      }, 0);
-    } catch {}
+    (this as any).setState({ hasError: false, error: null });
   };
 
   render() {
     if (this.state.hasError) {
-      if (this.state.isRecoverable) {
-        try {
-          this.handleRetry();
-        } catch {}
-        return this.props.children;
-      }
       if (this.props.fallback) return this.props.fallback;
       return (
         <div className="min-h-[60vh] flex items-center justify-center p-8">
