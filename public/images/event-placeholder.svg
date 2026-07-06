@@ -1,0 +1,8 @@
+<svg width="400" height="300" viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="300" fill="#F5F7FA"/>
+  <rect x="1" y="1" width="398" height="298" rx="16" stroke="#E2E8F0" stroke-width="2" stroke-dasharray="8 4"/>
+  <circle cx="200" cy="130" r="32" fill="#E2E8F0"/>
+  <path d="M184 130C184 121.163 191.163 114 200 114C208.837 114 216 121.163 216 130C216 138.837 208.837 146 200 146C191.163 146 184 138.837 184 130Z" fill="#94A3B8"/>
+  <path d="M160 200C160 177.909 177.909 160 200 160C222.091 160 240 177.909 240 200V220H160V200Z" fill="#94A3B8"/>
+  <text x="200" y="255" text-anchor="middle" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="14" font-weight="500">No Image Available</text>
+</svg>
