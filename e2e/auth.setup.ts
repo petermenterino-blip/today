@@ -1,4 +1,4 @@
-import { test as setup } from '@playwright/test'
+import { test as setup, expect } from '@playwright/test'
 
 const QA_ACCOUNTS = {
   mentor: {
@@ -16,6 +16,7 @@ const QA_ACCOUNTS = {
 }
 
 setup('authenticate as mentor', async ({ page }) => {
+  expect(QA_ACCOUNTS.mentor.password).toBeTruthy()
   await page.goto('/#/auth')
   await page.fill('[placeholder="name@example.com"]', QA_ACCOUNTS.mentor.email)
   await page.fill('[placeholder="••••••••"]', QA_ACCOUNTS.mentor.password)
@@ -25,6 +26,7 @@ setup('authenticate as mentor', async ({ page }) => {
 })
 
 setup('authenticate as student1', async ({ page }) => {
+  expect(QA_ACCOUNTS.student1.password).toBeTruthy()
   await page.goto('/#/auth')
   await page.fill('[placeholder="name@example.com"]', QA_ACCOUNTS.student1.email)
   await page.fill('[placeholder="••••••••"]', QA_ACCOUNTS.student1.password)
@@ -34,6 +36,7 @@ setup('authenticate as student1', async ({ page }) => {
 })
 
 setup('authenticate as student2', async ({ page }) => {
+  expect(QA_ACCOUNTS.student2.password).toBeTruthy()
   await page.goto('/#/auth')
   await page.fill('[placeholder="name@example.com"]', QA_ACCOUNTS.student2.email)
   await page.fill('[placeholder="••••••••"]', QA_ACCOUNTS.student2.password)
