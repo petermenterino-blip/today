@@ -1,159 +1,235 @@
--- Mentorino seed data
--- This seeds the database with demo data for local development
+-- ──────────────────────────────────────────────────────────────────────────────
+-- Seed Data for Staging Environment
+-- Deterministic UUIDs — safe to run multiple times (idempotent).
+-- NOTE: Timestamps use NOW() relative to execution time.
+-- For fully-reproducible runs, replace NOW() with a fixed date.
+-- Run: psql $STAGING_DATABASE_URL -f supabase/seed/seed.sql
+-- ──────────────────────────────────────────────────────────────────────────────
 
--- ============================
--- TAGS
--- ============================
-insert into public.tags (label, color) values
-  ('High Potential', '#10b981'),
-  ('Needs Support', '#f59e0b'),
-  ('Placement Ready', '#3b82f6'),
-  ('Backend Expert', '#8b5cf6'),
-  ('FinTech', '#06b6d4')
-on conflict (label) do nothing;
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- QA ACCOUNTS
+-- Auth users must be created separately via admin API (see auth_users.sql).
+-- UUIDs are deterministic and must match the auth.users.id after updating.
+-- ═══════════════════════════════════════════════════════════════════════════════
 
--- ============================
+-- ═══════════════════════════════════════════════════════════════════════════════
 -- PROGRAMS
--- ============================
-do $$
-declare
-  v_mentor_id uuid;
-  p1_id uuid := gen_random_uuid();
-  p2_id uuid := gen_random_uuid();
-begin
-  select id into v_mentor_id from public.profiles where email = 'mentor@mentorino.com' limit 1;
-  if v_mentor_id is null then
-    raise notice 'Mentor profile not found, skipping program seed';
-    return;
-  end if;
+-- ═══════════════════════════════════════════════════════════════════════════════
 
-  insert into public.programs (id, title, description, duration, mentor_id, category, difficulty, status, visibility, student_count, outcomes, skills_covered) values
-    (p1_id, 'Software Architecture Elite Mentorship', 'Master system design, architecture patterns, and engineering leadership.', '12 weeks', v_mentor_id, 'Engineering', 'Advanced', 'published', 'public', 5,
-      '["Design scalable systems", "Lead technical discussions", "Master architecture patterns"]'::jsonb,
-      '["System Design", "Microservices", "Cloud Architecture"]'::jsonb),
-    (p2_id, 'Product Leadership Accelerator', 'From PM to product leader. Strategy, execution, and stakeholder management.', '10 weeks', v_mentor_id, 'Product', 'Intermediate', 'published', 'public', 3,
-      '["Define product strategy", "Run effective sprints", "Lead cross-functional teams"]'::jsonb,
-      '["Product Strategy", "Agile", "Stakeholder Management"]'::jsonb)
-  on conflict (id) do nothing;
-end;
-$$;
+INSERT INTO public.programs (id, title, description, duration, status, category)
+VALUES
+  ('00000000-0000-0000-0000-000000000010', 'Product Management Foundations', 'Learn the fundamentals of product management including roadmap planning, stakeholder management, and agile methodologies.', '12 weeks', 'active', 'Career Development')
+ON CONFLICT (id) DO NOTHING;
 
--- ============================
+INSERT INTO public.programs (id, title, description, duration, status, category)
+VALUES
+  ('00000000-0000-0000-0000-000000000011', 'Cybersecurity Essentials', 'Master the core concepts of cybersecurity including network security, cryptography, and incident response.', '16 weeks', 'active', 'Technical Skills'),
+  ('00000000-0000-0000-0000-000000000012', 'Data Science Bootcamp', 'Intensive program covering Python, statistics, machine learning, and data visualization.', '20 weeks', 'active', 'Technical Skills'),
+  ('00000000-0000-0000-0000-000000000013', 'Leadership & Management', 'Develop leadership skills including team management, conflict resolution, and strategic thinking.', '8 weeks', 'active', 'Professional Development')
+ON CONFLICT (id) DO NOTHING;
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- PROFILES
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+INSERT INTO public.profiles (id, email, name, role, status, health_status, growth_score, metrics, tags, application_status)
+VALUES
+  ('00000000-0000-0000-0000-000000000001', 'mentor.qa@mentorino.test', 'QA Mentor', 'mentor', 'active', 'active', 0, '{"attendanceRate": 0, "goalCompletionRate": 0, "activityLevel": 0}', '["qa", "mentor"]', 'approved'),
+  ('00000000-0000-0000-0000-000000000002', 'student1.qa@mentorino.test', 'QA Student One', 'student', 'active', 'active', 75, '{"attendanceRate": 80, "goalCompletionRate": 60, "activityLevel": 70}', '["qa", "student"]', 'approved'),
+  ('00000000-0000-0000-0000-000000000003', 'student2.qa@mentorino.test', 'QA Student Two', 'student', 'active', 'active', 45, '{"attendanceRate": 50, "goalCompletionRate": 30, "activityLevel": 40}', '["qa", "student"]', 'approved')
+ON CONFLICT (id) DO NOTHING;
+
+-- Assign mentor to students
+UPDATE public.profiles SET mentor_id = '00000000-0000-0000-0000-000000000001' WHERE id = '00000000-0000-0000-0000-000000000002';
+UPDATE public.profiles SET mentor_id = '00000000-0000-0000-0000-000000000001' WHERE id = '00000000-0000-0000-0000-000000000003';
+UPDATE public.profiles SET program_id = '00000000-0000-0000-0000-000000000010' WHERE id = '00000000-0000-0000-0000-000000000002';
+UPDATE public.profiles SET program_id = '00000000-0000-0000-0000-000000000011' WHERE id = '00000000-0000-0000-0000-000000000003';
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- APPLICATIONS
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+INSERT INTO public.applications (id, user_id, email, first_name, last_name, discipline, reason_for_applying, status, program_id, focus_area)
+VALUES
+  ('00000000-0000-0000-0000-000000000020', '00000000-0000-0000-0000-000000000002', 'student1.qa@mentorino.test', 'QA Student', 'One', 'Career Strategist',
+   '{"goals": "Become a senior product manager and lead cross-functional teams. I have 3 years of experience as an associate PM and want to level up my strategic thinking and stakeholder management skills.", "linkedin_url": "https://linkedin.com/in/qa-student-one", "meeting_preference": "Virtual", "frequency": "Weekly", "seriousness": 10, "program_id": "00000000-0000-0000-0000-000000000010"}',
+   'approved', '00000000-0000-0000-0000-000000000010', 'Product Management'),
+  ('00000000-0000-0000-0000-000000000021', '00000000-0000-0000-0000-000000000003', 'student2.qa@mentorino.test', 'QA Student', 'Two', 'Academic Guide',
+   '{"goals": "Transition from IT support to cybersecurity analyst. Currently pursuing CompTIA Security+ certification and looking for mentorship to navigate the career change.", "linkedin_url": "https://linkedin.com/in/qa-student-two", "meeting_preference": "Virtual", "frequency": "Bi-weekly", "seriousness": 9, "program_id": "00000000-0000-0000-0000-000000000011"}',
+   'approved', '00000000-0000-0000-0000-000000000011', 'Cybersecurity'),
+  ('00000000-0000-0000-0000-000000000022', NULL, 'visitor@mentorino.test', 'QA Visitor', 'User', 'Career Strategist',
+   '{"goals": "I am exploring mentorship opportunities to advance my career in project management. I have a background in operations and want to transition into a more strategic role. I am looking for guidance on certifications, networking, and career planning to make this transition successful.", "linkedin_url": "https://linkedin.com/in/qa-visitor", "meeting_preference": "Virtual", "frequency": "Weekly", "seriousness": 8, "program_id": "00000000-0000-0000-0000-000000000010"}',
+   'pending_review', '00000000-0000-0000-0000-000000000010', 'Project Management')
+ON CONFLICT (id) DO NOTHING;
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- STUDENT PROGRESS
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+INSERT INTO public.student_progress (user_id, program_id, started_at, lessons)
+VALUES
+  ('00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000010', NOW() - INTERVAL '30 days', '{}'),
+  ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000011', NOW() - INTERVAL '14 days', '{}')
+ON CONFLICT (user_id, program_id) DO NOTHING;
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- DASHBOARD LAYOUTS
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+INSERT INTO public.dashboard_layouts (user_id, layout)
+VALUES
+  ('00000000-0000-0000-0000-000000000002', '[]'),
+  ('00000000-0000-0000-0000-000000000003', '[]')
+ON CONFLICT (user_id) DO NOTHING;
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- GOALS
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+INSERT INTO public.goals (id, student_id, title, description, progress_percentage, status)
+VALUES
+  ('00000000-0000-0000-0000-000000000030', '00000000-0000-0000-0000-000000000002', 'Complete Product Roadmap Project', 'Create a comprehensive product roadmap for a fictional product including market analysis, feature prioritization, and launch timeline.', 60, 'in_progress'),
+  ('00000000-0000-0000-0000-000000000031', '00000000-0000-0000-0000-000000000002', 'Master Stakeholder Communication', 'Develop and practice stakeholder communication strategies including status reports, executive summaries, and conflict resolution.', 30, 'in_progress'),
+  ('00000000-0000-0000-0000-000000000032', '00000000-0000-0000-0000-000000000002', 'Build PM Portfolio', 'Create a portfolio of product management artifacts including PRDs, roadmaps, and competitive analyses.', 10, 'not_started'),
+  ('00000000-0000-0000-0000-000000000033', '00000000-0000-0000-0000-000000000003', 'Complete Security+ Certification', 'Study and pass the CompTIA Security+ certification exam.', 40, 'in_progress'),
+  ('00000000-0000-0000-0000-000000000034', '00000000-0000-0000-0000-000000000003', 'Build Home Lab Environment', 'Set up a cybersecurity home lab with virtual machines for hands-on practice.', 80, 'in_progress'),
+  ('00000000-0000-0000-0000-000000000035', '00000000-0000-0000-0000-000000000003', 'Network in Cybersecurity Community', 'Attend 3 cybersecurity meetups and connect with 10 professionals on LinkedIn.', 20, 'not_started')
+ON CONFLICT (id) DO NOTHING;
+
+-- Goal milestones
+INSERT INTO public.goal_milestones (id, goal_id, title, completed)
+VALUES
+  ('00000000-0000-0000-0000-000000000040', '00000000-0000-0000-0000-000000000030', 'Research market trends', true),
+  ('00000000-0000-0000-0000-000000000041', '00000000-0000-0000-0000-000000000030', 'Define product vision', true),
+  ('00000000-0000-0000-0000-000000000042', '00000000-0000-0000-0000-000000000030', 'Create feature backlog', true),
+  ('00000000-0000-0000-0000-000000000043', '00000000-0000-0000-0000-000000000030', 'Present roadmap draft', false),
+  ('00000000-0000-0000-0000-000000000044', '00000000-0000-0000-0000-000000000034', 'Install virtualization software', true),
+  ('00000000-0000-0000-0000-000000000045', '00000000-0000-0000-0000-000000000034', 'Configure Windows domain controller', true),
+  ('00000000-0000-0000-0000-000000000046', '00000000-0000-0000-0000-000000000034', 'Set up vulnerable machines for testing', false)
+ON CONFLICT (id) DO NOTHING;
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- TASKS
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+INSERT INTO public.tasks (id, student_id, mentor_id, title, description, status, priority, due_date)
+VALUES
+  ('00000000-0000-0000-0000-000000000050', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000001', 'Submit Roadmap Draft', 'Prepare and submit the first draft of your product roadmap for review.', 'pending', 'high', NOW() + INTERVAL '3 days'),
+  ('00000000-0000-0000-0000-000000000051', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000001', 'Read "Inspired" Chapters 1-10', 'Read the first ten chapters of "Inspired" by Marty Cagan.', 'in_progress', 'medium', NOW() + INTERVAL '7 days'),
+  ('00000000-0000-0000-0000-000000000052', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000001', 'Prepare Stakeholder Presentation', 'Create a 10-slide deck for the stakeholder communication exercise.', 'pending', 'medium', NOW() + INTERVAL '5 days'),
+  ('00000000-0000-0000-0000-000000000053', '00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000001', 'Complete Security+ Practice Test', 'Take a full-length practice test and identify weak areas.', 'in_progress', 'high', NOW() + INTERVAL '2 days'),
+  ('00000000-0000-0000-0000-000000000054', '00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000001', 'Research SANS Courses', 'Research and compare 3 SANS courses relevant to your career goals.', 'pending', 'low', NOW() + INTERVAL '10 days')
+ON CONFLICT (id) DO NOTHING;
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- SESSIONS
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+INSERT INTO public.sessions (id, student_id, mentor_id, title, description, start_time, end_time, status, meeting_type, attendance_status)
+VALUES
+  ('00000000-0000-0000-0000-000000000060', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000001', 'Roadmap Review Session', 'Review the product roadmap draft together and provide feedback.', NOW() + INTERVAL '2 days', NOW() + INTERVAL '2 days' + INTERVAL '1 hour', 'scheduled', 'Google Meet', 'pending'),
+  ('00000000-0000-0000-0000-000000000061', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000001', 'Career Planning Discussion', 'Discuss long-term career goals and create a development plan.', NOW() + INTERVAL '7 days', NOW() + INTERVAL '7 days' + INTERVAL '1 hour', 'scheduled', 'Google Meet', 'pending'),
+  ('00000000-0000-0000-0000-000000000062', '00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000001', 'Security+ Study Session', 'Review practice test results and focus on weak areas.', NOW() + INTERVAL '1 day', NOW() + INTERVAL '1 day' + INTERVAL '1 hour', 'scheduled', 'Google Meet', 'pending'),
+  ('00000000-0000-0000-0000-000000000063', '00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000001', 'Lab Setup Check-in', 'Verify home lab setup and troubleshoot any issues.', NOW() + INTERVAL '5 days', NOW() + INTERVAL '5 days' + INTERVAL '30 minutes', 'scheduled', 'Google Meet', 'pending')
+ON CONFLICT (id) DO NOTHING;
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- CONVERSATIONS & MESSAGES
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+INSERT INTO public.conversations (id, mentor_id, student_id, last_message, last_message_time)
+VALUES
+  ('00000000-0000-0000-0000-000000000070', '00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000002', 'Great work on the roadmap draft!', NOW() - INTERVAL '1 day'),
+  ('00000000-0000-0000-0000-000000000071', '00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000003', 'I finished the practice test', NOW() - INTERVAL '2 hours')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.conversation_participants (conversation_id, user_id)
+VALUES
+  ('00000000-0000-0000-0000-000000000070', '00000000-0000-0000-0000-000000000001'),
+  ('00000000-0000-0000-0000-000000000070', '00000000-0000-0000-0000-000000000002'),
+  ('00000000-0000-0000-0000-000000000071', '00000000-0000-0000-0000-000000000001'),
+  ('00000000-0000-0000-0000-000000000071', '00000000-0000-0000-0000-000000000003')
+ON CONFLICT (conversation_id, user_id) DO NOTHING;
+
+INSERT INTO public.messages (id, sender_id, conversation_id, content, type, created_at)
+VALUES
+  ('00000000-0000-0000-0000-000000000080', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000070', 'Hi mentor! I have completed the first draft of my roadmap. Please review when you get a chance.', 'text', NOW() - INTERVAL '2 days'),
+  ('00000000-0000-0000-0000-000000000081', '00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000070', 'Great, I will take a look. Let us schedule a session to discuss it.', 'text', NOW() - INTERVAL '1 day'),
+  ('00000000-0000-0000-0000-000000000082', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000070', 'Perfect, thank you!', 'text', NOW() - INTERVAL '1 day'),
+  ('00000000-0000-0000-0000-000000000083', '00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000071', 'I finished the practice test. I scored 72%. Need to work on cryptography and network security.', 'text', NOW() - INTERVAL '3 hours'),
+  ('00000000-0000-0000-0000-000000000084', '00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000071', '72% is a good start! Focus on cryptography this week and we will review together.', 'text', NOW() - INTERVAL '2 hours')
+ON CONFLICT (id) DO NOTHING;
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- NOTIFICATIONS
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+INSERT INTO public.notifications (id, user_id, title, message, type, read)
+VALUES
+  ('00000000-0000-0000-0000-000000000090', '00000000-0000-0000-0000-000000000002', 'Session Reminder', 'You have a Roadmap Review session in 2 days.', 'session', false),
+  ('00000000-0000-0000-0000-000000000091', '00000000-0000-0000-0000-000000000002', 'Task Due Soon', 'Roadmap Draft is due in 3 days.', 'task', false),
+  ('00000000-0000-0000-0000-000000000092', '00000000-0000-0000-0000-000000000002', 'New Message', 'Your mentor replied to your message.', 'system', true),
+  ('00000000-0000-0000-0000-000000000093', '00000000-0000-0000-0000-000000000003', 'Task Due Soon', 'Security+ Practice Test is due in 2 days.', 'task', false),
+  ('00000000-0000-0000-0000-000000000094', '00000000-0000-0000-0000-000000000003', 'Session Scheduled', 'Your Lab Setup Check-in has been scheduled.', 'session', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- STUDENT TIMELINE EVENTS
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+INSERT INTO public.student_timeline_events (id, student_id, type, title, description, timestamp, mentor_id, category)
+VALUES
+  ('00000000-0000-0000-0000-000000000100', '00000000-0000-0000-0000-000000000002', 'application_approved', 'Application Approved', 'QA Student One was approved by QA Mentor.', NOW() - INTERVAL '30 days', '00000000-0000-0000-0000-000000000001', 'system'),
+  ('00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000000002', 'goal_created', 'Goal Created', 'Created goal: Complete Product Roadmap Project.', NOW() - INTERVAL '25 days', '00000000-0000-0000-0000-000000000001', 'goal'),
+  ('00000000-0000-0000-0000-000000000102', '00000000-0000-0000-0000-000000000002', 'goal_completed', 'Milestone Reached', 'Completed: Research market trends milestone.', NOW() - INTERVAL '20 days', NULL, 'goal'),
+  ('00000000-0000-0000-0000-000000000103', '00000000-0000-0000-0000-000000000002', 'session_completed', 'Session Completed', 'Completed: Introductory Call session.', NOW() - INTERVAL '15 days', '00000000-0000-0000-0000-000000000001', 'session'),
+  ('00000000-0000-0000-0000-000000000104', '00000000-0000-0000-0000-000000000003', 'application_approved', 'Application Approved', 'QA Student Two was approved by QA Mentor.', NOW() - INTERVAL '14 days', '00000000-0000-0000-0000-000000000001', 'system'),
+  ('00000000-0000-0000-0000-000000000105', '00000000-0000-0000-0000-000000000003', 'goal_created', 'Goal Created', 'Created goal: Build Home Lab Environment.', NOW() - INTERVAL '10 days', '00000000-0000-0000-0000-000000000001', 'goal'),
+  ('00000000-0000-0000-0000-000000000106', '00000000-0000-0000-0000-000000000003', 'task_completed', 'Task Completed', 'Completed: Install virtualization software.', NOW() - INTERVAL '5 days', NULL, 'task')
+ON CONFLICT (id) DO NOTHING;
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- EVENTS (calendar events)
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+INSERT INTO public.events (id, title, description, date, time, location, meeting_link, capacity, category, status)
+VALUES
+  ('00000000-0000-0000-0000-000000000110', 'Cybersecurity Networking Mixer', 'Connect with industry professionals in cybersecurity.', (NOW() + INTERVAL '14 days')::date, '18:00', 'Virtual', 'https://meet.google.com/cyber-mixer', 50, 'Networking', 'published'),
+  ('00000000-0000-0000-0000-000000000111', 'Product Management Workshop', 'Hands-on workshop on product discovery techniques.', (NOW() + INTERVAL '21 days')::date, '14:00', 'Virtual', 'https://meet.google.com/pm-workshop', 30, 'Workshop', 'published'),
+  ('00000000-0000-0000-0000-000000000112', 'Resume Review Webinar', 'Learn how to craft a standout resume for tech roles.', (NOW() + INTERVAL '5 days')::date, '11:00', 'Virtual', 'https://meet.google.com/resume-webinar', 100, 'Webinar', 'published')
+ON CONFLICT (id) DO NOTHING;
+
+-- ═══════════════════════════════════════════════════════════════════════════════
 -- RESOURCES
--- ============================
-insert into public.resources (title, url, category, is_pinned) values
-  ('System Design Interview Guide', '#', 'Engineering', true),
-  ('Product Strategy Framework', '#', 'Product', true),
-  ('Resume Template & Checklist', '#', 'Career', false),
-  ('Mock Interview Questions Bank', '#', 'Interview Prep', false);
+-- ═══════════════════════════════════════════════════════════════════════════════
 
--- ============================
--- EVENTS
--- ============================
-insert into public.events (title, location, date, time, description, status, visibility) values
-  ('Summer Networking Mixer', 'Zoom', 'Jul 15, 2026', '6:00 PM', 'Connect with mentors and students in a relaxed setting.', 'published', 'public'),
-  ('Resume Review Workshop', 'Google Meet', 'Aug 02, 2026', '4:00 PM', 'Learn how to beat the ATS and land more interviews.', 'published', 'public'),
-  ('Tech Interview Panel', 'Zoom', 'Sep 10, 2026', '5:30 PM', 'Panel discussion with senior engineers from top tech companies.', 'published', 'public'),
-  ('PM Case Workshop', 'WebEx', 'Oct 05, 2026', '6:00 PM', 'Interactive workshop on solving product cases.', 'published', 'public'),
-  ('Alumni Q&A Session', 'Zoom', 'Nov 12, 2026', '7:00 PM', 'Ask questions to successful alumni working in your target industry.', 'published', 'public'),
-  ('Salary Negotiation Masterclass', 'Google Meet', 'Dec 01, 2026', '5:00 PM', 'Learn actionable strategies for negotiating job offers.', 'published', 'public');
+INSERT INTO public.resources (id, title, url, category, is_pinned)
+VALUES
+  ('00000000-0000-0000-0000-000000000120', 'PM Interview Guide', 'https://example.com/pm-guide', 'Career Resources', true),
+  ('00000000-0000-0000-0000-000000000121', 'Resume Template', 'https://example.com/resume-template', 'Templates', true),
+  ('00000000-0000-0000-0000-000000000122', 'Cybersecurity Study Plan', 'https://example.com/cyber-study-plan', 'Career Resources', false),
+  ('00000000-0000-0000-0000-000000000123', 'Networking Tips Guide', 'https://example.com/networking-tips', 'Career Resources', false)
+ON CONFLICT (id) DO NOTHING;
 
--- ============================
--- PRODUCTS
--- ============================
-insert into public.products (name, description, price, category, status) values
-  ('1-on-1 Career Coaching Session', 'Personalized career coaching session', 150.00, 'Coaching', 'active'),
-  ('Resume Review Package', 'Detailed resume review with feedback', 75.00, 'Career', 'active'),
-  ('Mock Interview Bundle', '3 mock interview sessions', 200.00, 'Interview Prep', 'active');
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- JOURNALS
+-- ═══════════════════════════════════════════════════════════════════════════════
 
--- ============================
--- ANNOUNCEMENTS
--- ============================
-insert into public.announcements (title, content, priority) values
-  ('Welcome to the Program!', 'We are excited to have you onboard. Your first session is scheduled for next week.', 'high'),
-  ('New Workshop Added', 'Check out the new System Design workshop added to the curriculum.', 'medium');
+INSERT INTO public.journals (id, student_id, title, content, type, mood, wins, challenges)
+VALUES
+  ('00000000-0000-0000-0000-000000000130', '00000000-0000-0000-0000-000000000002', 'Product Roadmap Progress', 'Made significant progress on the roadmap today. Defined the product vision and started working on the feature backlog. Feeling confident about the direction.', 'daily', 'good', ARRAY['Defined product vision', 'Created initial feature backlog'], ARRAY['Need more market research data']),
+  ('00000000-0000-0000-0000-000000000131', '00000000-0000-0000-0000-000000000002', 'Weekly Reflection', 'Good week overall. Completed market research and started the roadmap draft. The session with my mentor was very helpful.', 'weekly', 'great', ARRAY['Completed market research', 'Had productive mentor session'], ARRAY['Time management needs improvement']),
+  ('00000000-0000-0000-0000-000000000132', '00000000-0000-0000-0000-000000000003', 'Security+ Study Session', 'Studied cryptography today. Understood symmetric vs asymmetric encryption. Need more practice with PKI concepts.', 'daily', 'neutral', ARRAY['Reviewed encryption algorithms'], ARRAY['PKI concepts are confusing']),
+  ('00000000-0000-0000-0000-000000000133', '00000000-0000-0000-0000-000000000003', 'Lab Setup Progress', 'Successfully configured the Windows domain controller in my home lab. Next step is to set up vulnerable machines.', 'daily', 'good', ARRAY['Domain controller configured', 'Network segmentation planned'], ARRAY['Lab documentation needs to be organized'])
+ON CONFLICT (id) DO NOTHING;
 
--- ============================
--- GOALS + JOURNALS + TASKS + SESSIONS + NOTIFICATIONS (for Alex Rivera)
--- ============================
-do $$
-declare
-  v_mentor_id uuid;
-  alex_id uuid;
-  aisha_id uuid;
-begin
-  select id into v_mentor_id from public.profiles where email = 'mentor@mentorino.com' limit 1;
-  select id into alex_id from public.profiles where email = 'alex@example.com' limit 1;
-  select id into aisha_id from public.profiles where email = 'aisha@example.com' limit 1;
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- ANALYTICS EVENTS
+-- ═══════════════════════════════════════════════════════════════════════════════
 
-  if alex_id is not null then
-    insert into public.goals (student_id, title, description, progress_percentage, status) values
-      (alex_id, 'Complete Resume Revision', 'Update the resume with recent internship details and format perfectly.', 100, 'completed'),
-      (alex_id, 'Conduct 5 Informational Interviews', 'Reach out to PMs on LinkedIn and conduct 30 min chats.', 40, 'in_progress'),
-      (alex_id, 'Finalize Portfolio Website', 'Ship version 1 of portfolio website on Vercel.', 0, 'not_started');
-
-    insert into public.journals (student_id, type, content, mood, wins, challenges, reviewed_by_mentor, mentor_comments) values
-      (alex_id, 'daily', 'Today was productive. I reached out to 5 PMs on LinkedIn, 2 replied already!', 'good',
-        '["Sent LinkedIn messages", "Got replies"]'::jsonb, '["Felt nervous sending cold messages"]'::jsonb, true,
-        '["Great job pushing past the nervousness!"]'::jsonb),
-      (alex_id, 'weekly', 'This week I focused mostly on my resume and getting it reviewed.', 'okay',
-        '["Finished V2 of resume"]'::jsonb, '["Time management was poor this week"]'::jsonb, false, '[]'::jsonb);
-  end if;
-
-  if v_mentor_id is not null and alex_id is not null then
-    insert into public.sessions (mentor_id, student_id, title, description, start_time, end_time, meeting_url, attendance_status, status, notes) values
-      (v_mentor_id, alex_id, 'Introductory Call', 'First meeting to discuss goals and roadmap.',
-        now() + interval '1 day', now() + interval '1 day' + interval '1 hour',
-        'https://meet.google.com/abc-defg-hij', 'pending', 'scheduled', null),
-      (v_mentor_id, alex_id, 'Resume Review', 'Deep dive into resume bullet points and formatting.',
-        now() + interval '3 days', now() + interval '3 days' + interval '45 minutes',
-        'https://meet.google.com/jkl-mnop-qrs', 'pending', 'scheduled', null),
-      (v_mentor_id, alex_id, 'Career Strategy Session', 'Discuss career transition strategy and milestones.',
-        now() - interval '7 days', now() - interval '7 days' + interval '1 hour',
-        null, 'attended', 'completed', 'Discussed career goals. Next steps: update resume and start networking.');
-
-    insert into public.tasks (student_id, mentor_id, title, description, due_date, status) values
-      (alex_id, v_mentor_id, 'Submit updated resume PDF', 'Make sure it is 1 page and export as PDF.', now() + interval '3 days', 'pending'),
-      (alex_id, v_mentor_id, 'Read PM Interview guide chapter 1', 'Read the first chapter and write down 3 key takeaways.', now() + interval '5 days', 'in_progress'),
-      (alex_id, v_mentor_id, 'Draft cover letter for Startup X', 'Use the framework we discussed in the last session.', now() - interval '1 day', 'completed');
-
-    insert into public.notifications (user_id, title, message, read, type) values
-      (alex_id, 'New Task Assigned', 'Sarah assigned you a new task: Submit updated resume PDF.', false, 'task'),
-      (alex_id, 'Session Scheduled', 'Resume Review session scheduled for this Thursday at 2:00 PM.', true, 'session');
-  end if;
-
-  if v_mentor_id is not null and aisha_id is not null then
-    insert into public.sessions (mentor_id, student_id, title, description, start_time, end_time, meeting_url, attendance_status, status) values
-      (v_mentor_id, aisha_id, 'System Design Review', 'Review system design exercise for URL shortener.',
-        now() + interval '2 days', now() + interval '2 days' + interval '1 hour',
-        'https://meet.google.com/xyz-uvwx-yz', 'pending', 'scheduled');
-
-    insert into public.tasks (student_id, mentor_id, title, description, due_date, status) values
-      (aisha_id, v_mentor_id, 'Complete System Design exercise', 'Design a URL shortener service.', now() + interval '2 days', 'in_progress');
-  end if;
-
-  if v_mentor_id is not null then
-    insert into public.notifications (user_id, title, message, read, type) values
-      (v_mentor_id, 'New Application', 'Alex Rivera submitted an application for the mentorship program.', false, 'system'),
-      (v_mentor_id, 'Session Reminder', 'Introductory call with Alex Rivera is tomorrow at 10:00 AM.', false, 'session'),
-      (v_mentor_id, 'Task Completed', 'Alex Rivera completed "Draft cover letter for Startup X".', false, 'task');
-  end if;
-end;
-$$;
-
--- ============================
--- MENTOR SETTINGS
--- ============================
-do $$
-declare
-  v_mentor_id uuid;
-begin
-  select id into v_mentor_id from public.profiles where email = 'mentor@mentorino.com' limit 1;
-
-  if v_mentor_id is not null then
-    insert into public.mentor_settings (mentor_id, timezone, session_duration, buffer_time, working_days, available_hours_start, available_hours_end) values
-      (v_mentor_id, 'America/New_York', 45, 15, '{1,2,3,4,5}'::integer[], '09:00', '17:00')
-    on conflict (mentor_id) do nothing;
-  end if;
-end;
-$$;
+INSERT INTO public.analytics_events (user_id, event_type, properties)
+VALUES
+  ('00000000-0000-0000-0000-000000000002', 'student_approved', '{"application_id": "00000000-0000-0000-0000-000000000020", "name": "QA Student One", "approved_by": "00000000-0000-0000-0000-000000000001"}'),
+  ('00000000-0000-0000-0000-000000000002', 'session_completed', '{"session_id": "00000000-0000-0000-0000-000000000103", "type": "introductory"}'),
+  ('00000000-0000-0000-0000-000000000003', 'student_approved', '{"application_id": "00000000-0000-0000-0000-000000000021", "name": "QA Student Two", "approved_by": "00000000-0000-0000-0000-000000000001"}'),
+  ('00000000-0000-0000-0000-000000000003', 'goal_created', '{"goal_title": "Build Home Lab Environment"}');

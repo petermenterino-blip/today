@@ -97,12 +97,13 @@ create policy "Public read published gallery"
   on public.gallery_items for select
   using (visibility = 'published');
 
--- Authenticated users (mentors) can read all
+-- Authenticated users can read published items; creators see own drafts
 drop policy if exists "Authenticated read all gallery" on public.gallery_items;
-create policy "Authenticated read all gallery"
+create policy "Authenticated read published gallery"
   on public.gallery_items for select
   to authenticated
-  using (true);
+  using (visibility = 'published' or created_by = auth.uid() or
+    exists (select 1 from public.profiles where id = auth.uid() and role = 'mentor'));
 
 -- Mentors can insert
 drop policy if exists "Mentors insert gallery" on public.gallery_items;

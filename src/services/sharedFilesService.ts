@@ -1,5 +1,4 @@
 import { supabase } from '../lib/supabase';
-import { storageService } from './storageService';
 import { safeQuery, safeMutate } from '../lib/supabaseFallback';
 import { interpretError } from '../lib/errorHandler';
 import { timelineService } from './timelineService';
@@ -95,7 +94,6 @@ export const sharedFilesService = {
       throw new Error(`File size exceeds the ${MAX_SIZE / 1024 / 1024}MB limit`);
     }
 
-    await this.ensureBucket();
     const sanitizedName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
     const storagePath = `${userId}/${Date.now()}_${sanitizedName}`;
 

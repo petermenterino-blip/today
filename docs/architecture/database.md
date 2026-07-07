@@ -64,7 +64,7 @@ CREATE TABLE audit_logs (
 );
 ```
 
-Triggers on sensitive tables (`applications`, `profiles`, `transactions`) push changes to `audit_logs`. The mentor views audit logs from the admin panel.
+Triggers on sensitive tables (`applications`, `profiles`, `transactions`) push changes to `audit_logs`. The mentor views audit logs from the mentor panel.
 
 
 ## 5. ER Diagram (Text)

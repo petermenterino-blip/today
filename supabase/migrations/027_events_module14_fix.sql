@@ -39,16 +39,16 @@ create index if not exists idx_event_feedbacks_event on public.event_feedbacks(e
 create index if not exists idx_event_recordings_event on public.event_recordings(event_id);
 
 -- 6. Ensure all event tables are in realtime publication
-alter publication supabase_realtime add table if not exists public.events;
-alter publication supabase_realtime add table if not exists public.event_attendees;
-alter publication supabase_realtime add table if not exists public.event_waitlist;
-alter publication supabase_realtime add table if not exists public.event_activity;
-alter publication supabase_realtime add table if not exists public.event_comments;
-alter publication supabase_realtime add table if not exists public.event_speakers;
-alter publication supabase_realtime add table if not exists public.event_feedbacks;
-alter publication supabase_realtime add table if not exists public.event_files;
-alter publication supabase_realtime add table if not exists public.event_notifications;
-alter publication supabase_realtime add table if not exists public.event_recordings;
+do $$ begin alter publication supabase_realtime add table public.events; exception when sqlstate '42710' then null; end $$;
+do $$ begin alter publication supabase_realtime add table public.event_attendees; exception when sqlstate '42710' then null; end $$;
+do $$ begin alter publication supabase_realtime add table public.event_waitlist; exception when sqlstate '42710' then null; end $$;
+do $$ begin alter publication supabase_realtime add table public.event_activity; exception when sqlstate '42710' then null; end $$;
+do $$ begin alter publication supabase_realtime add table public.event_comments; exception when sqlstate '42710' then null; end $$;
+do $$ begin alter publication supabase_realtime add table public.event_speakers; exception when sqlstate '42710' then null; end $$;
+do $$ begin alter publication supabase_realtime add table public.event_feedbacks; exception when sqlstate '42710' then null; end $$;
+do $$ begin alter publication supabase_realtime add table public.event_files; exception when sqlstate '42710' then null; end $$;
+do $$ begin alter publication supabase_realtime add table public.event_notifications; exception when sqlstate '42710' then null; end $$;
+do $$ begin alter publication supabase_realtime add table public.event_recordings; exception when sqlstate '42710' then null; end $$;
 
 -- 7. RLS: Ensure all policies exist
 
@@ -259,12 +259,13 @@ create policy "Event creators can delete recordings"
   using (exists (select 1 from public.events where events.id = event_id and events.created_by = auth.uid()));
 
 -- 8. Function to get upcoming events with attendee count (fix existing)
+-- Restricted to 'published' only to prevent draft event leaks
 create or replace function public.get_upcoming_events()
 returns table (
   id uuid,
   title text,
   date text,
-  time text,
+  "time" text,
   event_type text,
   location text,
   capacity integer,
@@ -273,6 +274,7 @@ returns table (
 )
 language sql
 security definer
+set search_path = public
 stable
 as $$
   select
@@ -286,8 +288,8 @@ as $$
     (select count(*)::bigint from public.event_attendees ea where ea.event_id = e.id and ea.registration_status = 'confirmed'),
     e.status
   from public.events e
-  where e.status in ('published', 'draft')
-    and (e.date >= current_date or (e.date = current_date and e.time >= to_char(now(), 'HH24:MI')))
+  where e.status = 'published'
+    and (e.date::date >= current_date or (e.date::date = current_date and e.time >= to_char(now(), 'HH24:MI')))
   order by e.date, e.time;
 $$;
 

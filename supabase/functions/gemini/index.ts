@@ -1,5 +1,5 @@
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts'
-import { verifyAuth, requireRole, CORS_HEADERS } from '../middleware/auth.ts'
+import { verifyAuth, requireRole, getCorsHeaders, CORS_HEADERS, checkRateLimit, getRateLimitKey } from '../middleware/auth.ts'
 
 const SYSTEM_PROMPTS: Record<string, string> = {
   chat:
@@ -14,8 +14,32 @@ const SYSTEM_PROMPTS: Record<string, string> = {
     'You are a mentor analytics assistant. Identify patterns, progress trends, and areas needing attention.',
 }
 
+const PII_PATTERNS = [
+  /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g,
+  /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/g,
+  /\b(?:\d{4}[-\s]?){3}\d{4}\b/g,
+]
+
+function stripPII(obj: unknown): unknown {
+  if (typeof obj === 'string') {
+    let s = obj
+    for (const p of PII_PATTERNS) s = s.replace(p, '[REDACTED]')
+    return s
+  }
+  if (Array.isArray(obj)) return obj.map(stripPII)
+  if (obj && typeof obj === 'object') {
+    const result: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(obj)) {
+      result[k] = stripPII(v)
+    }
+    return result
+  }
+  return obj
+}
+
 function buildContents(systemPrompt: string, messages: { role: string; content: string }[] | undefined, userPrompt: string, context: any) {
-  const contextBlock = context ? `\n\nContext:\n${JSON.stringify(context, null, 2).slice(0, 20000)}` : ''
+  const sanitizedContext = context ? stripPII(context) : null
+  const contextBlock = sanitizedContext ? `\n\nContext:\n${JSON.stringify(sanitizedContext, null, 2).slice(0, 20000)}` : ''
   const historyBlock = messages && messages.length > 0
     ? `\n\nConversation history:\n${messages.map((m) => `${m.role}: ${m.content.slice(0, 2000)}`).join('\n')}`
     : ''
@@ -29,38 +53,72 @@ function buildContents(systemPrompt: string, messages: { role: string; content: 
 }
 
 serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req)
+  const startTime = Date.now()
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: CORS_HEADERS })
+    return new Response(null, { headers: corsHeaders })
+  }
+
+  if (req.method === 'GET') {
+    return new Response(JSON.stringify({ status: 'ok', function: 'gemini' }), {
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+    })
   }
 
   const authHeader = req.headers.get('Authorization')
   const { user, error } = await verifyAuth(authHeader)
   if (error) return error
 
-  const roleError = requireRole(user, ['student', 'mentor', 'admin'])
+  const roleError = requireRole(user, ['student', 'mentor'])
   if (roleError) return roleError
+
+  const rateKey = getRateLimitKey('gemini', user.id, req.headers.get('x-forwarded-for') || '')
+  const { allowed, retryAfterMs } = await checkRateLimit(rateKey, 'gemini')
+  if (!allowed) {
+    return new Response(
+      JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
+      { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': String(Math.ceil(retryAfterMs / 1000)), ...corsHeaders } },
+    )
+  }
 
   const apiKey = Deno.env.get('GEMINI_API_KEY')
   if (!apiKey) {
     return new Response(
-      JSON.stringify({ error: 'AI service is not configured. Please contact the administrator to set up the GEMINI_API_KEY.' }),
-      { status: 503, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
+      JSON.stringify({ error: 'AI service is not configured. Please contact a mentor to set up the GEMINI_API_KEY.' }),
+      { status: 503, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
     )
   }
 
   try {
     const { prompt, context, type, messages, systemPrompt: customSystem, stream, temperature, maxTokens } = await req.json()
+
+    if (typeof prompt !== 'string' || !prompt.trim()) {
+      return new Response(
+        JSON.stringify({ error: 'prompt is required and must be a string' }),
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
+      )
+    }
+    if (messages !== undefined && !Array.isArray(messages)) {
+      return new Response(
+        JSON.stringify({ error: 'messages must be an array if provided' }),
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
+      )
+    }
+
     const systemPrompt = customSystem || SYSTEM_PROMPTS[type] || SYSTEM_PROMPTS.chat
     const contents = buildContents(systemPrompt, messages, prompt, context)
 
     const isStreaming = stream === true
 
+    const geminiHeaders: Record<string, string> = { 'Content-Type': 'application/json', 'X-Goog-Api-Key': apiKey }
+
     if (isStreaming) {
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?alt=sse&key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?alt=sse`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: geminiHeaders,
           body: JSON.stringify({
             contents,
             generationConfig: { temperature: temperature ?? 0.7, maxOutputTokens: maxTokens ?? 4096 },
@@ -70,9 +128,10 @@ serve(async (req) => {
 
       if (!response.ok) {
         const errText = await response.text()
+        console.error(`[gemini] streaming API error: ${response.status} ${errText.slice(0, 500)}`)
         return new Response(
-          JSON.stringify({ error: `AI provider error: ${response.status}. ${errText.slice(0, 500)}` }),
-          { status: response.status, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
+          JSON.stringify({ error: 'AI provider error. Please try again later.' }),
+          { status: response.status, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
         )
       }
 
@@ -107,8 +166,9 @@ serve(async (req) => {
                 }
               }
             }
-          } catch (err) {
-            controller.enqueue(encoder.encode(JSON.stringify({ error: err.message }) + '\n'))
+          } catch (streamError) {
+            console.error('[gemini] stream error:', streamError)
+            controller.enqueue(encoder.encode(JSON.stringify({ error: 'AI response error' }) + '\n'))
           } finally {
             reader.releaseLock()
             controller.close()
@@ -117,15 +177,15 @@ serve(async (req) => {
       })
 
       return new Response(streamBody, {
-        headers: { 'Content-Type': 'text/event-stream', ...CORS_HEADERS },
+        headers: { 'Content-Type': 'text/event-stream', ...corsHeaders },
       })
     }
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`,
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: geminiHeaders,
         body: JSON.stringify({
           contents,
           generationConfig: { temperature: temperature ?? 0.7, maxOutputTokens: maxTokens ?? 4096 },
@@ -135,23 +195,26 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errText = await response.text()
+      console.error(`[gemini] API error: ${response.status} ${errText.slice(0, 500)}`)
       return new Response(
-        JSON.stringify({ error: `AI provider error: ${response.status}. ${errText.slice(0, 500)}` }),
-        { status: response.status, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
+        JSON.stringify({ error: 'AI provider error. Please try again later.' }),
+        { status: response.status, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
       )
     }
 
     const data = await response.json()
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || ''
     const usage = data?.usageMetadata || {}
+    console.log(`[gemini] success: type=${type} userId=${user.id.slice(0, 8)} duration=${Date.now() - startTime}ms`)
 
     return new Response(JSON.stringify({ result: text, type, usage }), {
-      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
     })
   } catch (err) {
+    console.error('[gemini] handler error:', err)
     return new Response(
-      JSON.stringify({ error: `AI request failed: ${err.message}. Please try again.` }),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
+      JSON.stringify({ error: 'AI request failed. Please try again.' }),
+      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
     )
   }
 })

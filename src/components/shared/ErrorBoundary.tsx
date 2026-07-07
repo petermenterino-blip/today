@@ -1,6 +1,8 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
+import { logger } from '../../lib/logger';
+import { analyzeError } from '../../lib/errorHandler';
 
-type EBProps = { children: ReactNode; fallback?: ReactNode };
+type EBProps = { children: ReactNode; fallback?: ReactNode; onError?: (error: Error, info: ErrorInfo) => void };
 type EBState = { hasError: boolean; error: Error | null; };
 
 export default class ErrorBoundary extends Component<EBProps, EBState> {
@@ -17,7 +19,12 @@ export default class ErrorBoundary extends Component<EBProps, EBState> {
   }
 
   componentDidCatch(error: Error, _info: ErrorInfo) {
-    console.error('ErrorBoundary caught:', error, _info);
+    const safe = analyzeError(error);
+    logger.critical('ErrorBoundary', 'Unhandled React error', {
+      errorMessage: safe.message,
+      errorCode: safe.code,
+      recoverable: safe.recoverable,
+    });
   }
 
   handleRetry = () => {
@@ -27,6 +34,7 @@ export default class ErrorBoundary extends Component<EBProps, EBState> {
   render() {
     if (this.state.hasError) {
       if (this.props.fallback) return this.props.fallback;
+      const safe = this.state.error ? analyzeError(this.state.error) : null;
       return (
         <div className="min-h-[60vh] flex items-center justify-center p-8">
           <div className="bg-white p-12 rounded-[48px] shadow-2xl shadow-black/5 border border-slate-100 text-center max-w-md">
@@ -35,15 +43,20 @@ export default class ErrorBoundary extends Component<EBProps, EBState> {
             </div>
             <h2 className="text-2xl font-black uppercase tracking-tight text-slate-900 mb-4">Something went wrong</h2>
             <p className="text-slate-500 text-sm font-medium leading-relaxed mb-6">
-              An unexpected error occurred. Please try refreshing the page.
+              {safe?.recoverable === false
+                ? 'A critical error occurred. This may require mentor intervention.'
+                : 'An unexpected error occurred. Please try refreshing the page.'
+              }
             </p>
             <div className="flex flex-col gap-3">
-              <button
-                onClick={this.handleRetry}
-                className="w-full py-4 bg-slate-900 text-white text-[10px] font-black uppercase tracking-[0.3em] rounded-full hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-black/10"
-              >
-                Try Again
-              </button>
+              {safe?.recoverable !== false && (
+                <button
+                  onClick={this.handleRetry}
+                  className="w-full py-4 bg-slate-900 text-white text-[10px] font-black uppercase tracking-[0.3em] rounded-full hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-black/10"
+                >
+                  Try Again
+                </button>
+              )}
               <button
                 onClick={() => window.location.reload()}
                 className="w-full py-4 bg-white text-slate-900 border border-slate-200 text-[10px] font-black uppercase tracking-[0.3em] rounded-full hover:bg-slate-50 active:scale-95 transition-all"

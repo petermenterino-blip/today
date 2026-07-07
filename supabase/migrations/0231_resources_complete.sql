@@ -436,13 +436,30 @@ create trigger trigger_increment_views
 -- ========================
 -- 16. ADD RESOURCES TO REALTIME PUBLICATION
 -- ========================
-alter publication supabase_realtime add table public.resources;
-alter publication supabase_realtime add table public.resource_categories;
-alter publication supabase_realtime add table public.resource_tags;
-alter publication supabase_realtime add table public.resource_assignments;
-alter publication supabase_realtime add table public.resource_favorites;
-alter publication supabase_realtime add table public.resource_comments;
-alter publication supabase_realtime add table public.resource_activity;
+do $$
+begin
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'resources') then
+    alter publication supabase_realtime add table public.resources;
+  end if;
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'resource_categories') then
+    alter publication supabase_realtime add table public.resource_categories;
+  end if;
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'resource_tags') then
+    alter publication supabase_realtime add table public.resource_tags;
+  end if;
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'resource_assignments') then
+    alter publication supabase_realtime add table public.resource_assignments;
+  end if;
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'resource_favorites') then
+    alter publication supabase_realtime add table public.resource_favorites;
+  end if;
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'resource_comments') then
+    alter publication supabase_realtime add table public.resource_comments;
+  end if;
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'resource_activity') then
+    alter publication supabase_realtime add table public.resource_activity;
+  end if;
+end $$;
 
 -- ========================
 -- 17. SEED DEFAULT CATEGORIES

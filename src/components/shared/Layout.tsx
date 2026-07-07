@@ -209,13 +209,13 @@ const Layout: React.FC<LayoutProps> = ({ children, role, onLogout }) => {
         >
            <Link to="/" className="text-sm font-black tracking-tighter text-black uppercase">Mentorino</Link>
            <div className="flex items-center gap-2">
-             <button onClick={onLogout} className="w-8 h-8 bg-slate-50 border border-slate-100 rounded-full flex items-center justify-center text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-colors" title="Sign Out">
-               <LogOut size={14} />
-             </button>
-             <Link to="/settings" className="w-8 h-8 bg-black rounded-full flex items-center justify-center text-white text-[10px] font-black hover:scale-110 transition-transform active:scale-95">
-                {role === 'mentor' ? 'M' : 'S'}
-              </Link>
-              <button onClick={() => setIsSidebarOpen(true)} className="w-8 h-8 bg-slate-50 border border-slate-100 rounded-full flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-colors">
+              <button onClick={onLogout} className="w-8 h-8 bg-slate-50 border border-slate-100 rounded-full flex items-center justify-center text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-colors" title="Sign Out" aria-label="Sign out">
+                <LogOut size={14} />
+              </button>
+              <Link to="/settings" aria-label="Settings" className="w-8 h-8 bg-black rounded-full flex items-center justify-center text-white text-[10px] font-black hover:scale-110 transition-transform active:scale-95">
+                 {role === 'mentor' ? 'M' : 'S'}
+               </Link>
+              <button onClick={() => setIsSidebarOpen(true)} className="w-8 h-8 bg-slate-50 border border-slate-100 rounded-full flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-colors" aria-label="Open navigation menu">
                 <Menu size={16} />
               </button>
            </div>
@@ -248,7 +248,7 @@ const Layout: React.FC<LayoutProps> = ({ children, role, onLogout }) => {
                   <span className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white text-xs font-bold shrink-0">M</span>
                   <span className="font-black text-sm tracking-widest uppercase shrink-0">MENTORINO</span>
                 </Link>
-                <button onClick={() => setIsSidebarOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full">
+                <button onClick={() => setIsSidebarOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full" aria-label="Close navigation menu">
                   <X size={20} />
                 </button>
               </div>
@@ -296,6 +296,7 @@ const Layout: React.FC<LayoutProps> = ({ children, role, onLogout }) => {
                     }} 
                     className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-50 rounded-lg border border-slate-100 transition-colors"
                     title="Collapse sidebar"
+                    aria-label="Collapse sidebar"
                   >
                     <ChevronLeft size={16} />
                   </button>
@@ -314,6 +315,7 @@ const Layout: React.FC<LayoutProps> = ({ children, role, onLogout }) => {
                   }} 
                   className="p-1 text-slate-400 hover:text-slate-900 hover:bg-slate-50 rounded-lg border border-slate-100 transition-colors flex items-center justify-center"
                   title="Expand sidebar"
+                  aria-label="Expand sidebar"
                 >
                   <ChevronRight size={14} />
                 </button>
@@ -348,8 +350,13 @@ const Layout: React.FC<LayoutProps> = ({ children, role, onLogout }) => {
         </motion.aside>
       )}
 
+      {/* Skip to main content link */}
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-white focus:text-black focus:rounded-xl focus:shadow-xl focus:text-sm focus:font-bold">
+        Skip to main content
+      </a>
+
       {/* Main Content */}
-      <main className={`flex-1 w-full min-h-screen overflow-y-auto ${
+      <main id="main-content" className={`flex-1 w-full min-h-screen overflow-y-auto ${
         (role === 'visitor' || isLandingPage) 
           ? 'p-0' 
           : (isMessaging ? 'p-0 pt-16 md:pt-0' : 'px-6 md:pl-12 md:pr-12 pt-24 md:pt-10 pb-24 md:pb-16')

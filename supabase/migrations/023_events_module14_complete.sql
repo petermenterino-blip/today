@@ -119,16 +119,16 @@ alter table public.event_feedbacks add column if not exists rating_breakdown jso
 alter table public.event_feedbacks add column if not exists would_recommend boolean;
 
 -- 9. ENABLE REALTIME FOR ALL EVENT TABLES
-alter publication supabase_realtime add table public.events;
-alter publication supabase_realtime add table public.event_attendees;
-alter publication supabase_realtime add table public.event_waitlist;
-alter publication supabase_realtime add table public.event_activity;
-alter publication supabase_realtime add table public.event_comments;
-alter publication supabase_realtime add table public.event_speakers;
-alter publication supabase_realtime add table public.event_feedbacks;
-alter publication supabase_realtime add table public.event_files;
-alter publication supabase_realtime add table public.event_notifications;
-alter publication supabase_realtime add table public.event_recordings;
+do $$ begin alter publication supabase_realtime add table public.events; exception when duplicate_object then null; end; $$;
+do $$ begin alter publication supabase_realtime add table public.event_attendees; exception when duplicate_object then null; end; $$;
+do $$ begin alter publication supabase_realtime add table public.event_waitlist; exception when duplicate_object then null; end; $$;
+do $$ begin alter publication supabase_realtime add table public.event_activity; exception when duplicate_object then null; end; $$;
+do $$ begin alter publication supabase_realtime add table public.event_comments; exception when duplicate_object then null; end; $$;
+do $$ begin alter publication supabase_realtime add table public.event_speakers; exception when duplicate_object then null; end; $$;
+do $$ begin alter publication supabase_realtime add table public.event_feedbacks; exception when duplicate_object then null; end; $$;
+do $$ begin alter publication supabase_realtime add table public.event_files; exception when duplicate_object then null; end; $$;
+do $$ begin alter publication supabase_realtime add table public.event_notifications; exception when duplicate_object then null; end; $$;
+do $$ begin alter publication supabase_realtime add table public.event_recordings; exception when duplicate_object then null; end; $$;
 
 -- 10. RLS POLICIES FOR NEW TABLES
 

@@ -10,23 +10,13 @@ import { motion, AnimatePresence } from "motion/react";
 import {
   CheckCircle2,
   Clock3,
-  Download,
-  ExternalLink,
   ArrowRight,
-  TrendingUp,
-  HelpCircle,
-  Briefcase,
-  User as UserIcon,
   Calendar,
   Info,
-  MessageSquare,
   X,
   Zap,
-  Loader2,
-  ShieldCheck,
   BookOpen,
   FileIcon,
-  Bell,
 } from "lucide-react";
 import {
   useNavigate,
@@ -38,9 +28,6 @@ import {
 } from "react-router-dom";
 import {
   User,
-  Application,
-  Booking,
-  TaskActivity,
   NetworkEvent,
 } from "../../types";
 import { useApplications } from "../../hooks/useApplications";
@@ -48,7 +35,6 @@ import { useTasks } from "../../hooks/useTasks";
 import { useBookings } from "../../hooks/useBookings";
 import { useEvents } from "../../hooks/useEvents";
 import { useSessions } from "../../hooks/useSessions";
-import { notifyError, notifySuccess } from "../../utils/toast";
 import { getRecentlyViewed } from "../../utils/recentlyViewed";
 
 const StudentJournal = lazy(() => import("./StudentJournal"));
@@ -796,23 +782,22 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
                                         </div>
 
                                         <button
-                                          onClick={async () => {
+                                            onClick={async () => {
                                             if (!currentUser) return;
                                             const response = await applicationService.submitApplication({
                                               user_id: currentUser.id,
-                                              user_name: currentUser.name || "Alex Student",
-                                              user_email: currentUser.email || "student@example.com",
+                                              user_name: currentUser.name || "Student",
+                                              user_email: currentUser.email || "",
                                               program_id: prog.id,
                                               role_selected: "student" as any,
-                                              full_name: currentUser.name || "Alex Student",
-                                              location: "San Francisco",
-                                              linkedin_url: "linkedin.com",
-                                              goal: "Career Growth",
+                                              full_name: currentUser.name || "Student",
+                                              location: "",
+                                              linkedin_url: "",
+                                              goal: "",
                                               focus_area: prog.title
                                             });
                                             if (response.data?.id) {
-                                              await applicationService.updateStatus(response.data.id, 'approved');
-                                              toast.success(`Successfully enrolled in ${prog.title}!`);
+                                              toast.success(`Application submitted for ${prog.title}!`);
                                               refreshApps();
                                               refreshProfilesAndPrograms();
                                             } else {

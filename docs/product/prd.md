@@ -22,14 +22,14 @@ Mentorino solves this by providing a **single unified platform** covering the en
 
 | Persona | Description | Pain Points |
 |---------|-------------|-------------|
-| **Mentor** (Peter Mannarino / admin) | Career coach managing 5-50 mentees | Scattered tools, no student health visibility, manual follow-ups, no analytics |
+| **Mentor** (Peter Mannarino) | Career coach managing 5-50 mentees | Scattered tools, no student health visibility, manual follow-ups, no analytics |
 | **Student (mentee)** | Career transitioner, recent grad, or professional seeking guidance | No structured program, hard to track progress, disconnected communication |
 | **Visitor** | Prospective applicant browsing the platform | No clear application pipeline, no visibility into program structure |
 
 
 ## 4. User Personas
 
-### 4.1 Mentor — Sarah (Admin)
+### 4.1 Mentor — Sarah
 - **Role:** Platform administrator + mentor
 - **Needs:** Review applications, manage students at scale, schedule sessions, track student health, communicate in-app, run events, view revenue analytics
 - **Goals:** Maximize student success rates, streamline administrative overhead, grow program revenue
@@ -243,7 +243,7 @@ Scenario: User sends a message
 | Application | `/apply` | 4-step application form (profile, meeting pref, goals, documents) |
 | Student Dashboard | `/student/*` | Overview, programs, goals, tasks, sessions, events, journal, messaging |
 | Mentor Dashboard | `/mentor/*` | Students, applications, scheduler, analytics, events, messaging, forms, files, settings |
-| Admin Revenue | `/admin/revenue` | Revenue chart, transaction table, PDF/Excel export |
+| Mentor Revenue | `/admin/revenue` | Revenue chart, transaction table, PDF/Excel export |
 
 
 ## 10. Technical Architecture

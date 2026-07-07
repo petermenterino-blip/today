@@ -93,13 +93,13 @@ create trigger trigger_increment_completions
   for each row
   execute function public.increment_resource_completions();
 
--- Function to upsert recently_viewed
-create or replace function public.upsert_recently_viewed(p_user_id uuid, p_resource_id uuid)
+-- Function to upsert recently_viewed (uses auth.uid() to prevent cross-user manipulation)
+create or replace function public.upsert_recently_viewed(p_resource_id uuid)
 returns void as $$
 begin
   insert into public.recently_viewed (user_id, resource_id, viewed_at)
-  values (p_user_id, p_resource_id, now())
+  values (auth.uid(), p_resource_id, now())
   on conflict (user_id, resource_id)
   do update set viewed_at = now();
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer set search_path = public;

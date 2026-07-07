@@ -2,8 +2,8 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  Calendar as CalendarIcon, Clock, ChevronLeft, ChevronRight, Check, ArrowLeft,
-  Zap, Video, Sparkles, Mail, Phone, User, Building2, GraduationCap, Briefcase,
+  Clock, ChevronLeft, ChevronRight, Check, ArrowLeft,
+  Zap, Video, Mail, Phone, User, Building2, GraduationCap, Briefcase,
   Star, MessageSquare, Globe, Loader2
 } from 'lucide-react';
 import { notifyError, notifySuccess } from '../utils/toast';
@@ -264,10 +264,11 @@ const BookingPage: React.FC = () => {
         </div>
 
         <div>
-          <label className="text-[8px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Email Address *</label>
+          <label htmlFor="booking-email" className="text-[8px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Email Address *</label>
           <div className="relative">
             <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
             <input
+              id="booking-email"
               type="email"
               value={email}
               onChange={e => validateEmail(e.target.value)}
@@ -275,9 +276,10 @@ const BookingPage: React.FC = () => {
                 emailError ? 'border-rose-300 focus:border-rose-500' : 'border-slate-100 focus:border-black'
               }`}
               placeholder="john@example.com"
+              aria-describedby={emailError ? 'booking-email-error' : undefined}
             />
           </div>
-          {emailError && <p className="text-[8px] font-bold text-rose-400 mt-1.5">{emailError}</p>}
+          {emailError && <p id="booking-email-error" className="text-[8px] font-bold text-rose-400 mt-1.5" role="alert">{emailError}</p>}
         </div>
 
         <div>

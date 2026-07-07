@@ -32,12 +32,13 @@ const ResetPasswordPage: React.FC = () => {
       <div className="w-full max-w-[400px] bg-white p-8 md:p-10 rounded-[48px] border border-black/[0.03] shadow-2xl">
         <h1 className="text-2xl font-black tracking-tight text-slate-900 mb-8 uppercase text-center">Reset Password</h1>
         <form className="space-y-6" onSubmit={handleResetPassword}>
-          {error && <p className="text-[10px] font-bold text-red-500 uppercase tracking-widest text-center">{error}</p>}
+          {error && <p className="text-[10px] font-bold text-red-500 uppercase tracking-widest text-center" role="alert">{error}</p>}
           <div className="space-y-1.5">
-            <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">NEW PASSWORD</label>
+            <label htmlFor="reset-password" className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">NEW PASSWORD</label>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
               <input 
+                id="reset-password"
                 type="password" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -65,7 +66,7 @@ const ResetPasswordPage: React.FC = () => {
                 <p className="text-[10px] font-black uppercase tracking-widest">System Message</p>
                 <p className="text-[11px] font-medium leading-relaxed opacity-70">{notification}</p>
               </div>
-              <button onClick={() => setNotification(null)} className="p-1 hover:bg-white/10 rounded-full transition-colors">
+              <button onClick={() => setNotification(null)} className="p-1 hover:bg-white/10 rounded-full transition-colors" aria-label="Dismiss notification">
                 <X size={16} />
               </button>
            </div>

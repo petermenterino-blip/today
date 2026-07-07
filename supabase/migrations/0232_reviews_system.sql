@@ -53,8 +53,15 @@ create index if not exists idx_review_history_review on public.review_history(re
 create index if not exists idx_reviews_source on public.reviews(source_type, source_id);
 
 -- Enable realtime
-alter publication supabase_realtime add table public.reviews;
-alter publication supabase_realtime add table public.review_history;
+do $$
+begin
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'reviews') then
+    alter publication supabase_realtime add table public.reviews;
+  end if;
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'review_history') then
+    alter publication supabase_realtime add table public.review_history;
+  end if;
+end $$;
 
 -- Add 'review' type to notifications check constraint
 alter table public.notifications drop constraint if exists notifications_type_check;

@@ -11,10 +11,10 @@ CREATE POLICY "docs_anon_upload_applications"
     AND (storage.foldername(name))[1] = 'applications'
   );
 
-CREATE POLICY "docs_anon_read_applications" 
+CREATE POLICY "docs_auth_read_applications" 
   ON storage.objects 
   FOR SELECT 
-  TO public 
+  TO authenticated 
   USING (
     bucket_id = 'student-documents' 
     AND (storage.foldername(name))[1] = 'applications'

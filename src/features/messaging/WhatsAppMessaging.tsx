@@ -184,6 +184,16 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
     loadConversations();
   }, [loadConversations]);
 
+  useEffect(() => {
+    if (conversations.length > 0 && !selectedConversation) {
+      const first = conversations[0];
+      setSelectedConversation(first);
+      messageService.markAsRead(first.id);
+      setConversations(prev => prev.map(x => x.id === first.id ? { ...x, unreadCount: 0 } : x));
+      setShowGroupInfo(false);
+    }
+  }, [conversations, selectedConversation]);
+
   useRealtime([
     {
       table: 'messages',

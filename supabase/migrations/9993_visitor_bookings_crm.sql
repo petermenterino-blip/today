@@ -51,9 +51,18 @@ create table if not exists public.booking_timeline (
 create index if not exists idx_booking_timeline_booking_created on public.booking_timeline(booking_id, created_at);
 
 -- 5. Add to realtime publication
-alter publication supabase_realtime add table if not exists public.visitor_bookings;
-alter publication supabase_realtime add table if not exists public.booking_notes;
-alter publication supabase_realtime add table if not exists public.booking_timeline;
+do $$
+begin
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'visitor_bookings') then
+    alter publication supabase_realtime add table public.visitor_bookings;
+  end if;
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'booking_notes') then
+    alter publication supabase_realtime add table public.booking_notes;
+  end if;
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'booking_timeline') then
+    alter publication supabase_realtime add table public.booking_timeline;
+  end if;
+end $$;
 
 -- 6. Create updated_at trigger for visitor_bookings (uses handle_updated_at from 900_auth_triggers)
 do $$ begin

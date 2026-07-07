@@ -202,7 +202,7 @@ export const ContactInfoPanel: React.FC<ContactInfoPanelProps> = ({
                         <div className="min-w-0 flex-1">
                           <p className="text-xs font-semibold text-[#111b21] truncate" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{name}</p>
                           <p className="text-[9px] text-[#667781] truncate">
-                            {isMentorParticipant ? 'Group Admin' : 'Student'}
+                            {isMentorParticipant ? 'Group Mentor' : 'Student'}
                           </p>
                         </div>
                       </div>

@@ -83,7 +83,7 @@ Client Request
 |------|-----------|-------|
 | `student` | `raw_user_meta_data->role` | Own data + read assigned programs/sessions |
 | `mentor` | `raw_user_meta_data->role` | Own data + read/write on assigned students |
-| `admin` | `raw_user_meta_data->role` | Full access (future, not implemented in v1) |
+| `mentor` | `raw_user_meta_data->role` | Full access (future, not implemented in v1) |
 
 ### 3.3 Helper Functions
 
@@ -256,7 +256,7 @@ CREATE POLICY "Mentors can update applications"
 All other tables follow the same pattern established above:
 - Own-data access for students
 - Broader read/write for mentors on assigned students
-- Admin override for future use
+- Mentor override for future use
 - Soft delete enforced through RLS
 
 Full RLS policies for all 30 tables are in `supabase/migrations/999_rls.sql`.

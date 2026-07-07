@@ -23,7 +23,7 @@ src/                Application source code
 ├── components/     Reusable UI (shared/, ui/)
 ├── constants/      Static constants (query keys)
 ├── context/        React context providers (Auth, Connection)
-├── features/       Feature modules (admin, events, mentor, messaging, resources, settings, student)
+├── features/       Feature modules (events, mentor, messaging, resources, settings, student)
 ├── hooks/          Custom React hooks
 ├── interfaces/     Domain type interfaces
 ├── lib/            Core utilities (supabase, sentry, logger)

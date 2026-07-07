@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import DOMPurify from 'dompurify';
 import {
   Bot, Sparkles, Send, Loader2, RotateCcw, Square, Bookmark,
   Trash, Pencil, Search, Pin, PinOff, X, MessageSquare, Clock,
@@ -9,6 +10,8 @@ import {
 } from 'lucide-react';
 import { contextEngine } from '../../../services/contextEngine';
 import type { AIChatMessage } from '../../../types';
+
+const SANITIZER = DOMPurify.sanitize as (html: string) => string;
 
 interface AIDashboardProps {
   chatHistory: AIChatMessage[];
@@ -110,7 +113,6 @@ export default function AIDashboard({
   };
 
   const renderMessage = (content: string) => {
-    // Simple markdown-like rendering for chat
     const rendered = content
       .replace(/^### (.*$)/gm, '<h3 class="text-sm font-bold text-slate-900 mt-3 mb-1">$1</h3>')
       .replace(/^## (.*$)/gm, '<h2 class="text-base font-black text-slate-900 mt-4 mb-2">$1</h2>')
@@ -123,8 +125,8 @@ export default function AIDashboard({
       .replace(/^\d+\. (.*$)/gm, '<li class="text-xs text-slate-700 ml-4 list-decimal">$1</li>')
       .replace(/\n\n/g, '<br/><br/>')
       .replace(/\n/g, '<br/>')
-      .replace(/\[Action: (\w+)\](.*?)(?:\n|$)/g, '<button class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-slate-700 transition-all mt-1 mr-2" onclick="window.__aiAction && window.__aiAction(\'$1\')">$2</button>');
-    return rendered;
+      .replace(/\[Action: (\w+)\](.*?)(?:\n|$)/g, '<button class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-slate-700 transition-all mt-1 mr-2" data-action="$1">$2</button>');
+    return SANITIZER(rendered);
   };
 
   return (

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { ArrowLeft, ArrowRight, Briefcase, CalendarDays, CheckCircle2, ClipboardList, Compass, GraduationCap, ShieldCheck, Loader2 } from 'lucide-react';
+import { ArrowLeft, Briefcase, CalendarDays, CheckCircle2, ClipboardList, Compass, GraduationCap, ShieldCheck, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { VisitorHeader } from '../components/shared/VisitorHeader';
 import Footer from '../components/shared/Footer';

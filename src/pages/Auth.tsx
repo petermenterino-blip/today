@@ -73,9 +73,10 @@ const AuthPage: React.FC = () => {
           <form className="space-y-4 sm:space-y-6" onSubmit={handleAuth}>
 
             <div className="space-y-1 sm:space-y-1.5">
-              <label className="text-[7px] sm:text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">EMAIL ADDRESS</label>
+              <label htmlFor="auth-email" className="text-[7px] sm:text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">EMAIL ADDRESS</label>
               <div className="relative">
                 <input 
+                  id="auth-email"
                   type="email" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -88,11 +89,12 @@ const AuthPage: React.FC = () => {
 
             <div className="space-y-1 sm:space-y-1.5">
               <div className="flex justify-between items-center ml-1">
-                <label className="text-[7px] sm:text-[8px] font-black text-slate-400 uppercase tracking-widest">PASSWORD</label>
+                <label htmlFor="auth-password" className="text-[7px] sm:text-[8px] font-black text-slate-400 uppercase tracking-widest">PASSWORD</label>
                 <button type="button" onClick={handleForgotPassword} className="text-[7px] sm:text-[8px] font-black text-slate-400 uppercase tracking-widest hover:text-black">FORGOT?</button>
               </div>
               <div className="relative">
                 <input 
+                  id="auth-password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -104,7 +106,7 @@ const AuthPage: React.FC = () => {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-black transition-colors"
-                  tabIndex={-1}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>

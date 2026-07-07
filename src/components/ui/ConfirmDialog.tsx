@@ -14,7 +14,7 @@ interface ConfirmDialogProps {
   onCancel: () => void;
 }
 
-export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
+export const ConfirmDialog: React.FC<ConfirmDialogProps> = React.memo(({
   open,
   title,
   message,
@@ -30,6 +30,9 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
       {open && (
         <motion.div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="confirm-dialog-title"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -43,10 +46,11 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-slate-800">{title}</h3>
+              <h3 id="confirm-dialog-title" className="text-lg font-semibold text-slate-800">{title}</h3>
               <button
                 onClick={onCancel}
                 className="p-1 rounded-lg hover:bg-slate-100 transition-colors"
+                aria-label="Close dialog"
               >
                 <X size={18} className="text-slate-400" />
               </button>
@@ -78,4 +82,4 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
       )}
     </AnimatePresence>
   );
-};
+});

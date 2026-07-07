@@ -164,7 +164,7 @@ const ApplicationPage: React.FC = () => {
           <span className="text-[10px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">PROGRAM AUDIT • Step {step}</span>
           <span className="text-[10px] sm:text-[10px] font-black text-black uppercase tracking-[0.4em]">{Math.round((step / totalSteps) * 100)}%</span>
         </div>
-        <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+        <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden" role="progressbar" aria-valuenow={step} aria-valuemin={1} aria-valuemax={totalSteps} aria-label="Form progress">
           <div 
             className="h-full bg-black transition-all duration-1000 ease-out"
             style={{ width: `${(step / totalSteps) * 100}%` }}

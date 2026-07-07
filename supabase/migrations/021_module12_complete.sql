@@ -14,7 +14,7 @@ CREATE INDEX IF NOT EXISTS idx_sessions_student ON public.sessions(student_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_mentor ON public.sessions(mentor_id);
 
 -- Indexes for task queries
-CREATE INDEX IF NOT EXISTS idx_tasks_user ON public.tasks(user_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_student ON public.tasks(student_id);
 
 -- Indexes for goal queries
 CREATE INDEX IF NOT EXISTS idx_goals_student ON public.goals(student_id);

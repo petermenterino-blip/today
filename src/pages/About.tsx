@@ -1,12 +1,12 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { ArrowLeft, Brain, Briefcase, Eye, Instagram, Linkedin, Shield, Target, Twitter, Youtube } from 'lucide-react';
+import { ArrowLeft, Brain, Briefcase, Target } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { VisitorHeader } from '../components/shared/VisitorHeader';
 import Footer from '../components/shared/Footer';
 
 const AboutPage: React.FC = () => {
-  const mentorImageUrl = 'https://lh3.googleusercontent.com/d/1u6X_oVTZvmMVfiITy0Felr6yukTDkW9y';
+  const mentorImageUrl = '/images/mentorino.png';
 
   const approach = [
     {

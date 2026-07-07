@@ -34,7 +34,7 @@ const DATA = [
   { name: 'W6', revenue: 8900 },
 ];
 
-const AdminRevenue: React.FC = () => {
+const Financials: React.FC = () => {
   const navigate = useNavigate();
   const [isExporting, setIsExporting] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -153,4 +153,4 @@ const AdminRevenue: React.FC = () => {
   );
 };
 
-export default AdminRevenue;
+export default Financials;

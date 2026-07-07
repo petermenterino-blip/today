@@ -263,7 +263,7 @@ REQUIRED (use Edge Function):
   ✅ Google Calendar integration
   ✅ Google Meet link creation
   ✅ Scheduled jobs (reminders, cleanup)
-  ✅ Admin operations needing service_role
+  ✅ Mentor operations needing service_role
 
 FORBIDDEN (don't use Edge Function):
   ❌ Simple CRUD operations

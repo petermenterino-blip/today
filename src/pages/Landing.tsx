@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { notifySuccess, notifyError } from '../utils/toast';
@@ -16,19 +16,12 @@ import {
   ClipboardList,
   Zap,
   Image as ImageIcon,
-  Award,
-  Users,
-  Clock,
-  Target,
   Plus,
   Minus,
-  HelpCircle,
-  MessageSquare,
   Mail,
   Phone,
   MapPin,
   Send,
-  AlertCircle,
   Sparkles,
   Calendar
 } from 'lucide-react';
@@ -63,7 +56,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ currentRole = 'visitor' }) =>
   const { login } = useAuth();
 
   // About Section States
-  const mentorImageUrl = "https://lh3.googleusercontent.com/d/1u6X_oVTZvmMVfiITy0Felr6yukTDkW9y";
+  const mentorImageUrl = "/images/mentorino.png";
 
   // FAQ Accordion State
   const [openFaqIndex, setOpenFaqIndex] = useState<string | null>(null);
@@ -244,7 +237,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ currentRole = 'visitor' }) =>
           <div className="absolute inset-0 z-0">
             <img 
               src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=2400" 
-              alt="Architecture" 
+              alt="" 
               className="w-full h-full object-cover opacity-20 grayscale scale-105"
               loading="lazy"
             />

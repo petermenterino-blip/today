@@ -3,6 +3,10 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=20.0.0 <21.0.0",
+    "npm": ">=10.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -12,13 +16,16 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "seed:qa": "npx tsx scripts/seedAuthUsers.ts && psql $STAGING_DATABASE_URL -f supabase/seed/seed.sql",
+    "reset:qa": "npx tsx scripts/resetQaData.ts && psql $STAGING_DATABASE_URL -f supabase/seed/seed.sql"
   },
   "dependencies": {
     "@sentry/react": "^10.62.0",
     "@supabase/supabase-js": "^2.108.2",
     "@tailwindcss/vite": "^4.2.4",
     "@tanstack/react-query": "^5.100.8",
+    "dompurify": "^3.4.11",
     "hls.js": "^1.6.16",
     "jspdf": "^4.2.0",
     "jspdf-autotable": "^5.0.7",
@@ -37,6 +44,7 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
+    "@types/dompurify": "^3.0.5",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
     "@vitest/coverage-v8": "^4.1.9",

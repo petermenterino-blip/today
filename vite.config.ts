@@ -36,6 +36,8 @@ export default defineConfig(({ mode }) => {
         outDir: 'dist',
         reportCompressedSize: false,
         chunkSizeWarningLimit: 2000,
+        cssCodeSplit: true,
+        minify: 'esbuild',
         rollupOptions: {
           output: {
             manualChunks(id) {
@@ -43,7 +45,16 @@ export default defineConfig(({ mode }) => {
                 if (id.includes('lucide-react') || id.includes('recharts') || id.includes('motion')) {
                   return 'vendor-ui';
                 }
+                if (id.includes('@sentry') || id.includes('hls.js') || id.includes('jspdf') || id.includes('xlsx')) {
+                  return 'vendor-heavy';
+                }
+                if (id.includes('@tanstack') || id.includes('@supabase')) {
+                  return 'vendor-data';
+                }
                 return 'vendor';
+              }
+              if (id.includes('src/features/mentor/') || id.includes('src/features/messaging/') || id.includes('src/features/resources/') || id.includes('src/features/admin/')) {
+                return 'feature-heavy';
               }
             }
           }

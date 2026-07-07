@@ -4,6 +4,7 @@ import { edgeFunctionService } from './edgeFunctionService';
 import { crmInitializationService } from './crmInitializationService';
 import { Application, ServiceResponse } from '../types';
 import { handleError } from '../lib/serviceHelper';
+import { features } from '../config/features';
 
 const AUTH_SIGNUP_DISABLED = !import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY;
 
@@ -315,7 +316,29 @@ export const applicationService = {
     return { data: undefined, error: null };
   },
 
+  async approveApplicationViaEdge(id: string): Promise<ServiceResponse<any>> {
+    try {
+      const body: Record<string, string> = { applicationId: id }
+      if (features.transactionalProvisioning) {
+        body.idempotencyKey = `${id}_${Date.now()}`
+      }
+      const { data, error } = await supabase.functions.invoke('approve-application', {
+        body,
+      })
+      if (error) return { data: null, error: error.message }
+      if (!data?.success) return { data: null, error: data?.message || 'Approval failed' }
+      window.dispatchEvent(new Event('user-profile-changed'))
+      return { data: { id, email: data.email }, error: null }
+    } catch (err: any) {
+      return { data: null, error: err?.message || 'Edge Function invocation failed' }
+    }
+  },
+
   async approveApplication(id: string): Promise<ServiceResponse<any>> {
+    if (features.edgeApproval) {
+      return this.approveApplicationViaEdge(id)
+    }
+
     const { data: app, error: fetchError } = await supabase
       .from('applications')
       .select('*')

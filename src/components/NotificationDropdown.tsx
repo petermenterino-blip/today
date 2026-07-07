@@ -181,4 +181,4 @@ const NotificationDropdown: React.FC = () => {
   );
 };
 
-export default NotificationDropdown;
+export default React.memo(NotificationDropdown);

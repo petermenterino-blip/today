@@ -99,6 +99,9 @@ export const authService = {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) return { data: null, error: handleError(error).error };
     if (!data.user) return { data: null, error: 'Login failed' };
+    if (!data.user.email_confirmed_at) {
+      return { data: null, error: 'Please verify your email before signing in. Check your inbox for the confirmation link.' };
+    }
 
     const profile = await getOrCreateProfileForUser(data.user);
 

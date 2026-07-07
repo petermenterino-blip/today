@@ -2,13 +2,16 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './e2e',
-  fullyParallel: true,
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 4 : 2,
-  reporter: process.env.CI
-    ? [['html', { outputFolder: 'playwright-report' }], ['github']]
-    : [['html', { outputFolder: 'playwright-report' }], ['list']],
+  reporter: [
+    ['html', { outputFolder: 'playwright-report' }],
+    ['junit', { outputFile: 'playwright-report/results.xml' }],
+    ['json', { outputFile: 'playwright-report/results.json' }],
+    ['list'],
+  ],
   use: {
     baseURL: process.env.BASE_URL || 'http://localhost:3000',
     trace: 'on-first-retry',
@@ -17,24 +20,108 @@ export default defineConfig({
   },
   projects: [
     {
-      name: 'chromium',
+      name: 'setup',
+      testMatch: /.*\.setup\.ts/,
+    },
+    {
+      name: 'chromium-visitor',
+      dependencies: [],
       use: { ...devices['Desktop Chrome'] },
+      testMatch: /visitor-flow\.spec\.ts/,
+    },
+    {
+      name: 'chromium-mentor',
+      dependencies: ['setup'],
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: /mentor-flow\.spec\.ts/,
+    },
+    {
+      name: 'chromium-student1',
+      dependencies: ['setup'],
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: /student-flow\.spec\.ts/,
+    },
+    {
+      name: 'chromium-student2',
+      dependencies: ['setup'],
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: /student-isolation\.spec\.ts/,
+    },
+    {
+      name: 'chromium-realtime',
+      dependencies: ['setup'],
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: /realtime\.spec\.ts/,
+    },
+    {
+      name: 'chromium',
+      dependencies: ['setup'],
+      use: { ...devices['Desktop Chrome'] },
+      testIgnore: [
+        /visitor-flow\.spec\.ts/,
+        /mentor-flow\.spec\.ts/,
+        /student-flow\.spec\.ts/,
+        /student-isolation\.spec\.ts/,
+        /realtime\.spec\.ts/,
+        /student-dashboard\.spec\.ts/,
+        /debug-auth\.spec\.ts/,
+      ],
     },
     {
       name: 'firefox',
+      dependencies: ['setup'],
       use: { ...devices['Desktop Firefox'] },
+      testIgnore: [
+        /visitor-flow\.spec\.ts/,
+        /mentor-flow\.spec\.ts/,
+        /student-flow\.spec\.ts/,
+        /student-isolation\.spec\.ts/,
+        /realtime\.spec\.ts/,
+        /student-dashboard\.spec\.ts/,
+        /debug-auth\.spec\.ts/,
+      ],
     },
     {
       name: 'webkit',
+      dependencies: ['setup'],
       use: { ...devices['Desktop Safari'] },
+      testIgnore: [
+        /visitor-flow\.spec\.ts/,
+        /mentor-flow\.spec\.ts/,
+        /student-flow\.spec\.ts/,
+        /student-isolation\.spec\.ts/,
+        /realtime\.spec\.ts/,
+        /student-dashboard\.spec\.ts/,
+        /debug-auth\.spec\.ts/,
+      ],
     },
     {
       name: 'mobile-chrome',
+      dependencies: ['setup'],
       use: { ...devices['Pixel 9'] },
+      testIgnore: [
+        /visitor-flow\.spec\.ts/,
+        /mentor-flow\.spec\.ts/,
+        /student-flow\.spec\.ts/,
+        /student-isolation\.spec\.ts/,
+        /realtime\.spec\.ts/,
+        /student-dashboard\.spec\.ts/,
+        /debug-auth\.spec\.ts/,
+      ],
     },
     {
       name: 'mobile-safari',
+      dependencies: ['setup'],
       use: { ...devices['iPhone 16'] },
+      testIgnore: [
+        /visitor-flow\.spec\.ts/,
+        /mentor-flow\.spec\.ts/,
+        /student-flow\.spec\.ts/,
+        /student-isolation\.spec\.ts/,
+        /realtime\.spec\.ts/,
+        /student-dashboard\.spec\.ts/,
+        /debug-auth\.spec\.ts/,
+      ],
     },
   ],
   webServer: {
@@ -43,4 +130,4 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 30000,
   },
-});
+})

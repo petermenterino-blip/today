@@ -68,6 +68,7 @@ returns boolean
 language sql
 stable
 security definer
+set search_path = public, auth
 as $$
   select coalesce(
     nullif(current_setting('request.jwt.claims', true)::jsonb #>> '{user_metadata, role}', ''),

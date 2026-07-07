@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Calendar, Clock, Zap, ArrowRight, Video, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { Calendar, Zap, ArrowRight, Video, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { VisitorHeader } from '../components/shared/VisitorHeader';
 import Footer from '../components/shared/Footer';

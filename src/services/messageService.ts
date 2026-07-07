@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import type { Message, Conversation } from '../types/messaging';
+import { logger } from '../lib/logger';
 
 function fromDbConversation(row: any): Conversation {
   return {
@@ -21,18 +22,19 @@ function fromDbConversation(row: any): Conversation {
   };
 }
 
-async function fetchProfileName(userId: string): Promise<string> {
-  try {
-    const { data } = await supabase
-      .from('profiles')
-      .select('name, role')
-      .eq('id', userId)
-      .single();
-    return data?.name || 'Unknown User';
-  } catch {
-    return 'Unknown User';
+  async function fetchProfileName(userId: string): Promise<string> {
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('name, role')
+        .eq('id', userId)
+        .single();
+      return data?.name || 'Unknown User';
+    } catch (err) {
+      logger.error('messageService', 'fetchProfileName failed', { userId, error: err instanceof Error ? err.message : 'Unknown error' });
+      return 'Unknown User';
+    }
   }
-}
 
 async function enrichConversation(c: Conversation): Promise<Conversation> {
   if (!c.isGroup) {
@@ -91,7 +93,10 @@ export const messageService = {
       .select('conversation_id')
       .eq('user_id', userId);
 
-    if (partError) return [];
+    if (partError) {
+      logger.error('messageService', 'getConversations: failed to fetch participants', { userId, error: partError.message });
+      return [];
+    }
     const convIds = participants.map(p => p.conversation_id);
     if (convIds.length === 0) return [];
 
@@ -103,7 +108,10 @@ export const messageService = {
       .order('pinned', { ascending: false })
       .order('last_message_time', { ascending: false });
 
-    if (error) return [];
+    if (error) {
+      logger.error('messageService', 'getConversations: query failed', { error: error.message });
+      return [];
+    }
     const convs = (data || []).map(fromDbConversation);
     const enriched = await Promise.all(convs.map(enrichConversation));
     return enriched;
@@ -117,7 +125,10 @@ export const messageService = {
       .order('pinned', { ascending: false })
       .order('last_message_time', { ascending: false });
 
-    if (error) return [];
+    if (error) {
+      logger.error('messageService', 'getAllConversations: query failed', { error: error.message });
+      return [];
+    }
     return (data || []).map(fromDbConversation);
   },
 
@@ -136,7 +147,10 @@ export const messageService = {
 
     const { data, error } = await query;
 
-    if (error) return [];
+    if (error) {
+      logger.error('messageService', 'getMessages: query failed', { conversationId, error: error.message });
+      return [];
+    }
     const msgs = (data || []).map(fromDbMessage);
     return msgs.reverse();
   },
@@ -149,7 +163,10 @@ export const messageService = {
       .order('created_at', { ascending: false })
       .limit(50);
 
-    if (error) return [];
+    if (error) {
+      logger.error('messageService', 'getAllMessages: query failed', { error: error.message });
+      return [];
+    }
     return (data || []).map(fromDbMessage).reverse();
   },
 
@@ -164,13 +181,16 @@ export const messageService = {
       .select()
       .single();
 
-    if (error) return null;
+    if (error) {
+      logger.error('messageService', 'sendMessage: insert failed', { conversationId: msg.conversationId, error: error.message });
+      return null;
+    }
 
     const lastMsgText = msg.type === 'voice' ? 'Voice message'
       : msg.type === 'file' ? (msg.fileName || 'File attachment')
       : msg.content;
 
-    await supabase
+    const { error: updateError } = await supabase
       .from('conversations')
       .update({
         last_message: lastMsgText,
@@ -178,56 +198,88 @@ export const messageService = {
       })
       .eq('id', msg.conversationId);
 
+    if (updateError) {
+      logger.error('messageService', 'sendMessage: conversation update failed', { conversationId: msg.conversationId, error: updateError.message });
+    }
+
     try { localStorage.setItem('message_sync_ts', Date.now().toString()) } catch {}
 
     return fromDbMessage(data);
   },
 
   async markAsDelivered(conversationId: string): Promise<void> {
-    await supabase
+    const { error } = await supabase
       .from('messages')
       .update({ status: 'delivered' })
       .eq('conversation_id', conversationId)
       .eq('status', 'sent');
+
+    if (error) {
+      logger.error('messageService', 'markAsDelivered failed', { conversationId, error: error.message });
+    }
   },
 
   async markAsRead(conversationId: string): Promise<void> {
-    await supabase
+    const { error: convError } = await supabase
       .from('conversations')
       .update({ unread_count: 0 })
       .eq('id', conversationId);
 
-    await supabase
+    if (convError) {
+      logger.error('messageService', 'markAsRead: conversation update failed', { conversationId, error: convError.message });
+    }
+
+    const { error: msgError } = await supabase
       .from('messages')
       .update({ status: 'read' })
       .eq('conversation_id', conversationId)
       .neq('status', 'read');
+
+    if (msgError) {
+      logger.error('messageService', 'markAsRead: message update failed', { conversationId, error: msgError.message });
+    }
   },
 
   async pinConversation(conversationId: string, pinned: boolean): Promise<void> {
-    await supabase
+    const { error } = await supabase
       .from('conversations')
       .update({ pinned })
       .eq('id', conversationId);
+
+    if (error) {
+      logger.error('messageService', 'pinConversation failed', { conversationId, pinned, error: error.message });
+    }
   },
 
   async archiveConversation(conversationId: string, archived: boolean): Promise<void> {
-    await supabase
+    const { error } = await supabase
       .from('conversations')
       .update({ archived })
       .eq('id', conversationId);
+
+    if (error) {
+      logger.error('messageService', 'archiveConversation failed', { conversationId, archived, error: error.message });
+    }
   },
 
   async deleteConversation(conversationId: string): Promise<void> {
-    await supabase
+    const { error: convError } = await supabase
       .from('conversations')
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', conversationId);
 
-    await supabase
+    if (convError) {
+      logger.error('messageService', 'deleteConversation: conversation delete failed', { conversationId, error: convError.message });
+    }
+
+    const { error: msgError } = await supabase
       .from('messages')
       .update({ deleted_at: new Date().toISOString() })
       .eq('conversation_id', conversationId);
+
+    if (msgError) {
+      logger.error('messageService', 'deleteConversation: messages delete failed', { conversationId, error: msgError.message });
+    }
   },
 
   async getOtherParticipantProfile(conversationId: string, currentUserId: string): Promise<{ id: string; name: string; role: string; avatar_url?: string; email?: string } | null> {
@@ -237,7 +289,10 @@ export const messageService = {
         .select('mentor_id, student_id')
         .eq('id', conversationId)
         .single();
-      if (error || !conv) return null;
+      if (error || !conv) {
+        logger.error('messageService', 'getOtherParticipantProfile: conversation fetch failed', { conversationId, error: error?.message });
+        return null;
+      }
       const otherId = conv.mentor_id === currentUserId ? conv.student_id : conv.mentor_id;
       if (!otherId) return null;
       const { data: profile } = await supabase
@@ -253,7 +308,8 @@ export const messageService = {
         avatar_url: profile.avatar_url,
         email: profile.email,
       };
-    } catch {
+    } catch (err) {
+      logger.error('messageService', 'getOtherParticipantProfile: unexpected error', { conversationId, error: err instanceof Error ? err.message : 'Unknown error' });
       return null;
     }
   },
@@ -277,7 +333,8 @@ export const messageService = {
         specialization: profile.specialization,
         created_at: profile.created_at,
       };
-    } catch {
+    } catch (err) {
+      logger.error('messageService', 'getConversationParticipantProfile failed', { conversationId, participantId, error: err instanceof Error ? err.message : 'Unknown error' });
       return null;
     }
   },
@@ -290,7 +347,8 @@ export const messageService = {
         .eq('id', userId)
         .single();
       return data || null;
-    } catch {
+    } catch (err) {
+      logger.error('messageService', 'getProfileByUserId failed', { userId, error: err instanceof Error ? err.message : 'Unknown error' });
       return null;
     }
   },
@@ -313,6 +371,7 @@ export const messageService = {
 
     const resolvedStudentName = studentName || studentProfile;
     if (resolvedStudentName === 'Unknown User' || mentorProfile === 'Unknown User') {
+      logger.warn('messageService', 'createConversation: could not resolve user profiles', { studentId, mentorId });
       return null;
     }
 
@@ -329,12 +388,19 @@ export const messageService = {
       .select()
       .single();
 
-    if (error || !data) return null;
+    if (error || !data) {
+      logger.error('messageService', 'createConversation: insert failed', { studentId, mentorId, error: error?.message });
+      return null;
+    }
 
-    await supabase.from('conversation_participants').insert([
+    const { error: partError } = await supabase.from('conversation_participants').insert([
       { conversation_id: data.id, user_id: studentId },
       { conversation_id: data.id, user_id: mentorId },
     ]);
+
+    if (partError) {
+      logger.error('messageService', 'createConversation: participants insert failed', { conversationId: data.id, error: partError.message });
+    }
 
     return fromDbConversation(data);
   },
@@ -357,16 +423,23 @@ export const messageService = {
       .select()
       .single();
 
-    if (error || !data) return null;
+    if (error || !data) {
+      logger.error('messageService', 'createGroup: insert failed', { name, error: error?.message });
+      return null;
+    }
 
-    await supabase.from('conversation_participants').insert(
+    const { error: partError } = await supabase.from('conversation_participants').insert(
       allParticipants.map(user_id => ({
         conversation_id: data.id,
         user_id,
       }))
     );
 
-    await supabase.from('messages').insert({
+    if (partError) {
+      logger.error('messageService', 'createGroup: participants insert failed', { conversationId: data.id, error: partError.message });
+    }
+
+    const { error: msgError } = await supabase.from('messages').insert({
       conversation_id: data.id,
       sender_id: mentorId,
       sender_name: 'System',
@@ -376,23 +449,37 @@ export const messageService = {
       created_at: new Date().toISOString(),
     });
 
+    if (msgError) {
+      logger.error('messageService', 'createGroup: system message insert failed', { conversationId: data.id, error: msgError.message });
+    }
+
     return fromDbConversation(data);
   },
 
   async updateGroupParticipants(groupId: string, participantIds: string[]): Promise<void> {
-    await supabase.from('conversation_participants').delete().eq('conversation_id', groupId);
+    const { error: deleteError } = await supabase.from('conversation_participants').delete().eq('conversation_id', groupId);
+    if (deleteError) {
+      logger.error('messageService', 'updateGroupParticipants: delete failed', { groupId, error: deleteError.message });
+      return;
+    }
 
     const allParticipants = [...new Set(participantIds)];
 
-    await supabase.from('conversations').update({ participants: allParticipants }).eq('id', groupId);
+    const { error: updateError } = await supabase.from('conversations').update({ participants: allParticipants }).eq('id', groupId);
+    if (updateError) {
+      logger.error('messageService', 'updateGroupParticipants: conversation update failed', { groupId, error: updateError.message });
+    }
 
     if (allParticipants.length > 0) {
-      await supabase.from('conversation_participants').insert(
+      const { error: insertError } = await supabase.from('conversation_participants').insert(
         allParticipants.map(user_id => ({
           conversation_id: groupId,
           user_id,
         }))
       );
+      if (insertError) {
+        logger.error('messageService', 'updateGroupParticipants: participants insert failed', { groupId, error: insertError.message });
+      }
     }
   },
 };

@@ -44,31 +44,35 @@ VALUES (
 ON CONFLICT (id) DO NOTHING;
 
 -- Message attachments: sender can write, participants can read
+DROP POLICY IF EXISTS "msg_attach_sender_write" ON storage.objects;
 CREATE POLICY "msg_attach_sender_write" ON storage.objects FOR INSERT TO authenticated
   WITH CHECK (
     bucket_id = 'message-attachments'
     AND (storage.foldername(name))[1] = auth.uid()::text
   );
 
+DROP POLICY IF EXISTS "msg_attach_sender_update" ON storage.objects;
 CREATE POLICY "msg_attach_sender_update" ON storage.objects FOR UPDATE TO authenticated
   USING (
     bucket_id = 'message-attachments'
     AND (storage.foldername(name))[1] = auth.uid()::text
   );
 
+DROP POLICY IF EXISTS "msg_attach_sender_delete" ON storage.objects;
 CREATE POLICY "msg_attach_sender_delete" ON storage.objects FOR DELETE TO authenticated
   USING (
     bucket_id = 'message-attachments'
     AND (storage.foldername(name))[1] = auth.uid()::text
   );
 
+DROP POLICY IF EXISTS "msg_attach_participant_read" ON storage.objects;
 CREATE POLICY "msg_attach_participant_read" ON storage.objects FOR SELECT TO authenticated
   USING (
     bucket_id = 'message-attachments'
     AND EXISTS (
       SELECT 1 FROM public.messages m
       JOIN public.conversation_participants cp ON cp.conversation_id = m.conversation_id
-      WHERE m.file_url LIKE '%' || name || '%'
+      WHERE m.file_url = ('message-attachments/' || name)
       AND cp.user_id = auth.uid()
     )
   );
@@ -78,5 +82,11 @@ INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
 VALUES ('public-website', 'public-website', true, 10485760, ARRAY['image/png', 'image/jpeg', 'image/webp', 'application/pdf'])
 ON CONFLICT (id) DO NOTHING;
 
+DROP POLICY IF EXISTS "public_website_read" ON storage.objects;
 CREATE POLICY "public_website_read" ON storage.objects FOR SELECT TO public USING (bucket_id = 'public-website');
-CREATE POLICY "public_website_write" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'public-website');
+DROP POLICY IF EXISTS "public_website_write" ON storage.objects;
+CREATE POLICY "public_website_write" ON storage.objects FOR INSERT TO authenticated
+  WITH CHECK (
+    bucket_id = 'public-website'
+    AND EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'mentor')
+  );

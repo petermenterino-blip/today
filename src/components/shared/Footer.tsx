@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Instagram, Twitter, Linkedin, Youtube, Facebook, Github, FileText, Globe2, Palette } from 'lucide-react';
 import { socialLinksService, SocialLink } from '../../services/socialLinksService';
-import { websiteSettingsService, WebsiteSettings } from '../../services/websiteSettingsService';
+import { websiteSettingsService } from '../../services/websiteSettingsService';
 import { QK } from '../../constants/queryKeys';
 import { useRealtimeData } from '../../hooks/useRealtimeData';
 

@@ -18,7 +18,12 @@ create index if not exists idx_form_assignments_student on public.form_assignmen
 create index if not exists idx_form_assignments_form on public.form_assignments(form_id);
 
 -- Enable realtime for form_assignments
-alter publication supabase_realtime add table public.form_assignments;
+do $$
+begin
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'form_assignments') then
+    alter publication supabase_realtime add table public.form_assignments;
+  end if;
+end $$;
 
 -- 2. Add mentor_id to shared_files for notification routing
 alter table public.shared_files add column if not exists mentor_id uuid references public.profiles(id) on delete set null;
@@ -64,4 +69,9 @@ alter table public.form_submissions add column if not exists status text default
 alter table public.form_submissions add column if not exists updated_at timestamptz;
 
 -- 8. Enable realtime for notifications
-alter publication supabase_realtime add table public.notifications;
+do $$
+begin
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'notifications') then
+    alter publication supabase_realtime add table public.notifications;
+  end if;
+end $$;

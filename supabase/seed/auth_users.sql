@@ -1,0 +1,28 @@
+-- ──────────────────────────────────────────────────────────────────────────────
+-- QA Auth Users — Run against staging Supabase project via admin API
+-- These must be created through the Supabase auth admin API, not raw SQL.
+-- Use the management script to create these users.
+-- ──────────────────────────────────────────────────────────────────────────────
+
+-- To create these users, run the following commands in your staging environment:
+--
+-- supabase auth admin create-user --email mentor.qa@mentorino.test --password "<see-docs>" --email-confirm true
+-- supabase auth admin create-user --email student1.qa@mentorino.test --password "<see-docs>" --email-confirm true
+-- supabase auth admin create-user --email student2.qa@mentorino.test --password "<see-docs>" --email-confirm true
+--
+-- Then update the auth.users.id column to match the deterministic UUIDs above.
+-- WARNING: Do NOT use raw UPDATE on auth.users — use the admin API instead:
+--
+-- supabase auth admin update-user <auth-user-id> --new-id 00000000-0000-0000-0000-000000000001
+-- supabase auth admin update-user <auth-user-id> --new-id 00000000-0000-0000-0000-000000000002
+-- supabase auth admin update-user <auth-user-id> --new-id 00000000-0000-0000-0000-000000000003
+--
+-- (To find the auto-generated UUID after user creation:
+-- SELECT id, email FROM auth.users WHERE email LIKE '%.qa@mentorino.test';)
+
+-- QA Account Details
+-- ──────────────────
+-- Mentor:   mentor.qa@mentorino.test     / see docs/TEST_USERS.md
+-- Student1: student1.qa@mentorino.test   / see docs/TEST_USERS.md
+-- Student2: student2.qa@mentorino.test   / see docs/TEST_USERS.md
+-- Visitor:  unauthenticated — no auth user created

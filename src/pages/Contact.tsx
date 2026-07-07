@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Mail, Phone, MapPin, Send, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, CheckCircle2, Sparkles } from 'lucide-react';
 import { VisitorHeader } from '../components/shared/VisitorHeader';
 import Footer from '../components/shared/Footer';
 import { notifySuccess, notifyError } from '../utils/toast';

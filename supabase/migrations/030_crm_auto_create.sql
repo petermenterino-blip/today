@@ -142,16 +142,24 @@ do $$ begin
 end $$;
 
 -- 8. RLS policy for mentor read access to all students (not just via program_enrollments)
-drop policy if exists "Mentors can read all student profiles" on public.profiles;
-create policy "Mentors can read all student profiles"
-  on public.profiles for select
-  using (public.is_mentor());
+do $$ begin
+  if exists (select 1 from pg_proc where proname = 'is_mentor') then
+    drop policy if exists "Mentors can read all student profiles" on public.profiles;
+    create policy "Mentors can read all student profiles"
+      on public.profiles for select
+      using (public.is_mentor());
+  end if;
+end $$;
 
 -- 9. RLS policy for mentors to update student profiles
-drop policy if exists "Mentors can update all student profiles" on public.profiles;
-create policy "Mentors can update all student profiles"
-  on public.profiles for update
-  using (public.is_mentor());
+do $$ begin
+  if exists (select 1 from pg_proc where proname = 'is_mentor') then
+    drop policy if exists "Mentors can update all student profiles" on public.profiles;
+    create policy "Mentors can update all student profiles"
+      on public.profiles for update
+      using (public.is_mentor());
+  end if;
+end $$;
 
 -- 10. Enable realtime for profiles table
-alter publication supabase_realtime add table if not exists public.profiles;
+do $$ begin alter publication supabase_realtime add table public.profiles; exception when sqlstate '42710' then null; end $$;

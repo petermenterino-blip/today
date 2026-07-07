@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Minus, HelpCircle, ArrowRight, MessageSquare } from 'lucide-react';
+import { Plus, Minus, ArrowRight, MessageSquare } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { VisitorHeader } from '../components/shared/VisitorHeader';
 import Footer from '../components/shared/Footer';

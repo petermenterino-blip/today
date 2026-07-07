@@ -1,8 +1,8 @@
-import React, { useState, Suspense, lazy } from 'react';
+import React, { Suspense, lazy } from 'react';
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import {
-  X, Loader2, Trash
+  X, Trash
 } from 'lucide-react';
 import ErrorBoundary from '../../components/shared/ErrorBoundary';
 

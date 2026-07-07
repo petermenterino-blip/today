@@ -8,7 +8,7 @@ interface EmptyStateProps {
   action?: React.ReactNode;
 }
 
-export const EmptyState: React.FC<EmptyStateProps> = ({ icon, title, description, action }) => {
+export const EmptyState: React.FC<EmptyStateProps> = React.memo(({ icon, title, description, action }) => {
   return (
     <motion.div
       className="flex flex-col items-center justify-center py-16 px-4 text-center"
@@ -27,4 +27,4 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ icon, title, description
       {action}
     </motion.div>
   );
-};
+});

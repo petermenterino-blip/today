@@ -13,6 +13,12 @@ dist-ssr
 *.local
 .env.local
 
+# Environment files (contain real secrets)
+.env
+.env.staging
+.env.production
+.env.local.bak
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -39,6 +45,9 @@ vite-out.txt
 # Test artifacts
 playwright-report/
 test-results/
+
+# Playwright auth state (generated at runtime)
+playwright/.auth/*.json
 
 # Schema dumps
 _schema_dump.sql

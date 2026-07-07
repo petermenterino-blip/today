@@ -24,6 +24,13 @@ const { mockSignUp } = vi.hoisted(() => ({
   mockSignUp: vi.fn(),
 }));
 
+vi.mock('../../config/features', () => ({
+  features: {
+    get edgeApproval() { return false },
+    get transactionalProvisioning() { return false },
+  },
+}))
+
 vi.mock('@/src/lib/supabase', () => ({
   supabase: {
     auth: { signUp: mockSignUp },

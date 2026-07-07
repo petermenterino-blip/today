@@ -53,13 +53,14 @@ const StorePage: React.FC = () => {
               <input 
                 type="text" 
                 placeholder="Search..." 
+                aria-label="Search products"
                 className="pl-10 pr-4 py-3.5 sm:py-4 bg-white border border-black/[0.03] rounded-xl sm:rounded-2xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest w-full md:w-64 focus:border-black outline-none transition-all shadow-sm"
               />
             </div>
-            <button className="p-3.5 sm:p-4 bg-white border border-black/[0.03] rounded-xl sm:rounded-2xl relative hover:bg-slate-50 transition-all shrink-0 shadow-sm active:scale-90">
+            <button className="p-3.5 sm:p-4 bg-white border border-black/[0.03] rounded-xl sm:rounded-2xl relative hover:bg-slate-50 transition-all shrink-0 shadow-sm active:scale-90" aria-label="Shopping cart">
               <ShoppingCart size={18} className="sm:w-5 sm:h-5 text-slate-600" />
               {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-black text-white text-[9px] sm:text-[10px] flex items-center justify-center rounded-full font-black animate-in zoom-in">
+                <span className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-black text-white text-[9px] sm:text-[10px] flex items-center justify-center rounded-full font-black animate-in zoom-in" aria-live="polite">
                   {cartCount}
                 </span>
               )}

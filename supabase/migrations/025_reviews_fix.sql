@@ -9,6 +9,7 @@ create index if not exists idx_reviews_mentor_status on public.reviews(mentor_id
 create index if not exists idx_reviews_student_status on public.reviews(student_id, status) where deleted_at is null;
 
 -- Update notification RPC to accept link
+-- Restricted: p_user_id must equal auth.uid() (caller can only notify themselves)
 create or replace function public.insert_notification(
   p_user_id uuid,
   p_title text,
@@ -22,6 +23,9 @@ security definer
 set search_path = public
 as $$
 begin
+  if p_user_id != auth.uid() then
+    raise exception 'permission denied: you can only create notifications for yourself';
+  end if;
   insert into public.notifications (user_id, title, message, type, read, link)
   values (p_user_id, p_title, p_message, p_type, false, p_link);
 end;
@@ -50,5 +54,11 @@ create trigger trg_review_growth_score
   execute function public.handle_review_growth_score();
 
 -- Ensure reviews tables are in realtime publication
-alter publication supabase_realtime add table if not exists public.reviews;
-alter publication supabase_realtime add table if not exists public.review_history;
+do $$ begin
+  alter publication supabase_realtime add table public.reviews;
+exception when sqlstate '42710' then null;
+end $$;
+do $$ begin
+  alter publication supabase_realtime add table public.review_history;
+exception when sqlstate '42710' then null;
+end $$;

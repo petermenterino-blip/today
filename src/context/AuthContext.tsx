@@ -95,23 +95,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } catch (err: any) {
         if (mounted) {
           logger.error('AuthContext', 'Failed to initialize session', { error: err?.message });
-          try {
-            const { data: { session } } = await (await import('../lib/supabase')).supabase.auth.getSession();
-            if (session?.user) {
-              const role = (session.user.user_metadata?.role || session.user.app_metadata?.role || 'visitor') as UserRole;
-              const fallbackUser = {
-                id: session.user.id,
-                email: session.user.email || '',
-                name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || '',
-                role,
-                created_at: session.user.created_at,
-              };
-              lastUserIdRef.current = fallbackUser.id;
-              lastRoleRef.current = role;
-              setUser(fallbackUser as any);
-              setRole(role);
-              logger.info('AuthContext', 'Session restored from JWT fallback', { role });
-            }
+            try {
+              const { data: { session } } = await (await import('../lib/supabase')).supabase.auth.getSession();
+              if (session?.user) {
+                const role = 'visitor' as UserRole;
+                const fallbackUser = {
+                  id: session.user.id,
+                  email: session.user.email || '',
+                  name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || '',
+                  role,
+                  created_at: session.user.created_at,
+                };
+                lastUserIdRef.current = fallbackUser.id;
+                lastRoleRef.current = role;
+                setUser(fallbackUser as any);
+                setRole(role);
+                logger.info('AuthContext', 'Session restored from JWT fallback', { role });
+              }
           } catch (fallbackErr) {
             logger.warn('AuthContext', 'JWT fallback also failed', { error: String(fallbackErr) });
           }

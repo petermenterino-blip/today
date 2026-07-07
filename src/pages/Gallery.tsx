@@ -232,14 +232,14 @@ const GalleryPage: React.FC = () => {
                       <button
                         onClick={(e) => openEditForm(item, e)}
                         className="bg-white hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 p-2.5 rounded-full shadow-md border border-slate-100 transition-all"
-                        title="Edit"
+                        aria-label="Edit event"
                       >
                         <Edit2 size={14} />
                       </button>
                       <button
                         onClick={(e) => handleDeleteItem(item.id, e)}
                         className="bg-red-50 text-red-600 hover:bg-red-100 p-2.5 rounded-full border border-red-100/30 transition-all"
-                        title="Delete from Gallery"
+                        aria-label="Delete event from gallery"
                       >
                         <Trash2 size={14} />
                       </button>

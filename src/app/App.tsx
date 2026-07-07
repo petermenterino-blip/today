@@ -1,7 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
-import { AuthProvider, useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import Layout from '../components/shared/Layout';
 import ProtectedRoute from '../components/shared/ProtectedRoute';
 import ScrollToTop from '../components/shared/ScrollToTop';
@@ -20,7 +20,7 @@ const SurveyPage = lazy(() => import('../pages/Survey'));
 const PrivacyPage = lazy(() => import('../pages/Privacy'));
 const TermsPage = lazy(() => import('../pages/Terms'));
 const ResetPasswordPage = lazy(() => import('../pages/ResetPassword'));
-const AdminRevenuePage = lazy(() => import('../features/admin/AdminRevenue'));
+const FinancialsPage = lazy(() => import('../features/admin/AdminRevenue'));
 const ConsultationOverviewPage = lazy(() => import('../pages/ConsultationOverview'));
 const NotFoundPage = lazy(() => import('../pages/NotFound'));
 
@@ -73,7 +73,7 @@ const AppContent: React.FC = () => {
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route path="/admin/revenue" element={<ProtectedRoute allowedRoles={['mentor']}><AdminRevenuePage /></ProtectedRoute>} />
+            <Route path="/financials" element={<ProtectedRoute allowedRoles={['mentor']}><FinancialsPage /></ProtectedRoute>} />
             <Route path="/consultation-overview" element={<ConsultationOverviewPage />} />
             
             <Route path="/student/*" element={

@@ -1,0 +1,96 @@
+[auth]
+enabled = true
+site_url = "https://mentorino.vercel.app"
+additional_redirect_urls = ["https://mentorino.vercel.app", "http://localhost:5173"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+refresh_token_reuse_interval = 10
+enable_signup = true
+minimum_password_length = 8
+
+[auth.sessions]
+timebox = "24h"
+inactivity_timeout = "2h"
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = true
+secure_password_change = false
+max_frequency = "1s"
+
+[auth.mfa]
+max_enrolled_factors = 10
+
+[auth.mfa.totp]
+enroll_enabled = false
+verify_enabled = false
+
+[auth.rate_limit]
+email_sent = 2
+token_refresh = 30
+sign_in_sign_ups = 30
+
+[edge_runtime]
+enabled = true
+policy = "per_worker"
+inspector_port = 8083
+deno_version = 2
+
+[db]
+port = 54322
+major_version = 17
+
+[db.migrations]
+enabled = true
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
+
+[db.pooler]
+enabled = true
+pool_mode = "transaction"
+default_pool_size = 15
+max_client_conn = 100
+
+[realtime]
+enabled = true
+
+[storage]
+enabled = true
+
+[storage.buckets.profile-avatars]
+public = false
+allowed_mime_types = ["image/png", "image/jpeg", "image/webp"]
+file_size_limit = "2MB"
+
+[storage.buckets.student-documents]
+public = false
+allowed_mime_types = ["application/pdf", "image/png", "image/jpeg"]
+file_size_limit = "10MB"
+
+[storage.buckets.mentor-resources]
+public = true
+allowed_mime_types = ["application/pdf", "image/png", "image/jpeg", "image/webp", "video/mp4"]
+file_size_limit = "50MB"
+
+[storage.buckets.gallery-images]
+public = true
+allowed_mime_types = ["image/png", "image/jpeg", "image/webp"]
+file_size_limit = "10MB"
+
+[storage.buckets.public-website]
+public = true
+allowed_mime_types = ["image/png", "image/jpeg", "image/webp", "application/pdf"]
+file_size_limit = "10MB"
+
+[storage.buckets.message-attachments]
+public = false
+allowed_mime_types = ["application/pdf", "image/png", "image/jpeg", "image/webp"]
+file_size_limit = "10MB"
+
+[storage.buckets.shared_files]
+public = false
+allowed_mime_types = ["application/pdf", "image/png", "image/jpeg", "image/webp"]
+file_size_limit = "10MB"

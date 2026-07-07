@@ -1,6 +1,19 @@
 import { createAIProvider, AIChatMessage } from './aiProvider';
 import { contextEngine, type PlatformContext } from './contextEngine';
 import { supabase } from '../lib/supabase';
+import { logger } from '../lib/logger';
+
+const RATE_LIMIT_WINDOW_MS = 2000;
+const lastCallTimestamps = new Map<string, number>();
+
+function checkCallRate(fn: string): void {
+  const now = Date.now();
+  const last = lastCallTimestamps.get(fn) || 0;
+  if (now - last < RATE_LIMIT_WINDOW_MS) {
+    throw new Error('Please wait a moment before making another AI request.');
+  }
+  lastCallTimestamps.set(fn, now);
+}
 
 const SYSTEM_PROMPT = `You are Mentorino AI, the intelligent assistant for the Mentorino mentoring platform. You have access to ALL platform data and can analyze students, programs, sessions, applications, goals, tasks, resources, events, reviews, and analytics.
 
@@ -32,6 +45,7 @@ Example: [Action: create-session] Create Follow-up Session
 Available actions: create-session | open-student | review-application | assign-resource | schedule-event | send-reminder | approve-student | reject-application | open-program | generate-report`;
 
 export async function getStudentAnalysis(studentId: string, mentorId: string) {
+  checkCallRate('getStudentAnalysis');
   const student = await contextEngine.getStudentDetail(studentId, mentorId);
   const provider = createAIProvider();
 
@@ -57,6 +71,7 @@ export async function getStudentAnalysis(studentId: string, mentorId: string) {
 }
 
 export async function getProgramAnalysis(programId: string, mentorId: string) {
+  checkCallRate('getProgramAnalysis');
   const detail = await contextEngine.getProgramDetail(programId, mentorId);
   const provider = createAIProvider();
 
@@ -79,6 +94,7 @@ export async function getProgramAnalysis(programId: string, mentorId: string) {
 }
 
 export async function analyzeApplication(applicationId: string) {
+  checkCallRate('analyzeApplication');
   const { data: app } = await supabase
     .from('applications')
     .select('*, student:profiles(*)')
@@ -108,6 +124,7 @@ export async function analyzeApplication(applicationId: string) {
 }
 
 export async function generateWeeklyReport(userId: string) {
+  checkCallRate('generateWeeklyReport');
   const context = await contextEngine.getFullContext(userId);
   const provider = createAIProvider();
 
@@ -134,6 +151,7 @@ Format as a professional report ready for export.`;
 }
 
 export async function generateInsights(userId: string) {
+  checkCallRate('generateInsights');
   const context = await contextEngine.getFullContext(userId);
   const provider = createAIProvider();
 
@@ -232,6 +250,7 @@ export async function chatWithContext(
   userId: string,
   onToken?: (token: string) => void,
 ) {
+  checkCallRate('chatWithContext');
   const context = await contextEngine.getFullContext(userId);
   const provider = createAIProvider();
 
@@ -254,7 +273,8 @@ ${JSON.stringify(context, null, 2).slice(0, 15000)}
       temperature: 0.7,
       onToken,
     });
-  } catch {
+  } catch (err) {
+    logger.error('aiAssistant', 'chatWithContext failed, using fallback', { error: err instanceof Error ? err.message : 'Unknown error' });
     const fallback = generateFallbackResponse(messages, context);
     if (onToken) {
       let idx = 0;

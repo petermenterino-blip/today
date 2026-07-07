@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'motion/react';
 import {
   Calendar, Clock, MapPin, Users, User, Tag, AlertTriangle, Bookmark,
-  Share2, Copy, ExternalLink, QrCode, Video, Hourglass, Star,
+  Share2, Copy, QrCode, Video, Hourglass, Star,
 } from 'lucide-react';
 import { NetworkEvent } from '../../types';
 import { notifySuccess } from '../../utils/toast';
