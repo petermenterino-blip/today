@@ -16,7 +16,6 @@ dist-ssr
 # Environment files (contain real secrets)
 .env
 .env.staging
-.env.production
 .env.local.bak
 
 # Editor directories and files
