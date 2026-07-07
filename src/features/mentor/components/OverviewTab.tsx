@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'motion/react';
 import { Plus, Users, Calendar, Activity, Bot, Loader2, Send, Sparkles, FileText, MessageSquare, ClipboardList, Bell } from 'lucide-react';
 import { useOverviewStore } from '../hooks/useOverviewStore';
-import { useAIAssistant } from '../hooks/useAIAssistant';
 import { useAuth } from '../../../context/AuthContext';
 import { notifySuccess, notifyError } from '../../../utils/toast';
 import { messageService } from '../../../services/messageService';
@@ -24,11 +23,22 @@ interface OverviewTabProps {
   setProgramWizardStep: (v: number) => void;
   setIsSchedulingSession: (v: boolean) => void;
   handleOpenStudentProfile: (studentId: string) => void;
+  chatHistory: any[];
+  userInput: string;
+  setUserInput: (v: string) => void;
+  isAiLoading: boolean;
+  streamingContent: string;
+  suggestedPrompts: { label: string; prompt: string }[];
+  handleAiChat: () => void;
+  handleQuickAction: (prompt: string) => void;
+  chatEndRef: React.RefObject<HTMLDivElement>;
 }
 
 export const OverviewTab: React.FC<OverviewTabProps> = ({
   handleTabChange, setActiveTab, setIsCreatingProgram, setProgramWizardStep,
   setIsSchedulingSession, handleOpenStudentProfile,
+  chatHistory, userInput, setUserInput, isAiLoading, streamingContent,
+  suggestedPrompts, handleAiChat, handleQuickAction, chatEndRef,
 }) => {
   const { user: currentUser } = useAuth();
   const store = useOverviewStore();
@@ -44,15 +54,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     unreadCount, loading, formatRelativeTime, userId,
     programs, sessionsToday, taskActivities,
   } = store;
-
-  const aiDomain = useAIAssistant({
-    studentProfiles, sessions, applications, programs, userId,
-  });
-
-  const {
-    chatHistory, userInput, setUserInput, isAiLoading, streamingContent,
-    suggestedPrompts, handleAiChat, handleQuickAction, chatEndRef,
-  } = aiDomain;
 
   const [selectedChartTab, setSelectedChartTab] = useState('growth');
   const [showReviewApps, setShowReviewApps] = useState(false);

@@ -113,7 +113,11 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
           userInput={d.userInput}
           setUserInput={d.setUserInput}
           isAiLoading={d.isAiLoading}
+          streamingContent={d.streamingContent}
+          suggestedPrompts={d.suggestedPrompts}
           handleAiChat={d.handleAiChat}
+          handleQuickAction={d.handleQuickAction}
+          chatEndRef={d.chatEndRef}
           programsLoading={d.programsLoading}
           programs={d.programs}
           setIsCreatingProgram={d.setIsCreatingProgram}

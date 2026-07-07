@@ -48,6 +48,19 @@ export function useDashboard({ currentUser }: UseDashboardProps) {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // ── AI feature flag ──
+  const [aiEnabled, setAiEnabled] = useState(true);
+
+  useEffect(() => {
+    if (currentUser?.id) {
+      profileService.getProfileSettings(currentUser.id).then(({ data }) => {
+        if (data?.ai_enabled !== undefined) {
+          setAiEnabled(data.ai_enabled);
+        }
+      });
+    }
+  }, [currentUser?.id]);
+
   // ── Tab state ──
   const [activeTab, setActiveTab] = useState<MentorTab>(() => {
     const params = new URLSearchParams(location.search);
@@ -59,11 +72,15 @@ export function useDashboard({ currentUser }: UseDashboardProps) {
     const params = new URLSearchParams(location.search);
     const tab = params.get('tab');
     if (tab && tab !== activeTab) {
+      if (tab === 'ai' && !aiEnabled) {
+        navigate('/mentor', { replace: true });
+        return;
+      }
       setActiveTab(tab as MentorTab);
     } else if (!tab && activeTab !== 'overview') {
       setActiveTab('overview');
     }
-  }, [location.search]);
+  }, [location.search, aiEnabled, activeTab, navigate]);
 
   const handleTabChange = (tab: MentorTab) => {
     if (tab === 'ai' && !aiEnabled) return;
@@ -290,19 +307,6 @@ export function useDashboard({ currentUser }: UseDashboardProps) {
     { table: 'conversations', callback: () => { messageService.getConversations(currentUser?.id || '', 'mentor').then(setConversations); } },
     { table: 'messages', callback: () => { messageService.getConversations(currentUser?.id || '', 'mentor').then(setConversations); } },
   ]);
-
-  // ── AI feature flag ──
-  const [aiEnabled, setAiEnabled] = useState(true);
-
-  useEffect(() => {
-    if (currentUser?.id) {
-      profileService.getProfileSettings(currentUser.id).then(({ data }) => {
-        if (data?.aiEnabled !== undefined) {
-          setAiEnabled(data.aiEnabled);
-        }
-      });
-    }
-  }, [currentUser?.id]);
 
   useEffect(() => {
     if (activeTab === 'ai' && !aiEnabled) {
