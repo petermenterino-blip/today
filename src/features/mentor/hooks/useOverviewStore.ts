@@ -108,7 +108,7 @@ export function useOverviewStore() {
       try {
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, user_id, name, email, mentor_id, status, current_status, health_status, last_login, goal_progress, specialization, avatar_url, role')
+        .select('id, name, email, mentor_id, status, current_status, health_status, last_login, goal_progress, specialization, avatar_url, role')
         .eq('role', 'student')
         .limit(200);
       if (profiles) {
