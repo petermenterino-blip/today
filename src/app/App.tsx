@@ -32,17 +32,8 @@ const ContactPage = lazy(() => import('../pages/Contact'));
 const GalleryPage = lazy(() => import('../pages/Gallery'));
 const MentorshipPage = lazy(() => import('../pages/Mentorship'));
 
-const FullPageLoader = () => (
-  <div className="fixed inset-0 bg-white flex items-center justify-center z-[9999]">
-    <div className="flex flex-col items-center gap-4">
-      <div className="w-12 h-12 border-4 border-slate-100 border-t-black rounded-full animate-spin"></div>
-      <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Loading Workspace</p>
-    </div>
-  </div>
-);
-
 const AppContent: React.FC = () => {
-  const { user, role, authLoading, logout } = useAuth();
+  const { user, role, logout } = useAuth();
 
   return (
     <Router>

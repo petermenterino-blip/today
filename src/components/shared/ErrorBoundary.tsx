@@ -18,7 +18,7 @@ export default class ErrorBoundary extends Component<EBProps, EBState> {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, _info: ErrorInfo) {
+  componentDidCatch(error: Error) {
     const safe = analyzeError(error);
     logger.critical('ErrorBoundary', 'Unhandled React error', {
       errorMessage: safe.message,
@@ -28,7 +28,7 @@ export default class ErrorBoundary extends Component<EBProps, EBState> {
   }
 
   handleRetry = () => {
-    (this as any).setState({ hasError: false, error: null });
+    (this as Component<EBProps, EBState>).setState({ hasError: false, error: null });
   };
 
   render() {

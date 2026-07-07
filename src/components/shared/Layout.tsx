@@ -3,20 +3,14 @@ import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   LayoutDashboard, 
-  ShoppingBag, 
   Users, 
   Calendar, 
   Settings,
   Menu,
   X,
-  CreditCard,
-  Home,
   User,
   ClipboardList,
-  Plus,
-  Info,
   BookOpen,
-  HelpCircle,
   MessageCircle,
   Activity,
   Zap,
@@ -28,7 +22,6 @@ import {
   LogOut,
   Image as ImageIcon,
   CalendarCheck,
-  Bell,
   TrendingUp
 } from 'lucide-react';
 import { UserRole } from '../../types';
