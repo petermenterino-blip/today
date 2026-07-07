@@ -26,5 +26,8 @@
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "exclude": ["node_modules", "dist", "edge-functions", "supabase/functions", "backups", "e2e", "playwright.config.ts", "src/**/__tests__", "src/test"]
+  "references": [
+    { "path": "./tsconfig.node.json" }
+  ],
+  "exclude": ["node_modules", "dist", "edge-functions", "supabase/functions", "backups", "e2e", "playwright.config.ts", "src/**/__tests__", "src/test", "vite.config.ts"]
 }

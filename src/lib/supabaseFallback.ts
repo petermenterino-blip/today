@@ -4,6 +4,7 @@ type FallbackCache<T> = { data: T; timestamp: number };
 
 const cache = new Map<string, FallbackCache<any>>();
 const CACHE_TTL = 5 * 60 * 1000;
+const MAX_CACHE_SIZE = 100;
 
 function getFromCache<T>(key: string): T | null {
   const entry = cache.get(key);
@@ -16,6 +17,10 @@ function getFromCache<T>(key: string): T | null {
 }
 
 function setCache<T>(key: string, data: T): void {
+  if (cache.size >= MAX_CACHE_SIZE) {
+    const oldest = cache.entries().next().value;
+    if (oldest) cache.delete(oldest[0]);
+  }
   cache.set(key, { data, timestamp: Date.now() });
 }
 

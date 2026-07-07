@@ -27,7 +27,7 @@ jobs:
           node-version: 24
           cache: 'npm'
       - run: npm ci
-      - run: npx eslint src/ --max-warnings=0 || echo 'Lint warnings found (non-blocking)'
+      - run: npx eslint src/ --max-warnings=0
 
   typecheck:
     runs-on: ubuntu-latest

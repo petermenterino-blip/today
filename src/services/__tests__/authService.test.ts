@@ -284,7 +284,9 @@ describe('authService', () => {
       const result = await authService.resetPassword('test@mentorino.com');
 
       expect(result.error).toBeNull();
-      expect(mockResetPassword).toHaveBeenCalledWith('test@mentorino.com');
+      expect(mockResetPassword).toHaveBeenCalledWith('test@mentorino.com', {
+        redirectTo: 'http://localhost:3000/#/reset-password',
+      });
     });
   });
 
