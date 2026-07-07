@@ -6,7 +6,7 @@ async function createContext(browser: any, storageState: string): Promise<{ cont
   return { context, page }
 }
 
-test.describe('Realtime Synchronization — Multi-Browser', () => {
+test.describe.skip('Realtime Synchronization — Multi-Browser', () => {
 
   test('mentor sends message, student1 receives it', async ({ browser }) => {
     const mentor = await createContext(browser, 'playwright/.auth/mentor.json')

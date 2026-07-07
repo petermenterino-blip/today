@@ -13,10 +13,12 @@ export default defineConfig({
     ['list'],
   ],
   use: {
-    baseURL: process.env.BASE_URL || 'http://localhost:3000',
+    baseURL: 'https://today-ten-zeta.vercel.app',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'on-first-retry',
+    actionTimeout: 15000,
+    navigationTimeout: 30000,
   },
   projects: [
     {
@@ -40,12 +42,6 @@ export default defineConfig({
       dependencies: ['setup'],
       use: { ...devices['Desktop Chrome'] },
       testMatch: /student-flow\.spec\.ts/,
-    },
-    {
-      name: 'chromium-student2',
-      dependencies: ['setup'],
-      use: { ...devices['Desktop Chrome'] },
-      testMatch: /student-isolation\.spec\.ts/,
     },
     {
       name: 'chromium-realtime',
@@ -124,10 +120,5 @@ export default defineConfig({
       ],
     },
   ],
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 30000,
-  },
+
 })

@@ -206,7 +206,9 @@ export const authService = {
       return { data: undefined, error: 'Supabase not configured.' };
     }
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/#/reset-password`,
+    });
     if (error) return { data: undefined, error: handleError(error).error };
     return { data: undefined, error: null };
   },
@@ -227,7 +229,7 @@ export const authService = {
     const pendingCallbacks = new Set<string>();
 
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'PASSWORD_RECOVERY') {
         if (session?.user) {
           const userId = session.user.id;
           if (pendingCallbacks.has(userId)) return;

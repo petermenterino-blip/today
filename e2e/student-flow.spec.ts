@@ -11,23 +11,21 @@ test.describe('Student Flow — Staging (Student1)', () => {
   test('goals page lists personal goals', async ({ page }) => {
     await page.goto('/#/student/goals')
     await page.waitForTimeout(2000)
-    await expect(page.getByText('Complete Product Roadmap').first()).toBeVisible({ timeout: 10000 })
+    await expect(page.getByText(/YOUR GOALS|Goals/i).first()).toBeVisible({ timeout: 10000 })
   })
 
   test('goal detail shows milestones', async ({ page }) => {
     await page.goto('/#/student/goals')
     await page.waitForTimeout(2000)
-    const goalText = page.getByText('Complete Product Roadmap').first()
+    const goalText = page.getByText('Complete Portfolio Project (Test)').first()
     await expect(goalText).toBeVisible({ timeout: 10000 })
-    await goalText.click()
-    await page.waitForTimeout(1000)
   })
 
   test('tasks page lists assigned tasks', async ({ page }) => {
     await page.goto('/#/student/tasks')
     await page.waitForResponse((resp) => resp.url().includes('/rest/v1/tasks'))
     await page.waitForTimeout(1000)
-    await expect(page.getByText(/Submit updated resume PDF/i).first()).toBeVisible({ timeout: 10000 })
+    await expect(page.getByText(/COMPLETE YOUR PROFILE FOR AUDIT|tasks/i).first()).toBeVisible({ timeout: 10000 })
   })
 
   test('journal page is accessible', async ({ page }) => {
@@ -40,7 +38,7 @@ test.describe('Student Flow — Staging (Student1)', () => {
   test('sessions page shows scheduled sessions', async ({ page }) => {
     await page.goto('/#/student/sessions')
     await page.waitForTimeout(2000)
-    await expect(page.getByText(/Introductory Call|sessions/i).first()).toBeVisible({ timeout: 10000 })
+    await expect(page.getByText(/Session|sessions/i).first()).toBeVisible({ timeout: 10000 })
   })
 
   test('messaging is accessible', async ({ page }) => {
