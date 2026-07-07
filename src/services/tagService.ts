@@ -70,16 +70,6 @@ export const tagService = {
     return !error;
   },
 
-  async seed(tags: StudentTag[]): Promise<void> {
-    for (const tag of tags) {
-      const { error } = await supabase
-        .from('tags')
-        .upsert({ id: tag.id, label: tag.label, color: tag.color }, { onConflict: 'id' });
-
-      if (error) console.warn('Tag seed error:', error.message);
-    }
-  },
-
   // Student-tag assignment
   async getStudentTags(studentId: string): Promise<StudentTag[]> {
     const { data, error } = await supabase

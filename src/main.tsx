@@ -5,7 +5,6 @@ import '../index.css';
 import { QueryProvider } from './utils/queryClient';
 import { AuthProvider } from './context/AuthContext';
 import { ConnectionProvider } from './context/ConnectionContext';
-import { seedDatabase } from './utils/seedData';
 import { initSentry } from './lib/sentry';
 import ErrorBoundary from './components/shared/ErrorBoundary';
 import OfflineBanner from './components/shared/OfflineBanner';
@@ -47,10 +46,6 @@ if (shouldBlockStartup(startup)) {
 
 idleRecovery.mount();
 logger.info('App', 'Application starting', { env: import.meta.env.MODE });
-
-if (import.meta.env.DEV) {
-  seedDatabase().catch(() => {});
-}
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

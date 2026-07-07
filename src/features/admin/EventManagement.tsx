@@ -103,8 +103,8 @@ export const EventManagement: React.FC<EventManagementProps> = ({
           updatedRegs.push({
             userId: student.user_id,
             name: student.name || 'Anonymous Student',
-            email: student.email || 'student@example.com',
-            program: (student as any).specialization || 'Product Management',
+            email: student.email || '',
+            program: (student as any).specialization || '',
             registrationDate: new Date(Date.now() - (index + 2) * 24 * 60 * 60 * 1000).toLocaleDateString(),
             status: 'confirmed',
             attendanceStatus: evt.status === 'completed' ? (index % 5 === 0 ? 'absent' : 'attended') : 'none'
@@ -114,8 +114,8 @@ export const EventManagement: React.FC<EventManagementProps> = ({
           updatedRegs.push({
             userId: student.user_id,
             name: student.name || 'Anonymous Student',
-            email: student.email || 'student@example.com',
-            program: (student as any).specialization || 'Product Management',
+            email: student.email || '',
+            program: (student as any).specialization || '',
             registrationDate: new Date(Date.now() - index * 24 * 60 * 60 * 1000).toLocaleDateString(),
             status: status,
             attendanceStatus: 'none'
@@ -130,7 +130,7 @@ export const EventManagement: React.FC<EventManagementProps> = ({
         id: 'f1',
         name: 'Workshop_Slides_V1.pdf',
         type: 'slides' as const,
-        url: 'https://example.com/slides',
+        url: '',
         size: '2.4 MB',
         uploadedAt: evt.date
       },
@@ -138,7 +138,7 @@ export const EventManagement: React.FC<EventManagementProps> = ({
         id: 'f2',
         name: 'Pre_Read_Case_Study.pdf',
         type: 'pdf' as const,
-        url: 'https://example.com/preread',
+        url: '',
         size: '1.2 MB',
         uploadedAt: evt.date
       }
@@ -147,7 +147,7 @@ export const EventManagement: React.FC<EventManagementProps> = ({
     // 3. Ensure recording
     const updatedRecording = evt.recording || {
       type: 'zoom' as const,
-      url: evt.meetingLink || 'https://zoom.us/j/1234567890',
+      url: evt.meetingLink || '',
       notes: 'Passcode: Mentorino2026. Includes the full Q&A breakout rooms.'
     };
 
@@ -459,7 +459,7 @@ export const EventManagement: React.FC<EventManagementProps> = ({
       id: 'f_' + Date.now(),
       name: newFileName,
       type: newFileType,
-      url: newFileUrl || 'https://example.com/resources',
+      url: newFileUrl || '',
       size: newFileSize || '1.2 MB',
       uploadedAt: new Date().toLocaleDateString()
     };

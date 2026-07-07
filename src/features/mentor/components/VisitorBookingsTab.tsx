@@ -8,9 +8,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useVisitorBookings } from '../../../hooks/useVisitorBookings';
-import { useContactSubmissions } from '../../../hooks/useContactSubmissions';
 import { VisitorBooking } from '../../../services/visitorBookingService';
-import { ContactSubmission } from '../../../services/contactSubmissionService';
 import { notifySuccess, notifyError } from '../../../utils/toast';
 
 const PAGE_SIZE = 12;
@@ -633,166 +631,11 @@ const DetailModal: React.FC<DetailModalProps> = ({ booking, onClose, onStatusUpd
   );
 };
 
-const InquiriesPanel: React.FC<{
-  submissions: ContactSubmission[];
-  loading: boolean;
-  onUpdateStatus: (id: string, status: ContactSubmission['status']) => void;
-}> = ({ submissions, loading, onUpdateStatus }) => {
-  const [statusFilter, setStatusFilter] = useState<'all' | 'new' | 'read' | 'archived'>('all');
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const filtered = useMemo(() => {
-    let result = [...submissions];
-    if (statusFilter !== 'all') {
-      result = result.filter(s => s.status === statusFilter);
-    }
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(s =>
-        s.name?.toLowerCase().includes(q) ||
-        s.email?.toLowerCase().includes(q) ||
-        s.subject?.toLowerCase().includes(q) ||
-        s.message?.toLowerCase().includes(q)
-      );
-    }
-    result.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
-    return result;
-  }, [submissions, statusFilter, searchQuery]);
-
-  if (loading) {
-    return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="h-48 bg-slate-100 rounded-[32px] animate-pulse" />
-        ))}
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="bg-white p-5 rounded-[32px] border border-slate-100 shadow-sm space-y-4">
-        <div className="relative">
-          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-          <input
-            type="text"
-            placeholder="Search by name, email, subject, message..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-medium outline-none focus:border-black transition-all"
-          />
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {(['all', 'new', 'read', 'archived'] as const).map(opt => (
-            <button
-              key={opt}
-              onClick={() => setStatusFilter(prev => prev === opt ? 'all' : opt)}
-              className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
-                statusFilter === opt ? 'bg-brand-charcoal text-white shadow-sm' : 'bg-slate-50 text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              {opt === 'all' ? 'All' : opt.charAt(0).toUpperCase() + opt.slice(1)}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {filtered.length === 0 ? (
-        <div className="text-center py-16">
-          <p className="text-slate-400 text-xs font-medium">No inquiries found.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map(sub => (
-            <motion.div
-              key={sub.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-[24px] border border-slate-100 shadow-sm overflow-hidden hover:shadow-md transition-all"
-            >
-              <div className="p-5 space-y-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-[10px] font-black shrink-0 ${
-                      sub.status === 'new' ? 'bg-indigo-500' : sub.status === 'read' ? 'bg-slate-400' : 'bg-slate-300'
-                    }`}>
-                      {getInitials(sub.name)}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-slate-800 truncate">{sub.name}</p>
-                      <p className="text-[10px] text-slate-400 truncate">{sub.email}</p>
-                    </div>
-                  </div>
-                  <span className={`shrink-0 px-2.5 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${
-                    sub.status === 'new' ? 'bg-indigo-100 text-indigo-700' :
-                    sub.status === 'read' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'
-                  }`}>
-                    {sub.status}
-                  </span>
-                </div>
-
-                {sub.subject && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Subject:</span>
-                    <span className="text-xs font-medium text-slate-700">{sub.subject}</span>
-                  </div>
-                )}
-                {sub.discipline && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Discipline:</span>
-                    <span className="text-xs font-medium text-slate-700">{sub.discipline}</span>
-                  </div>
-                )}
-                {sub.message && (
-                  <p className="text-xs text-slate-600 leading-relaxed line-clamp-3">{sub.message}</p>
-                )}
-
-                <div className="flex items-center justify-between pt-2 border-t border-slate-50">
-                  <span className="text-[9px] text-slate-400 font-medium">{getRelativeTime(sub.createdAt)}</span>
-                  <div className="flex items-center gap-1">
-                    {sub.status === 'new' && (
-                      <button
-                        onClick={() => onUpdateStatus(sub.id, 'read')}
-                        className="px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-blue-50 text-slate-500 hover:text-blue-600 text-[8px] font-black uppercase tracking-widest transition-all"
-                      >
-                        Mark Read
-                      </button>
-                    )}
-                    {sub.status !== 'archived' && (
-                      <button
-                        onClick={() => onUpdateStatus(sub.id, 'archived')}
-                        className="px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-rose-50 text-slate-500 hover:text-rose-600 text-[8px] font-black uppercase tracking-widest transition-all"
-                      >
-                        Archive
-                      </button>
-                    )}
-                    <button
-                      onClick={() => window.open(`mailto:${sub.email}`, '_blank')}
-                      className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-50 hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 transition-all"
-                      title={`Email ${sub.email}`}
-                    >
-                      <Send size={12} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
 export const VisitorBookingsTab: React.FC = () => {
   const { user } = useAuth();
   const {
     bookings, loading, updateBooking, deleteBooking, refresh,
   } = useVisitorBookings();
-  const {
-    submissions, loading: inquiriesLoading, updateStatus, refresh: refreshInquiries,
-  } = useContactSubmissions();
-  const [activeSubTab, setActiveSubTab] = useState<'bookings' | 'inquiries'>('bookings');
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -933,225 +776,187 @@ export const VisitorBookingsTab: React.FC = () => {
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-slate-900">
-            {activeSubTab === 'bookings' ? 'Visitor Bookings' : 'Inquiries'}
-          </h1>
-          <p className="text-xs text-slate-500 mt-1 font-medium">
-            {activeSubTab === 'bookings'
-              ? 'Incoming call requests from website visitors'
-              : 'Contact form submissions from the website'}
-          </p>
+          <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-slate-900">Visitor Bookings</h1>
+          <p className="text-xs text-slate-500 mt-1 font-medium">Incoming call requests from website visitors</p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex bg-slate-100 rounded-xl p-0.5">
-            <button
-              onClick={() => setActiveSubTab('bookings')}
-              className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
-                activeSubTab === 'bookings' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-400 hover:text-slate-600'
-              }`}
-            >
-              Bookings
-            </button>
-            <button
-              onClick={() => setActiveSubTab('inquiries')}
-              className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
-                activeSubTab === 'inquiries' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-400 hover:text-slate-600'
-              }`}
-            >
-              Inquiries
-            </button>
-          </div>
           <button
-            onClick={activeSubTab === 'bookings' ? refresh : refreshInquiries}
+            onClick={refresh}
             className="p-2 rounded-xl bg-slate-100 text-slate-500 hover:text-slate-800 hover:bg-slate-200 transition-all"
-            title="Refresh"
+            title="Refresh bookings"
           >
             <RefreshCw size={16} />
           </button>
-          {activeSubTab === 'bookings' && (
-            <div className="flex bg-slate-100 rounded-xl p-1">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-400 hover:text-slate-600'}`}
-              >
-                <Grid3X3 size={16} />
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-400 hover:text-slate-600'}`}
-              >
-                <List size={16} />
-              </button>
-            </div>
-          )}
+          <div className="flex bg-slate-100 rounded-xl p-1">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              <Grid3X3 size={16} />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              <List size={16} />
+            </button>
+          </div>
         </div>
       </div>
 
-      {activeSubTab === 'bookings' && (
-        <>
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-            {STAT_DEFS.map(stat => (
-              <StatsCard
-                key={stat.key}
-                icon={stat.icon}
-                label={stat.label}
-                value={(stats as any)[stat.key]}
-                color={stat.color}
-                bg={stat.bg}
-              />
-            ))}
-          </div>
-
-          <div className="bg-white p-5 rounded-[32px] border border-slate-100 shadow-sm space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="relative flex-1">
-                <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                <input
-                  type="text"
-                  placeholder="Search by name, email, phone, company, notes..."
-                  value={searchInput}
-                  onChange={handleSearchChange}
-                  className="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-medium outline-none focus:border-black transition-all"
-                />
-                {searchInput && (
-                  <button
-                    onClick={handleClearSearch}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-300 hover:text-slate-500 transition-colors"
-                  >
-                    <X size={14} />
-                  </button>
-                )}
-              </div>
-              <div className="relative" ref={sortRef}>
-                <button
-                  onClick={() => setShowSort(prev => !prev)}
-                  className="px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-700 transition-all flex items-center gap-2"
-                >
-                  <ArrowUpDown size={14} />
-                  <span className="hidden sm:inline">{SORT_OPTIONS.find(o => o.id === sortBy)?.label}</span>
-                </button>
-                <AnimatePresence>
-                  {showSort && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -4 }}
-                      className="absolute right-0 top-full mt-2 z-20 bg-white border border-slate-100 rounded-2xl shadow-lg overflow-hidden min-w-[180px]"
-                    >
-                      {SORT_OPTIONS.map(opt => (
-                        <button
-                          key={opt.id}
-                          onClick={() => { setSortBy(opt.id); setShowSort(false); }}
-                          className={`w-full text-left px-4 py-2.5 text-[11px] font-bold transition-all ${
-                            sortBy === opt.id ? 'bg-brand-charcoal text-white' : 'text-slate-600 hover:bg-slate-50'
-                          }`}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              {STATUS_FILTERS.map(opt => (
-                <button
-                  key={opt.id}
-                  onClick={() => handleStatusFilter(opt.id)}
-                  className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
-                    statusFilter === opt.id ? 'bg-brand-charcoal text-white shadow-sm' : 'bg-slate-50 text-slate-500 hover:text-slate-700'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <SkeletonCard key={i} />
-              ))}
-            </div>
-          ) : filteredBookings.length === 0 ? (
-            <EmptyState hasActiveFilters={hasActiveFilters} />
-          ) : viewMode === 'grid' ? (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <AnimatePresence>
-                  {visibleBookings.map(booking => (
-                    <BookingCard
-                      key={booking.id}
-                      booking={booking}
-                      onClick={() => setSelectedBooking(booking)}
-                      onStatusUpdate={handleStatusUpdate}
-                      onAssignMentor={handleAssignMentor}
-                      onSendEmail={handleSendEmail}
-                      onArchive={handleArchive}
-                    />
-                  ))}
-                </AnimatePresence>
-              </div>
-              {hasMore && (
-                <div className="flex justify-center pt-4">
-                  <button
-                    onClick={() => setPage(p => p + 1)}
-                    className="px-8 py-3 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all"
-                  >
-                    Load More ({filteredBookings.length - page * PAGE_SIZE} remaining)
-                  </button>
-                </div>
-              )}
-            </>
-          ) : (
-            <>
-              <div className="space-y-2">
-                <AnimatePresence>
-                  {visibleBookings.map(booking => (
-                    <BookingListItem
-                      key={booking.id}
-                      booking={booking}
-                      onClick={() => setSelectedBooking(booking)}
-                      onStatusUpdate={handleStatusUpdate}
-                      onAssignMentor={handleAssignMentor}
-                      onSendEmail={handleSendEmail}
-                      onArchive={handleArchive}
-                    />
-                  ))}
-                </AnimatePresence>
-              </div>
-              {hasMore && (
-                <div className="flex justify-center pt-4">
-                  <button
-                    onClick={() => setPage(p => p + 1)}
-                    className="px-8 py-3 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all"
-                  >
-                    Load More ({filteredBookings.length - page * PAGE_SIZE} remaining)
-                  </button>
-                </div>
-              )}
-            </>
-          )}
-
-          <DetailModal
-            booking={selectedBooking}
-            onClose={() => setSelectedBooking(null)}
-            onStatusUpdate={handleStatusUpdate}
-            onAssignMentor={handleAssignMentor}
-            onArchive={handleArchive}
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+        {STAT_DEFS.map(stat => (
+          <StatsCard
+            key={stat.key}
+            icon={stat.icon}
+            label={stat.label}
+            value={(stats as any)[stat.key]}
+            color={stat.color}
+            bg={stat.bg}
           />
+        ))}
+      </div>
+
+      <div className="bg-white p-5 rounded-[32px] border border-slate-100 shadow-sm space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1">
+            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search by name, email, phone, company, notes..."
+              value={searchInput}
+              onChange={handleSearchChange}
+              className="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-medium outline-none focus:border-black transition-all"
+            />
+            {searchInput && (
+              <button
+                onClick={handleClearSearch}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-300 hover:text-slate-500 transition-colors"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+          <div className="relative" ref={sortRef}>
+            <button
+              onClick={() => setShowSort(prev => !prev)}
+              className="px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-700 transition-all flex items-center gap-2"
+            >
+              <ArrowUpDown size={14} />
+              <span className="hidden sm:inline">{SORT_OPTIONS.find(o => o.id === sortBy)?.label}</span>
+            </button>
+            <AnimatePresence>
+              {showSort && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  className="absolute right-0 top-full mt-2 z-20 bg-white border border-slate-100 rounded-2xl shadow-lg overflow-hidden min-w-[180px]"
+                >
+                  {SORT_OPTIONS.map(opt => (
+                    <button
+                      key={opt.id}
+                      onClick={() => { setSortBy(opt.id); setShowSort(false); }}
+                      className={`w-full text-left px-4 py-2.5 text-[11px] font-bold transition-all ${
+                        sortBy === opt.id ? 'bg-brand-charcoal text-white' : 'text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {STATUS_FILTERS.map(opt => (
+            <button
+              key={opt.id}
+              onClick={() => handleStatusFilter(opt.id)}
+              className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
+                statusFilter === opt.id ? 'bg-brand-charcoal text-white shadow-sm' : 'bg-slate-50 text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
+      ) : filteredBookings.length === 0 ? (
+        <EmptyState hasActiveFilters={hasActiveFilters} />
+      ) : viewMode === 'grid' ? (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <AnimatePresence>
+              {visibleBookings.map(booking => (
+                <BookingCard
+                  key={booking.id}
+                  booking={booking}
+                  onClick={() => setSelectedBooking(booking)}
+                  onStatusUpdate={handleStatusUpdate}
+                  onAssignMentor={handleAssignMentor}
+                  onSendEmail={handleSendEmail}
+                  onArchive={handleArchive}
+                />
+              ))}
+            </AnimatePresence>
+          </div>
+          {hasMore && (
+            <div className="flex justify-center pt-4">
+              <button
+                onClick={() => setPage(p => p + 1)}
+                className="px-8 py-3 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all"
+              >
+                Load More ({filteredBookings.length - page * PAGE_SIZE} remaining)
+              </button>
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          <div className="space-y-2">
+            <AnimatePresence>
+              {visibleBookings.map(booking => (
+                <BookingListItem
+                  key={booking.id}
+                  booking={booking}
+                  onClick={() => setSelectedBooking(booking)}
+                  onStatusUpdate={handleStatusUpdate}
+                  onAssignMentor={handleAssignMentor}
+                  onSendEmail={handleSendEmail}
+                  onArchive={handleArchive}
+                />
+              ))}
+            </AnimatePresence>
+          </div>
+          {hasMore && (
+            <div className="flex justify-center pt-4">
+              <button
+                onClick={() => setPage(p => p + 1)}
+                className="px-8 py-3 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all"
+              >
+                Load More ({filteredBookings.length - page * PAGE_SIZE} remaining)
+              </button>
+            </div>
+          )}
         </>
       )}
 
-      {activeSubTab === 'inquiries' && (
-        <InquiriesPanel
-          submissions={submissions}
-          loading={inquiriesLoading}
-          onUpdateStatus={(id, status) => updateStatus({ id, status })}
-        />
-      )}
+      <DetailModal
+        booking={selectedBooking}
+        onClose={() => setSelectedBooking(null)}
+        onStatusUpdate={handleStatusUpdate}
+        onAssignMentor={handleAssignMentor}
+        onArchive={handleArchive}
+      />
     </div>
   );
 };

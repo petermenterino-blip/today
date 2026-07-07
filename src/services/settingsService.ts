@@ -57,9 +57,6 @@ export const settingsService = {
     return fromDbSettings(data);
   },
 
-  async seed(mentorId: string, settings: Partial<MentorSettings>): Promise<void> {
-    await this.upsert(mentorId, settings);
-  },
 };
 
 function fromDbLayout(row: any): DashboardLayout {

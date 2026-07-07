@@ -1,36 +1,10 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MOCK_PRODUCTS } from '../constants';
-import { ShoppingCart, Search, Check, ArrowRight, ArrowLeft } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { transactionService } from '../services/transactionService';
+import { ShoppingCart, Search, ArrowLeft } from 'lucide-react';
 
 const StorePage: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const [cartCount, setCartCount] = useState(0);
-  const [purchasedIds, setPurchasedIds] = useState<string[]>([]);
-
-  useEffect(() => {
-    if (user?.id) {
-      transactionService.fetchByUserId(user.id).then(res => {
-        if (res.data) {
-          const productNames = res.data.filter(t => t.product).map(t => t.product);
-          const ids = MOCK_PRODUCTS.filter(p => productNames.includes(p.name)).map(p => p.id);
-          setPurchasedIds(ids);
-        }
-      });
-    }
-  }, [user?.id]);
-
-  const handleBuy = async (id: string) => {
-    const product = MOCK_PRODUCTS.find(p => p.id === id);
-    if (!product || !user?.id) return;
-    await transactionService.recordPurchase(user.id, user.name || '', product.name, product.price);
-    setPurchasedIds(prev => [...prev, id]);
-    setCartCount(prev => prev + 1);
-  };
 
   return (
     <div className="max-w-md md:max-w-4xl lg:max-w-6xl mx-auto space-y-6 sm:space-y-8 md:space-y-10 py-6 px-4 md:px-0 animate-in fade-in duration-700">
@@ -59,58 +33,13 @@ const StorePage: React.FC = () => {
             </div>
             <button className="p-3.5 sm:p-4 bg-white border border-black/[0.03] rounded-xl sm:rounded-2xl relative hover:bg-slate-50 transition-all shrink-0 shadow-sm active:scale-90" aria-label="Shopping cart">
               <ShoppingCart size={18} className="sm:w-5 sm:h-5 text-slate-600" />
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-black text-white text-[9px] sm:text-[10px] flex items-center justify-center rounded-full font-black animate-in zoom-in" aria-live="polite">
-                  {cartCount}
-                </span>
-              )}
             </button>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
-        {MOCK_PRODUCTS.map((product) => {
-          const isOwned = purchasedIds.includes(product.id);
-          return (
-            <div key={product.id} className="group bg-white border border-black/[0.03] rounded-[32px] sm:rounded-[48px] overflow-hidden hover:shadow-xl hover:border-black/10 transition-all duration-500 flex flex-col">
-              <div className="aspect-[4/3] relative overflow-hidden bg-slate-100">
-                <img 
-                  src={product.image} 
-                  alt={product.name} 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700"
-                  loading="lazy"
-                />
-                <div className="absolute top-4 left-4 sm:top-6 sm:left-6">
-                  <span className="px-3 sm:px-4 py-1 sm:py-1.5 bg-white/90 backdrop-blur-md rounded-full text-[7px] sm:text-[8px] font-black uppercase tracking-widest shadow-sm">
-                    {product.category}
-                  </span>
-                </div>
-              </div>
-              <div className="p-6 sm:p-8 flex flex-col flex-1">
-                <h3 className="text-lg sm:text-xl font-black uppercase tracking-tight mb-2 sm:mb-3">{product.name}</h3>
-                <p className="text-slate-400 text-[10px] sm:text-xs mb-6 sm:mb-8 line-clamp-2 leading-relaxed font-semibold">
-                  {product.description}
-                </p>
-                <div className="flex items-center justify-between mt-auto pt-4 sm:pt-6 border-t border-black/[0.02]">
-                  <span className="text-xl sm:text-2xl font-black text-black">${product.price}</span>
-                  <button 
-                    onClick={() => handleBuy(product.id)}
-                    disabled={isOwned}
-                    className={`
-                      btn-compact flex items-center gap-2
-                      ${isOwned 
-                        ? 'bg-emerald-50 text-emerald-600 cursor-default opacity-100' 
-                        : 'bg-black text-white hover:bg-slate-800'}
-                    `}
-                  >
-                    {isOwned ? <><Check size={14} /> Owned</> : <>Buy <ArrowRight size={14} /></>}
-                  </button>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+      <div className="flex items-center justify-center py-24">
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-300">No products available yet</p>
       </div>
     </div>
   );

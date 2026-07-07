@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { Application } from '../../../types';
 import { applicationService } from '../../../services/applicationService';
+import { storageService } from '../../../services/storageService';
 import { notifySuccess, notifyError } from '../../../utils/toast';
 
 interface ApplicationsTabProps {
@@ -52,6 +53,28 @@ interface ApplicationsTabProps {
   updateAppStatus: (id: string, status: 'approved' | 'rejected') => Promise<any>;
   filteredAppsForTab: Application[];
 }
+
+const ResumeDownloadButton: React.FC<{ path: string }> = ({ path }) => {
+  const [url, setUrl] = React.useState<string | null>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    storageService.getPublicUrlFromPath('student-documents', path, 3600)
+      .then(setUrl)
+      .catch(() => setUrl(null))
+      .finally(() => setLoading(false));
+  }, [path]);
+
+  if (loading) return <span className="text-xs text-slate-400">Loading...</span>;
+  if (!url) return <span className="text-xs text-red-400">Unavailable</span>;
+
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer"
+       className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-bold text-slate-700 transition-all">
+      <FileText size={14} /> View Resume
+    </a>
+  );
+};
 
 const ApplicationCard: React.FC<{
   app: Application;
@@ -236,11 +259,42 @@ const ApplicationDetailModal: React.FC<{
                     <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Applied</p>
                     <p className="text-sm font-semibold text-slate-900">{new Date(application.created_at).toLocaleDateString()}</p>
                   </div>
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Seriousness</p>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-black rounded-full transition-all" style={{ width: `${((application.seriousness || 5) / 10) * 100}%` }} />
+                      </div>
+                      <span className="text-sm font-bold text-slate-900">{application.seriousness || 5}/10</span>
+                    </div>
+                  </div>
+                  {application.portfolio_url && (
+                    <div className="space-y-1">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Portfolio</p>
+                      <p className="text-sm font-semibold text-blue-600 truncate">
+                        <a href={application.portfolio_url} target="_blank" rel="noopener noreferrer" className="hover:underline flex items-center gap-1">
+                          <ExternalLink size={12} />View Portfolio
+                        </a>
+                      </p>
+                    </div>
+                  )}
+                  {application.resume_link && (
+                    <div className="space-y-1">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Resume</p>
+                      <ResumeDownloadButton path={application.resume_link} />
+                    </div>
+                  )}
                 </div>
                 {application.goal && (
                   <div className="space-y-1">
                     <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Goal</p>
                     <p className="text-sm text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-100">{application.goal}</p>
+                  </div>
+                )}
+                {application.message_to_mentor && (
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Message to Mentor</p>
+                    <p className="text-sm text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-100">{application.message_to_mentor}</p>
                   </div>
                 )}
               </div>

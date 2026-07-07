@@ -163,17 +163,6 @@ export const studentService = {
     return fromDbProfile(result.data);
   },
 
-  async seed(profiles: any[]): Promise<void> {
-    for (const p of profiles) {
-      const existing = await this.getById(p.id || p.user_id);
-      if (existing) {
-        await this.update(p.id || p.user_id, p);
-      } else {
-        await this.create(p);
-      }
-    }
-  },
-
   async searchStudents(query: string): Promise<StudentProfile[]> {
     const { data, error } = await supabase
       .from('profiles')

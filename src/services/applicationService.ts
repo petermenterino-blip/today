@@ -8,6 +8,10 @@ import { features } from '../config/features';
 
 const AUTH_SIGNUP_DISABLED = !import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+function escHtml(str: string): string {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
 const APP_COLS = [
   'id', 'user_id', 'email', 'first_name', 'last_name', 'phone_number',
   'discipline', 'reason_for_applying', 'status', 'mentor_type',
@@ -182,7 +186,15 @@ export const applicationService = {
         needs_focus: app.needs_focus || null,
       });
     if (error) return { data: null, error: handleError(error).error };
-    return { data: rowToApplication((data ?? [{}])[0]), error: null };
+
+    const submitted = rowToApplication((data ?? [{}])[0]);
+    edgeFunctionService.sendCustomEmail(
+      app.user_email,
+      'Application Received - Mentorino',
+      `<h1>Thanks, ${escHtml(app.full_name)}!</h1><p>Your application for <strong>Mentorino Program</strong> has been received. We will review it and get back to you within 48 hours.</p><p>Best,<br/>The Mentorino Team</p>`
+    ).catch(() => {});
+
+    return { data: submitted, error: null };
   },
 
   async updateStatus(id: string, status: 'approved' | 'rejected'): Promise<ServiceResponse<void>> {

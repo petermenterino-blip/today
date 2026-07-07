@@ -138,9 +138,4 @@ export const notificationStorage = {
     return !result.error;
   },
 
-  async seed(items: Notification[]): Promise<void> {
-    for (const item of items) {
-      try { await this.create(item); } catch {}
-    }
-  },
 };

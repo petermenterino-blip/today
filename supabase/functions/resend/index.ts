@@ -3,8 +3,10 @@ import { verifyAuth, requireRole, getCorsHeaders, CORS_HEADERS, checkRateLimit, 
 
 interface EmailRequest {
   to: string
-  template: 'welcome' | 'session_reminder' | 'application_update' | 'notification'
-  data: Record<string, any>
+  template?: 'welcome' | 'session_reminder' | 'application_update' | 'notification'
+  data?: Record<string, any>
+  subject?: string
+  html?: string
 }
 
 function esc(str: string): string {
@@ -56,8 +58,19 @@ serve(async (req) => {
   const { user, error } = await verifyAuth(authHeader)
   if (error) return error
 
-  const roleError = requireRole(user, ['mentor'])
-  if (roleError) return roleError
+  const { to, template, data, subject: customSubject, html: customHtml }: EmailRequest = await req.json()
+
+  if (!to || typeof to !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
+    return new Response(JSON.stringify({ error: 'A valid recipient email is required' }), { status: 400, headers: corsHeaders })
+  }
+
+  if (customSubject && customHtml) {
+    const roleError = requireRole(user, ['student', 'mentor'])
+    if (roleError) return roleError
+  } else {
+    const roleError = requireRole(user, ['mentor'])
+    if (roleError) return roleError
+  }
 
   const rateKey = getRateLimitKey('resend', user.id, req.headers.get('x-forwarded-for') || '')
   const { allowed, retryAfterMs } = await checkRateLimit(rateKey, 'resend')
@@ -74,22 +87,27 @@ serve(async (req) => {
   }
 
   try {
-    const { to, template, data }: EmailRequest = await req.json()
+    let subject: string
+    let html: string
 
-    if (!to || typeof to !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
-      return new Response(JSON.stringify({ error: 'A valid recipient email is required' }), { status: 400, headers: corsHeaders })
+    if (customSubject && customHtml) {
+      subject = customSubject
+      html = customHtml
+    } else {
+      if (!template) {
+        return new Response(JSON.stringify({ error: 'Either template or subject+html is required' }), { status: 400, headers: corsHeaders })
+      }
+      const templateFn = TEMPLATES[template]
+      if (!templateFn) {
+        return new Response(JSON.stringify({ error: `Unknown template: ${template}` }), { status: 400, headers: corsHeaders })
+      }
+      if (!data || typeof data !== 'object') {
+        return new Response(JSON.stringify({ error: 'data object is required' }), { status: 400, headers: corsHeaders })
+      }
+      const rendered = templateFn(data)
+      subject = rendered.subject
+      html = rendered.html
     }
-
-    const templateFn = TEMPLATES[template]
-    if (!templateFn) {
-      return new Response(JSON.stringify({ error: `Unknown template: ${template}` }), { status: 400, headers: corsHeaders })
-    }
-
-    if (!data || typeof data !== 'object') {
-      return new Response(JSON.stringify({ error: 'data object is required' }), { status: 400, headers: corsHeaders })
-    }
-
-    const { subject, html } = templateFn(data)
 
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -112,7 +130,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Failed to send email. Please try again later.' }), { status: 502, headers: corsHeaders })
     }
 
-    console.log(`[resend] success: to=${to} template=${template} userId=${user.id.slice(0, 8)} duration=${Date.now() - startTime}ms`)
+    console.log(`[resend] success: to=${to} template=${template || 'custom'} userId=${user.id.slice(0, 8)} duration=${Date.now() - startTime}ms`)
     return new Response(JSON.stringify({ success: true, id: result.id }), {
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     })

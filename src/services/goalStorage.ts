@@ -141,9 +141,4 @@ export const goalStorage = {
     return !result.error;
   },
 
-  async seed(items: Goal[]): Promise<void> {
-    for (const item of items) {
-      try { await this.create(item); } catch {}
-    }
-  },
 };

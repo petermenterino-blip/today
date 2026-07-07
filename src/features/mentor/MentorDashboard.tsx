@@ -11,6 +11,7 @@ const EventListView = lazy(() => import('../events/EventListView'));
 const WhatsAppMessaging = lazy(() => import('../messaging/WhatsAppMessaging'));
 const MentorScheduler = lazy(() => import('./MentorScheduler').then(m => ({ default: m.MentorScheduler })));
 const GalleryManagement = lazy(() => import('../admin/GalleryManagement'));
+const EmailsTab = lazy(() => import('./components/EmailsTab').then(m => ({ default: m.EmailsTab })));
 const OverviewTab = lazy(() => import('./components/OverviewTab').then(m => ({ default: m.OverviewTab })));
 const MenteesTab = lazy(() => import('./components/MenteesTab').then(m => ({ default: m.MenteesTab })));
 const TasksTab = lazy(() => import('./components/TasksTab').then(m => ({ default: m.TasksTab })));
@@ -345,6 +346,13 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
 
       {d.activeTab === 'gallery' && (
         <ErrorBoundary><Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><GalleryManagement /></Suspense></ErrorBoundary>
+      )}
+
+      {d.activeTab === 'emails' && (
+        <ErrorBoundary><Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><EmailsTab
+          studentProfiles={d.studentProfiles}
+          currentUser={d.currentUser}
+        /></Suspense></ErrorBoundary>
       )}
 
       {d.activeTab === 'growth-audit' && (

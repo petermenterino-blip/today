@@ -135,17 +135,4 @@ export const studentProgressService = {
     return { data: fromDb(data), error: null };
   },
 
-  async seed(progressList: StudentProgress[]): Promise<void> {
-    for (const p of progressList) {
-      await supabase
-        .from('student_progress')
-        .upsert({
-          user_id: p.userId,
-          program_id: p.programId,
-          started_at: p.startedAt || new Date().toISOString(),
-          completed_at: p.completedAt || null,
-          lessons: p.lessons || {},
-        }, { onConflict: 'user_id, program_id' });
-    }
-  },
 };

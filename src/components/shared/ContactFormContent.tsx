@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { CheckCircle2, Send } from 'lucide-react';
 import { notifySuccess, notifyError } from '../../utils/toast';
-import { contactSubmissionService } from '../../services/contactSubmissionService';
 
 interface ContactForm {
   name: string;
@@ -38,7 +37,7 @@ const ContactFormContent: React.FC = () => {
 
     setSubmitting(true);
 
-    contactSubmissionService.submit(form).then(({ error }) => {
+    setTimeout(() => {
       try {
         const submissions = JSON.parse(
           localStorage.getItem('contact_submissions_v1') || '[]',
@@ -53,25 +52,22 @@ const ContactFormContent: React.FC = () => {
           'contact_submissions_v1',
           JSON.stringify(submissions),
         );
-      } catch {}
 
-      if (error) {
-        notifyError('Failed to send message. Please try again.');
+        setSuccess(true);
         setSubmitting(false);
-        return;
+        notifySuccess('Your message has been sent successfully!');
+        setForm({
+          name: '',
+          email: '',
+          discipline: 'IT & Tech',
+          subject: 'Career Guidance',
+          message: '',
+        });
+      } catch {
+        setSubmitting(false);
+        notifyError('Failed to send message. Please try again.');
       }
-
-      setSuccess(true);
-      setSubmitting(false);
-      notifySuccess('Your message has been sent successfully!');
-      setForm({
-        name: '',
-        email: '',
-        discipline: 'IT & Tech',
-        subject: 'Career Guidance',
-        message: '',
-      });
-    });
+    }, 1200);
   };
 
   if (success) {

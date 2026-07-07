@@ -38,7 +38,7 @@ import { useProgramManager } from './useProgramManager';
 import { useReviews } from '../../../hooks/useReviews';
 import { useAIAssistant } from './useAIAssistant';
 
-export type MentorTab = 'overview' | 'applications' | 'mentees' | 'programs' | 'sessions' | 'feedback' | 'resources' | 'events' | 'messaging' | 'analytics' | 'ai' | 'gallery' | 'bookings' | 'growth-audit' | 'program-progress';
+export type MentorTab = 'overview' | 'applications' | 'mentees' | 'programs' | 'sessions' | 'feedback' | 'resources' | 'events' | 'messaging' | 'analytics' | 'ai' | 'gallery' | 'bookings' | 'growth-audit' | 'program-progress' | 'emails';
 
 interface UseDashboardProps {
   currentUser: User | null;
@@ -387,7 +387,7 @@ export function useDashboard({ currentUser }: UseDashboardProps) {
         description: sessionDesc,
         startTime: startTimeISO,
         endTime: endTimeISO,
-        meetingUrl: sessionMeetingUrl || 'https://meet.google.com/abc-defg-hij',
+        meetingUrl: sessionMeetingUrl || '',
         attendanceStatus: 'pending',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
