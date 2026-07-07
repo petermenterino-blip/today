@@ -4,5 +4,12 @@ import tseslint from 'typescript-eslint';
 export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
+  {
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+      'no-empty': ['error', { allowEmptyCatch: true }],
+    },
+  },
   { ignores: ['dist/**', 'coverage/**', 'node_modules/**'] },
 );

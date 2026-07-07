@@ -92,7 +92,7 @@ export const EventManagement: React.FC<EventManagementProps> = ({
     const students = await studentService.getAll() as unknown as StudentProfile[];
     
     // 1. Ensure registrations
-    let updatedRegs = evt.registrations ? [...evt.registrations] : [];
+    const updatedRegs = evt.registrations ? [...evt.registrations] : [];
     if (updatedRegs.length === 0) {
       const attendeeSet = new Set(evt.attendees || []);
       
@@ -125,7 +125,7 @@ export const EventManagement: React.FC<EventManagementProps> = ({
     }
 
     // 2. Ensure files
-    let updatedFiles = evt.files ? [...evt.files] : [
+    const updatedFiles = evt.files ? [...evt.files] : [
       {
         id: 'f1',
         name: 'Workshop_Slides_V1.pdf',
@@ -145,14 +145,14 @@ export const EventManagement: React.FC<EventManagementProps> = ({
     ];
 
     // 3. Ensure recording
-    let updatedRecording = evt.recording || {
+    const updatedRecording = evt.recording || {
       type: 'zoom' as const,
       url: evt.meetingLink || 'https://zoom.us/j/1234567890',
       notes: 'Passcode: Mentorino2026. Includes the full Q&A breakout rooms.'
     };
 
     // 4. Ensure feedback
-    let updatedFeedback = evt.feedbacks ? [...evt.feedbacks] : [];
+    const updatedFeedback = evt.feedbacks ? [...evt.feedbacks] : [];
     if (updatedFeedback.length === 0) {
       const feedbackComments = [
         { rating: 5, comment: 'Absolutely brilliant breakdown of case interviews. Extremely practical!', suggestion: 'More interactive worksheets if possible.' },

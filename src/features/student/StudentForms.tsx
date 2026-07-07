@@ -269,9 +269,10 @@ function FormFieldRenderer({
           </div>
         </div>
       );
-    case 'checkboxes':
+    case 'checkboxes': {
       const selected = Array.isArray(value) ? value : [];
       return (
+
         <div className="space-y-2">
           <label className={baseLabel}>{field.label}{field.required && <span className="text-rose-400 ml-1">*</span>}</label>
           <div className="space-y-2">
@@ -304,6 +305,7 @@ function FormFieldRenderer({
           </div>
         </div>
       );
+    }
     case 'rating':
       return (
         <div className="space-y-2">

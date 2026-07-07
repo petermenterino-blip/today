@@ -555,7 +555,7 @@ Return as JSON array: [{title, type: "session"|"student"|"application"|"resource
 function extractList(text: string, key: string): string[] {
   try {
     const match = text.match(new RegExp(`${key}[:\\s]+([^\\n]+(?:\\n[^\\n]+)*)`, 'i'));
-    if (match) return match[1].split(/[,;•\-]\s*/).filter(Boolean).slice(0, 10);
+    if (match) return match[1].split(/[,;•-]\s*/).filter(Boolean).slice(0, 10);
   } catch {}
   return [];
 }

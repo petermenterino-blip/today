@@ -67,7 +67,7 @@ const AssignResourceModal: React.FC<AssignResourceModalProps> = ({ open, onClose
   const toggleStudent = (id: string) => {
     setSelected(prev => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
       return next;
     });
   };
@@ -75,7 +75,7 @@ const AssignResourceModal: React.FC<AssignResourceModalProps> = ({ open, onClose
   const toggleProgram = (programId: string) => {
     setSelected(prev => {
       const next = new Set(prev);
-      next.has(programId) ? next.delete(programId) : next.add(programId);
+      if (next.has(programId)) { next.delete(programId); } else { next.add(programId); }
       return next;
     });
   };

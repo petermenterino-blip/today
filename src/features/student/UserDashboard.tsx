@@ -113,8 +113,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
 
   useEffect(() => {
     refreshProfilesAndPrograms();
-    if (currentUser?.id) {
-    }
+
   }, [currentUser?.id, refreshProfilesAndPrograms]);
 
   // Handle auto-update on Database changes/sync

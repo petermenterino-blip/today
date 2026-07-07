@@ -124,7 +124,7 @@ export function useEventManager(currentUser: User | null) {
     try {
       if (editingEventId) {
         const originalEvent = events.find(e => e.id === editingEventId);
-        let updatedData = { ...newEventData };
+        const updatedData = { ...newEventData };
 
         if (originalEvent) {
           const changedFields: string[] = [];

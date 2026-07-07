@@ -223,7 +223,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ resourceId, comments,
                 <button
                   onClick={() => setExpandedReplies(prev => {
                     const next = new Set(prev);
-                    next.has(comment.id) ? next.delete(comment.id) : next.add(comment.id);
+                    if (next.has(comment.id)) { next.delete(comment.id); } else { next.add(comment.id); }
                     return next;
                   })}
                   className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-slate-600 font-bold uppercase tracking-widest mt-1 ml-10"

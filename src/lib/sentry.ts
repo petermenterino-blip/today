@@ -1,4 +1,4 @@
-/// <reference path="../types/sentry.d.ts" />
+import '../types/sentry';
 
 const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
 
