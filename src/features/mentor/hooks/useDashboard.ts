@@ -27,6 +27,7 @@ import { messageService } from '../../../services/messageService';
 import { notificationStorage } from '../../../services/notificationStorage';
 import { customFormService } from '../../../services/customFormService';
 import { notifySuccess, notifyError } from '../../../utils/toast';
+import { profileService } from '../../../services/profileService';
 import { useDatabaseSync } from '../../../hooks/useDatabaseSync';
 import { useRealtime } from '../../../hooks/useRealtime';
 import { useMentees } from './useMentees';
@@ -65,6 +66,7 @@ export function useDashboard({ currentUser }: UseDashboardProps) {
   }, [location.search]);
 
   const handleTabChange = (tab: MentorTab) => {
+    if (tab === 'ai' && !aiEnabled) return;
     setActiveTab(tab);
     setSelectedMenteeId(null);
     if (tab === 'overview') {
@@ -288,6 +290,26 @@ export function useDashboard({ currentUser }: UseDashboardProps) {
     { table: 'conversations', callback: () => { messageService.getConversations(currentUser?.id || '', 'mentor').then(setConversations); } },
     { table: 'messages', callback: () => { messageService.getConversations(currentUser?.id || '', 'mentor').then(setConversations); } },
   ]);
+
+  // ── AI feature flag ──
+  const [aiEnabled, setAiEnabled] = useState(true);
+
+  useEffect(() => {
+    if (currentUser?.id) {
+      profileService.getProfileSettings(currentUser.id).then(({ data }) => {
+        if (data?.aiEnabled !== undefined) {
+          setAiEnabled(data.aiEnabled);
+        }
+      });
+    }
+  }, [currentUser?.id]);
+
+  useEffect(() => {
+    if (activeTab === 'ai' && !aiEnabled) {
+      setActiveTab('overview');
+      navigate('/mentor');
+    }
+  }, [aiEnabled, activeTab, navigate]);
 
   // ── Initial load & sync ──
   useEffect(() => {
@@ -731,6 +753,7 @@ export function useDashboard({ currentUser }: UseDashboardProps) {
     togglePinned,
     clearChat,
     searchConversations,
+    aiEnabled,
 
     // Data from TanStack hooks (re-exported)
     applications,

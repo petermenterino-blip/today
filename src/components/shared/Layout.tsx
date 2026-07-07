@@ -25,6 +25,8 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { UserRole } from '../../types';
+import { profileService } from '../../services/profileService';
+import { useAuth } from '../../context/AuthContext';
 import NotificationDropdown from '../NotificationDropdown';
 
 interface LayoutProps {
@@ -69,6 +71,29 @@ const Layout: React.FC<LayoutProps> = ({ children, role, onLogout }) => {
 
   const location = useLocation();
 
+  const [aiEnabled, setAiEnabled] = React.useState(true);
+  const { user: authUser } = useAuth();
+
+  React.useEffect(() => {
+    if (role !== 'mentor' || !authUser?.id) return;
+    profileService.getProfileSettings(authUser.id).then(({ data }) => {
+      if (data?.ai_enabled !== undefined) {
+        setAiEnabled(data.ai_enabled);
+      }
+    });
+  }, [role, authUser?.id]);
+
+  React.useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.aiEnabled !== undefined) {
+        setAiEnabled(detail.aiEnabled);
+      }
+    };
+    window.addEventListener('ai-enabled-changed', handler);
+    return () => window.removeEventListener('ai-enabled-changed', handler);
+  }, []);
+
   const navItems = [
     { label: 'Overview', path: '/student', icon: LayoutDashboard, roles: ['student'] },
     { label: 'Programs', path: '/student/programs', icon: BookOpen, roles: ['student'] },
@@ -98,7 +123,8 @@ const Layout: React.FC<LayoutProps> = ({ children, role, onLogout }) => {
     { label: 'Gallery', path: '/mentor?tab=gallery', icon: ImageIcon, roles: ['mentor'] },
     { label: 'Bookings', path: '/mentor?tab=bookings', icon: CalendarCheck, roles: ['mentor'] },
     { label: 'Settings', path: '/settings', icon: Settings, roles: ['mentor'] },
-  ].filter(item => item.roles.includes(role));
+  ].filter(item => item.roles.includes(role))
+    .filter(item => !(item.label === 'AI Insights' && !aiEnabled));
 
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/';

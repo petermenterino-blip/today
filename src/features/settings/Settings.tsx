@@ -84,6 +84,9 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onLogout, currentUser }) =>
   const [messageNotifications, setMessageNotifications] = useState(true);
   const [messageSound, setMessageSound] = useState(true);
 
+  // AI features toggle
+  const [aiEnabled, setAiEnabled] = useState(true);
+
   // Footer preview
   const [showFooterPreview, setShowFooterPreview] = useState(false);
 
@@ -121,6 +124,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onLogout, currentUser }) =>
       if (res.data?.read_receipts !== undefined) setReadReceipts(res.data.read_receipts);
       if (res.data?.message_notifications !== undefined) setMessageNotifications(res.data.message_notifications);
       if (res.data?.message_sound !== undefined) setMessageSound(res.data.message_sound);
+      if (res.data?.ai_enabled !== undefined) setAiEnabled(res.data.ai_enabled);
 
       const slRes = await socialLinksService.fetchAll();
       if (slRes.data && slRes.data.length > 0) {
@@ -677,6 +681,35 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onLogout, currentUser }) =>
                 <div className="w-6 h-6 border-2 border-slate-300 border-t-transparent rounded-full animate-spin mx-auto" />
               </div>
             )}
+          </div>
+        )}
+
+        {/* AI Features */}
+        {currentUser?.role === 'mentor' && (
+          <div className="bg-white p-8 sm:p-12 rounded-[48px] border border-black/[0.03] shadow-sm">
+            <h3 className="text-xl font-black uppercase mb-8 text-center sm:text-left">AI Features</h3>
+            <p className="text-slate-500 text-xs font-medium mb-6 leading-relaxed">
+              Enable or disable AI-powered features across your mentor dashboard.
+            </p>
+            <div className="space-y-6">
+              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-3xl border border-slate-100">
+                <div>
+                  <p className="text-sm font-bold text-slate-800">AI Mentor Assistant</p>
+                  <p className="text-[10px] text-slate-500 font-medium mt-0.5">Show AI chat, insights, and the dedicated AI tab</p>
+                </div>
+                <button
+                  onClick={() => {
+                    const next = !aiEnabled;
+                    setAiEnabled(next);
+                    profileService.updateProfileSettings(currentUser.id, { ai_enabled: next });
+                    window.dispatchEvent(new CustomEvent('ai-enabled-changed', { detail: { aiEnabled: next } }));
+                  }}
+                  className={`w-12 h-7 rounded-full transition-all relative ${aiEnabled ? 'bg-[#00a884]' : 'bg-slate-300'}`}
+                >
+                  <div className={`w-5 h-5 bg-white rounded-full shadow absolute top-1 transition-all ${aiEnabled ? 'left-6' : 'left-1'}`} />
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
