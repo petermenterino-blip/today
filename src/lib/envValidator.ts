@@ -11,7 +11,6 @@ const PRODUCTION_REQUIRED: EnvVar[] = [
   { key: 'VITE_SUPABASE_URL', required: true, description: 'Supabase project URL', validator: (v) => v.startsWith('https://') && v.includes('supabase.co') },
   { key: 'VITE_SUPABASE_ANON_KEY', required: true, description: 'Supabase anonymous key', validator: (v) => v.startsWith('eyJ') && v.length > 50 },
   { key: 'VITE_APP_ENV', required: true, description: 'Application environment (must be "production")' },
-  { key: 'VITE_SENTRY_DSN', required: true, description: 'Sentry DSN for error monitoring' },
 ];
 
 const STAGING_REQUIRED: EnvVar[] = [
@@ -46,6 +45,7 @@ const SENTINEL_VALUES = new Set([
   'your_supabase_anon_key',
   'placeholder-for-CI',
   'placeholder-key',
+  'https://xxxxx@xxxxx.ingest.us.sentry.io/xxxxx',
 ]);
 
 export function validateEnvironment(): ValidationResult {

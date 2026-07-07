@@ -34,7 +34,6 @@ describe('validateEnvironment', () => {
     expect(result.valid).toBe(false);
     expect(result.missing).toContain('VITE_SUPABASE_URL');
     expect(result.missing).toContain('VITE_SUPABASE_ANON_KEY');
-    expect(result.missing).toContain('VITE_SENTRY_DSN');
   });
 
   it('rejects sentinel values in production', () => {
