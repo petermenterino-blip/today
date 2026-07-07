@@ -55,6 +55,20 @@ interface MenteesTabProps {
   setNewTagColor: (v: string) => void;
   handleMessageStudent: (userId: string, name: string) => void;
   handleUpdateNotes: () => void;
+  editingGoal?: boolean;
+  setEditingGoal?: (v: boolean) => void;
+  goalInput?: string;
+  setGoalInput?: (v: string) => void;
+  handleSaveGoal?: (value: string) => void;
+  editingStrength?: boolean;
+  setEditingStrength?: (v: boolean) => void;
+  editingFocus?: boolean;
+  setEditingFocus?: (v: boolean) => void;
+  strengthInput?: string;
+  setStrengthInput?: (v: string) => void;
+  focusInput?: string;
+  setFocusInput?: (v: string) => void;
+  handleSaveStrengthFocus?: (field: 'top_strength' | 'needs_focus', value: string) => void;
   toggleMenteeTag: (userId: string, tagId: string) => void;
   handleAddTag: () => void;
   addTask: (task: any) => Promise<any>;
@@ -93,6 +107,14 @@ export const MenteesTab: React.FC<MenteesTabProps> = ({
   newTaskDueDate, setNewTaskDueDate,
   menteeNotes, setMenteeNotes,
   isSavingNotes,
+  editingGoal, setEditingGoal,
+  goalInput, setGoalInput,
+  handleSaveGoal,
+  editingStrength, setEditingStrength,
+  editingFocus, setEditingFocus,
+  strengthInput, setStrengthInput,
+  focusInput, setFocusInput,
+  handleSaveStrengthFocus,
   menteeSubTab, setMenteeSubTab,
   selectedTask, setSelectedTask,
   newTagLabel, setNewTagLabel,
@@ -616,19 +638,111 @@ export const MenteesTab: React.FC<MenteesTabProps> = ({
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm space-y-6">
                           <div>
-                            <h3 className="text-lg font-black uppercase tracking-tighter mb-4">Statement of Intent</h3>
-                            <div className="p-6 bg-slate-50 rounded-[32px] border border-slate-100 italic text-slate-600 text-sm leading-relaxed">
-                              &ldquo;{mentee.goal}&rdquo;
+                            <div className="flex items-center justify-between mb-4">
+                              <h3 className="text-lg font-black uppercase tracking-tighter">Statement of Intent</h3>
+                              <button
+                                onClick={() => {
+                                  if (!editingGoal) { setGoalInput?.(mentee.goal); }
+                                  setEditingGoal?.(!editingGoal);
+                                }}
+                                className="p-2 bg-slate-50 rounded-xl hover:bg-slate-100 transition-all"
+                              >
+                                <Edit2 size={14} className="text-slate-400" />
+                              </button>
                             </div>
+                            {editingGoal ? (
+                              <div className="space-y-3">
+                                <textarea
+                                  value={goalInput}
+                                  onChange={e => setGoalInput?.(e.target.value)}
+                                  className="w-full p-5 bg-slate-50 border border-slate-200 rounded-3xl text-sm font-medium outline-none focus:bg-white focus:border-indigo-500 transition-all resize-none custom-scrollbar"
+                                  rows={3}
+                                />
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => { handleSaveGoal?.(goalInput || ''); setEditingGoal?.(false); }}
+                                    className="px-4 py-1.5 bg-black text-white rounded-full text-[9px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all"
+                                  >
+                                    Save
+                                  </button>
+                                  <button
+                                    onClick={() => setEditingGoal?.(false)}
+                                    className="px-4 py-1.5 bg-slate-100 text-slate-600 rounded-full text-[9px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="p-6 bg-slate-50 rounded-[32px] border border-slate-100 italic text-slate-600 text-sm leading-relaxed">
+                                &ldquo;{mentee.goal || 'Not specified'}&rdquo;
+                              </div>
+                            )}
                           </div>
                           <div className="grid grid-cols-2 gap-4">
                             <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50">
-                              <p className="text-[9px] font-black uppercase tracking-widest text-indigo-400 mb-1">Top Strength</p>
-                              <p className="text-sm font-bold text-indigo-900">{mentee.top_strength || 'Not specified'}</p>
+                              <div className="flex items-center justify-between mb-1">
+                                <p className="text-[9px] font-black uppercase tracking-widest text-indigo-400">Top Strength</p>
+                                <button
+                                  onClick={() => {
+                                    if (!editingStrength) { setStrengthInput?.(mentee.top_strength || ''); }
+                                    setEditingStrength?.(!editingStrength);
+                                  }}
+                                  className="p-1 rounded-lg hover:bg-indigo-100/50 transition-all"
+                                >
+                                  <Edit2 size={12} className="text-indigo-300" />
+                                </button>
+                              </div>
+                              {editingStrength ? (
+                                <div className="space-y-2">
+                                  <input
+                                    type="text"
+                                    value={strengthInput}
+                                    onChange={e => setStrengthInput?.(e.target.value)}
+                                    className="w-full px-3 py-2 bg-white border border-indigo-200 rounded-xl text-sm font-bold text-indigo-900 outline-none focus:border-indigo-500 transition-all"
+                                  />
+                                  <div className="flex gap-1.5">
+                                    <button onClick={() => { handleSaveStrengthFocus?.('top_strength', strengthInput || ''); setEditingStrength?.(false); }}
+                                      className="px-3 py-1 bg-indigo-600 text-white rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all">Save</button>
+                                    <button onClick={() => setEditingStrength?.(false)}
+                                      className="px-3 py-1 bg-slate-100 text-slate-500 rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all">Cancel</button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <p className="text-sm font-bold text-indigo-900 mt-1">{mentee.top_strength || 'Not specified'}</p>
+                              )}
                             </div>
                             <div className="p-4 bg-amber-50/50 rounded-2xl border border-amber-100/50">
-                              <p className="text-[9px] font-black uppercase tracking-widest text-amber-400 mb-1">Needs Focus</p>
-                              <p className="text-sm font-bold text-amber-900">{mentee.needs_focus || 'Not specified'}</p>
+                              <div className="flex items-center justify-between mb-1">
+                                <p className="text-[9px] font-black uppercase tracking-widest text-amber-400">Needs Focus</p>
+                                <button
+                                  onClick={() => {
+                                    if (!editingFocus) { setFocusInput?.(mentee.needs_focus || ''); }
+                                    setEditingFocus?.(!editingFocus);
+                                  }}
+                                  className="p-1 rounded-lg hover:bg-amber-100/50 transition-all"
+                                >
+                                  <Edit2 size={12} className="text-amber-300" />
+                                </button>
+                              </div>
+                              {editingFocus ? (
+                                <div className="space-y-2">
+                                  <input
+                                    type="text"
+                                    value={focusInput}
+                                    onChange={e => setFocusInput?.(e.target.value)}
+                                    className="w-full px-3 py-2 bg-white border border-amber-200 rounded-xl text-sm font-bold text-amber-900 outline-none focus:border-amber-500 transition-all"
+                                  />
+                                  <div className="flex gap-1.5">
+                                    <button onClick={() => { handleSaveStrengthFocus?.('needs_focus', focusInput || ''); setEditingFocus?.(false); }}
+                                      className="px-3 py-1 bg-amber-600 text-white rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-amber-700 transition-all">Save</button>
+                                    <button onClick={() => setEditingFocus?.(false)}
+                                      className="px-3 py-1 bg-slate-100 text-slate-500 rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all">Cancel</button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <p className="text-sm font-bold text-amber-900 mt-1">{mentee.needs_focus || 'Not specified'}</p>
+                              )}
                             </div>
                           </div>
 

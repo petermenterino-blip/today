@@ -25,8 +25,10 @@ export function useMentees(currentUser: User | null) {
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [editingStrength, setEditingStrength] = useState(false);
   const [editingFocus, setEditingFocus] = useState(false);
+  const [editingGoal, setEditingGoal] = useState(false);
   const [strengthInput, setStrengthInput] = useState('');
   const [focusInput, setFocusInput] = useState('');
+  const [goalInput, setGoalInput] = useState('');
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskPriority, setNewTaskPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [newTaskDueDate, setNewTaskDueDate] = useState('');
@@ -143,6 +145,19 @@ export function useMentees(currentUser: User | null) {
     }
   };
 
+  const handleSaveGoal = async (value: string) => {
+    if (!selectedMenteeId) return;
+    try {
+      const mentee = mentees.find(m => m.user_id === selectedMenteeId);
+      if (!mentee) return;
+      await applicationService.updateExtras(mentee.id, { goal: value });
+      await refreshApps();
+      notifySuccess('Statement of Intent updated');
+    } catch {
+      notifyError('Failed to save goal');
+    }
+  };
+
   const menteeGoals = goals.filter(g => g.studentId === selectedMenteeId);
 
   const handleAddGoal = async (title: string, description?: string) => {
@@ -237,8 +252,10 @@ export function useMentees(currentUser: User | null) {
     isSavingNotes, setIsSavingNotes,
     editingStrength, setEditingStrength,
     editingFocus, setEditingFocus,
+    editingGoal, setEditingGoal,
     strengthInput, setStrengthInput,
     focusInput, setFocusInput,
+    goalInput, setGoalInput,
     newTaskTitle, setNewTaskTitle,
     newTaskPriority, setNewTaskPriority,
     newTaskDueDate, setNewTaskDueDate,
@@ -249,7 +266,7 @@ export function useMentees(currentUser: User | null) {
     mentees, filteredMentees, activeStudentsCount,
     taskActivities, addTask,
     menteeGoals,
-    handleAddTag, toggleMenteeTag, handleUpdateNotes, handleSaveStrengthFocus,
+    handleAddTag, toggleMenteeTag, handleUpdateNotes, handleSaveStrengthFocus, handleSaveGoal,
     handleAddGoal, handleUpdateGoal, handleDeleteGoal,
     handleAddStudent,
   };

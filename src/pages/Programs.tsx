@@ -51,7 +51,7 @@ const defaultPrograms: {
   },
 ];
 
-const defaultAcademyPrograms: {
+export const defaultAcademyPrograms: {
   id: string; title: string; icon: React.ElementType; iconBg: string;
   duration: string; level: string; desc: string; points: string[];
 }[] = [

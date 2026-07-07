@@ -32,6 +32,7 @@ interface OverviewTabProps {
   handleAiChat: () => void;
   handleQuickAction: (prompt: string) => void;
   chatEndRef: React.RefObject<HTMLDivElement>;
+  aiEnabled?: boolean;
 }
 
 export const OverviewTab: React.FC<OverviewTabProps> = ({
@@ -39,6 +40,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   setIsSchedulingSession, handleOpenStudentProfile,
   chatHistory, userInput, setUserInput, isAiLoading, streamingContent,
   suggestedPrompts, handleAiChat, handleQuickAction, chatEndRef,
+  aiEnabled,
 }) => {
   const { user: currentUser } = useAuth();
   const store = useOverviewStore();
@@ -173,7 +175,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   <>
                     <MentorWorkspaceStatus status={mentorStatus} nextSession={nextSession} formatRelativeTime={formatRelativeTime} />
                     <TodayPrioritiesWidget priorities={priorities} onAction={(tab) => handleTabChange(tab as MentorTab)} />
-                    <AIDailySummaryWidget summary={aiDailySummary} />
+                    {aiEnabled !== false && <AIDailySummaryWidget summary={aiDailySummary} />}
                     <SummaryStatsRow
                       todaySessions={stats.todaySessions}
                       pendingReviews={stats.pendingReviews}
@@ -356,7 +358,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           )}
 
           {/* AI MENTOR ASSISTANT */}
-          <div id="ai-assistant-section" className="bg-slate-950 p-8 rounded-[40px] text-white shadow-2xl relative overflow-hidden flex flex-col md:flex-row gap-8">
+          {aiEnabled !== false && <div id="ai-assistant-section" className="bg-slate-950 p-8 rounded-[40px] text-white shadow-2xl relative overflow-hidden flex flex-col md:flex-row gap-8">
             <div className="flex-1 relative z-10">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-600/30">
@@ -425,7 +427,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 </button>
               ))}
             </div>
-          </div>
+          </div>}
         </>
       )}
 

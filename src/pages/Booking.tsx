@@ -9,6 +9,7 @@ import {
 import { notifyError, notifySuccess } from '../utils/toast';
 import { visitorBookingService } from '../services/visitorBookingService';
 import { usePrograms } from '../hooks/usePrograms';
+import { defaultAcademyPrograms } from './Programs';
 
 const TIMEZONES = [
   'UTC', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
@@ -45,6 +46,9 @@ const BookingPage: React.FC = () => {
   const callType = (searchParams.get('type') || 'intro') as 'intro' | 'rapid';
   const isRapid = callType === 'rapid';
   const { programs, loading: programsLoading } = usePrograms();
+  const programOptions = programs.length > 0
+    ? programs.map(p => ({ id: p.id, title: p.title }))
+    : defaultAcademyPrograms.map(p => ({ id: p.id, title: p.title }));
 
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
@@ -367,7 +371,7 @@ const BookingPage: React.FC = () => {
               className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-100 text-sm font-medium outline-none focus:border-black transition-all appearance-none cursor-pointer"
             >
               <option value="">{programsLoading ? 'Loading programs...' : 'Select a program'}</option>
-              {programs.map(p => (
+              {programOptions.map(p => (
                 <option key={p.id} value={p.id}>{p.title}</option>
               ))}
             </select>
@@ -566,7 +570,7 @@ const BookingPage: React.FC = () => {
         <div className={`rounded-[32px] p-6 border ${isRapid ? 'bg-white border-black/10' : 'bg-white border-slate-100'} shadow-sm`}>
           <h4 className="text-[8px] font-black uppercase tracking-widest text-slate-400 mb-4">Request Details</h4>
           <div className="space-y-2 text-sm">
-            <div className="flex justify-between"><span className="text-slate-400">Program</span><span className="font-medium text-slate-900">{programs.find(p => p.id === programOfInterest)?.title || programOfInterest}</span></div>
+            <div className="flex justify-between"><span className="text-slate-400">Program</span><span className="font-medium text-slate-900">{programOptions.find(p => p.id === programOfInterest)?.title || programOfInterest}</span></div>
             {preferredMentor && <div className="flex justify-between"><span className="text-slate-400">Mentor</span><span className="font-medium text-slate-900">{preferredMentor}</span></div>}
             <div className="flex justify-between"><span className="text-slate-400">Meeting</span><span className="font-medium text-slate-900 capitalize">{meetingType?.replace('_', ' ')}</span></div>
             {message && <div className="flex justify-between"><span className="text-slate-400">Message</span><span className="font-medium text-slate-900 max-w-[200px] text-right truncate">{message}</span></div>}

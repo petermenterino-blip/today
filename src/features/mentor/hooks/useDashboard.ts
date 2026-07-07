@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   User,
@@ -68,19 +68,19 @@ export function useDashboard({ currentUser }: UseDashboardProps) {
     return (tab as MentorTab) || 'overview';
   });
 
+  const lastSyncedTab = useRef<MentorTab>(activeTab);
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const tab = params.get('tab');
-    if (tab && tab !== activeTab) {
-      if (tab === 'ai' && !aiEnabled) {
-        navigate('/mentor', { replace: true });
-        return;
-      }
-      setActiveTab(tab as MentorTab);
-    } else if (!tab && activeTab !== 'overview') {
-      setActiveTab('overview');
+    const tab = params.get('tab') as MentorTab || 'overview';
+    if (tab === 'ai' && !aiEnabled) {
+      navigate('/mentor', { replace: true });
+      return;
     }
-  }, [location.search, aiEnabled, activeTab, navigate]);
+    if (tab !== lastSyncedTab.current) {
+      lastSyncedTab.current = tab;
+      setActiveTab(tab);
+    }
+  }, [location.search, aiEnabled, navigate]);
 
   const handleTabChange = (tab: MentorTab) => {
     if (tab === 'ai' && !aiEnabled) return;
@@ -131,8 +131,10 @@ export function useDashboard({ currentUser }: UseDashboardProps) {
     isSavingNotes, setIsSavingNotes,
     editingStrength, setEditingStrength,
     editingFocus, setEditingFocus,
+    editingGoal, setEditingGoal,
     strengthInput, setStrengthInput,
     focusInput, setFocusInput,
+    goalInput, setGoalInput,
     newTaskTitle, setNewTaskTitle,
     newTaskPriority, setNewTaskPriority,
     newTaskDueDate, setNewTaskDueDate,
@@ -142,7 +144,7 @@ export function useDashboard({ currentUser }: UseDashboardProps) {
     newTagColor, setNewTagColor,
     mentees, filteredMentees,
     taskActivities, addTask,
-    handleAddTag, toggleMenteeTag, handleUpdateNotes, handleSaveStrengthFocus,
+    handleAddTag, toggleMenteeTag, handleUpdateNotes, handleSaveStrengthFocus, handleSaveGoal,
     menteeGoals,
     handleAddGoal, handleUpdateGoal, handleDeleteGoal,
   } = menteeDomain;
@@ -644,8 +646,10 @@ export function useDashboard({ currentUser }: UseDashboardProps) {
     isSavingNotes, setIsSavingNotes,
     editingStrength, setEditingStrength,
     editingFocus, setEditingFocus,
+    editingGoal, setEditingGoal,
     strengthInput, setStrengthInput,
     focusInput, setFocusInput,
+    goalInput, setGoalInput,
     newTaskTitle, setNewTaskTitle,
     newTaskPriority, setNewTaskPriority,
     newTaskDueDate, setNewTaskDueDate,
@@ -655,7 +659,7 @@ export function useDashboard({ currentUser }: UseDashboardProps) {
     newTagColor, setNewTagColor,
     mentees, filteredMentees,
     taskActivities, addTask,
-    handleAddTag, toggleMenteeTag, handleUpdateNotes, handleSaveStrengthFocus,
+    handleAddTag, toggleMenteeTag, handleUpdateNotes, handleSaveStrengthFocus, handleSaveGoal,
     menteeGoals,
     handleAddGoal, handleUpdateGoal, handleDeleteGoal,
 

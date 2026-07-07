@@ -222,8 +222,12 @@ export function useAnalyticsBI({ currentUser }: UseAnalyticsBIProps) {
     }
   }, [userId]);
 
+  const analyticsLoaded = useRef(false);
   useEffect(() => {
-    loadAuxData();
+    if (!analyticsLoaded.current) {
+      analyticsLoaded.current = true;
+      loadAuxData();
+    }
   }, [loadAuxData]);
 
   // Analytics page updates on refresh — no realtime needed to avoid 10-channel overhead

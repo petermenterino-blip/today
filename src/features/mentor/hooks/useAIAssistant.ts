@@ -328,8 +328,10 @@ Return as JSON array: [{title, type: "session"|"student"|"application"|"resource
     }
   }, [userId, studentProfiles, applications]);
 
+  const aiLoaded = useRef(false);
   useEffect(() => {
-    if (userId) {
+    if (userId && !aiLoaded.current) {
+      aiLoaded.current = true;
       fetchWorkspaceSummary();
       fetchAiRecommendations();
       fetchAiInsights();
