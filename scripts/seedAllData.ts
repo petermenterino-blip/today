@@ -68,14 +68,8 @@ async function runSeed() {
   ], { onConflict: 'student_id, program_id' });
   if (enrErr) { console.error('enrollments error:', enrErr.message); } else { console.log('✓ enrollments'); }
 
-  // Applications (uses first_name/last_name columns per schema, not full_name/user_email)
-  const app1_id = '00000000-0000-0000-0000-000000000900';
-  const app2_id = '00000000-0000-0000-0000-000000000901';
-  const { error: appErr } = await supabase.from('applications').upsert([
-    { id: app1_id, user_id: s1_id, email: 'student1.qa@mentorino.test', first_name: 'QA', last_name: 'Student One', status: 'approved', program_id: prog1_id, mentor_type: 'Career Strategist', meeting_preference: 'Virtual', frequency: 'Weekly', seriousness: 8 },
-    { id: app2_id, user_id: s2_id, email: 'student2.qa@mentorino.test', first_name: 'QA', last_name: 'Student Two', status: 'approved', program_id: prog2_id, mentor_type: 'Industry Expert', meeting_preference: 'Virtual', frequency: 'Bi-weekly', seriousness: 9 },
-  ], { onConflict: 'id', ignoreDuplicates: true });
-  if (appErr) { console.error('applications error:', appErr.message); } else { console.log('✓ applications'); }
+  // Applications — intentionally empty; apps come from live submissions
+  console.log('✓ applications (skipped — no seed data)');
 
   // Conversations
   const conv1_id = '00000000-0000-0000-0000-000000000100';

@@ -46,21 +46,9 @@ UPDATE public.profiles SET program_id = '00000000-0000-0000-0000-000000000010' W
 UPDATE public.profiles SET program_id = '00000000-0000-0000-0000-000000000011' WHERE id = '00000000-0000-0000-0000-000000000003';
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- APPLICATIONS
+-- APPLICATIONS — intentionally empty; apps come from live submissions
 -- ═══════════════════════════════════════════════════════════════════════════════
-
-INSERT INTO public.applications (id, user_id, email, first_name, last_name, discipline, reason_for_applying, status, program_id, focus_area)
-VALUES
-  ('00000000-0000-0000-0000-000000000020', '00000000-0000-0000-0000-000000000002', 'student1.qa@mentorino.test', 'QA Student', 'One', 'Career Strategist',
-   '{"goals": "Become a senior product manager and lead cross-functional teams. I have 3 years of experience as an associate PM and want to level up my strategic thinking and stakeholder management skills.", "linkedin_url": "https://linkedin.com/in/qa-student-one", "meeting_preference": "Virtual", "frequency": "Weekly", "seriousness": 10, "program_id": "00000000-0000-0000-0000-000000000010"}',
-   'approved', '00000000-0000-0000-0000-000000000010', 'Product Management'),
-  ('00000000-0000-0000-0000-000000000021', '00000000-0000-0000-0000-000000000003', 'student2.qa@mentorino.test', 'QA Student', 'Two', 'Academic Guide',
-   '{"goals": "Transition from IT support to cybersecurity analyst. Currently pursuing CompTIA Security+ certification and looking for mentorship to navigate the career change.", "linkedin_url": "https://linkedin.com/in/qa-student-two", "meeting_preference": "Virtual", "frequency": "Bi-weekly", "seriousness": 9, "program_id": "00000000-0000-0000-0000-000000000011"}',
-   'approved', '00000000-0000-0000-0000-000000000011', 'Cybersecurity'),
-  ('00000000-0000-0000-0000-000000000022', NULL, 'visitor@mentorino.test', 'QA Visitor', 'User', 'Career Strategist',
-   '{"goals": "I am exploring mentorship opportunities to advance my career in project management. I have a background in operations and want to transition into a more strategic role. I am looking for guidance on certifications, networking, and career planning to make this transition successful.", "linkedin_url": "https://linkedin.com/in/qa-visitor", "meeting_preference": "Virtual", "frequency": "Weekly", "seriousness": 8, "program_id": "00000000-0000-0000-0000-000000000010"}',
-   'pending_review', '00000000-0000-0000-0000-000000000010', 'Project Management')
-ON CONFLICT (id) DO NOTHING;
+-- No seed data. Remove this comment block if you want to add seed applications.
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- STUDENT PROGRESS

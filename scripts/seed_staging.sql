@@ -51,11 +51,8 @@ UPDATE public.profiles SET mentor_id = v_mentor_id, program_id = v_prog2_id WHER
 -- Enrollments
 INSERT INTO public.program_enrollments (student_id, program_id, status) VALUES (v_s1_id, v_prog1_id, 'active'), (v_s2_id, v_prog2_id, 'active') ON CONFLICT DO NOTHING;
 
--- Applications
-INSERT INTO public.applications (user_id, email, full_name, user_email, status, program_id, mentor_type, goal, meeting_preference, frequency, seriousness)
-VALUES (v_s1_id, 'student1.qa@mentorino.test', 'QA Student One', 'student1.qa@mentorino.test', 'approved', v_prog1_id, 'Career Strategist', 'I want to transition into product management and develop strategic thinking skills.', 'Virtual', 'Weekly', 8),
-       (v_s2_id, 'student2.qa@mentorino.test', 'QA Student Two', 'student2.qa@mentorino.test', 'approved', v_prog2_id, 'Industry Expert', 'I want to build expertise in cybersecurity and earn industry certifications.', 'Virtual', 'Bi-weekly', 9)
-ON CONFLICT DO NOTHING;
+-- Applications — intentionally empty; apps come from live submissions
+-- No seed data. Remove this comment block if you want to add seed applications.
 
 -- Conversations
 INSERT INTO public.conversations (id, student_id, mentor_id, participants, last_message, last_message_time)
