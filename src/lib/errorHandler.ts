@@ -66,7 +66,7 @@ export function interpretError(error: { code?: string; message?: string } | stri
 
 export function analyzeError(error: unknown): SafeError {
   const message = error instanceof Object ? (error as any)?.message || '' : String(error || '');
-  const code = error instanceof Object ? (error as any)?.code || (error as any)?.status || '' : '';
+  const code = error instanceof Object ? String((error as any)?.code || (error as any)?.status || '') : '';
   const msgL = message.toLowerCase();
 
   const isNetwork = msgL.includes('failed to fetch') || msgL.includes('networkerror') || msgL.includes('network') || msgL.includes('err_connection');
