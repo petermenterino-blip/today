@@ -132,24 +132,28 @@ const signInDirect = async (email: string, password: string): Promise<ServiceRes
     return { data: null, error: 'Supabase not configured.' };
   }
 
-  const authData = await new Promise<any>((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', `${supabaseUrl}/auth/v1/token?grant_type=password`, true);
-    xhr.setRequestHeader('apikey', anonKey);
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.timeout = 20000;
-    xhr.ontimeout = () => reject(new Error('Login request timed out'));
-    xhr.onerror = () => reject(new Error('Network error during login'));
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        try { resolve(JSON.parse(xhr.responseText)); }
-        catch { reject(new Error('Invalid response from login server')); }
-      } else {
-        reject(new Error(`Login failed: ${xhr.status}`));
-      }
-    };
-    xhr.send(JSON.stringify({ email, password }));
-  });
+  const ac = new AbortController();
+  const timeoutId = setTimeout(() => ac.abort(), 20000);
+  let tokenRes;
+  try {
+    tokenRes = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: { 'apikey': anonKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+      signal: ac.signal,
+      cache: 'no-store',
+    });
+  } catch (e: any) {
+    clearTimeout(timeoutId);
+    if (e.name === 'AbortError') return { data: null, error: 'Login request timed out' };
+    return { data: null, error: e.message || 'Network error during login' };
+  }
+  clearTimeout(timeoutId);
+  if (!tokenRes.ok) {
+    const body = await tokenRes.text().catch(() => '');
+    return { data: null, error: `Login failed: ${tokenRes.status} ${body.substring(0, 200)}` };
+  }
+  const authData = await tokenRes.json();
   const user = authData.user;
   if (!user) return { data: null, error: 'Login failed: no user returned' };
   if (!user.email_confirmed_at) {
