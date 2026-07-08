@@ -31,12 +31,17 @@ const NOTIFICATION_FIELDS = 'id,user_id,title,message,read,type,link,created_at'
 export class ContextEngine {
   private cache = new Map<string, { data: any; expires: number }>();
   private cacheTTL = 30_000;
+  private maxCacheSize = 100;
 
   private async fetchWithCache(key: string, fetcher: () => Promise<any>): Promise<any> {
     const cached = this.cache.get(key);
     if (cached && cached.expires > Date.now()) return cached.data;
     const data = await fetcher();
     this.cache.set(key, { data, expires: Date.now() + this.cacheTTL });
+    if (this.cache.size > this.maxCacheSize) {
+      const oldest = this.cache.entries().next().value;
+      if (oldest) this.cache.delete(oldest[0]);
+    }
     return data;
   }
 

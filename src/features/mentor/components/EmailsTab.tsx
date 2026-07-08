@@ -2,10 +2,14 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'motion/react';
 import {
   Mail, Send, Settings2, Save, Loader2, CheckCircle2, XCircle,
-  Users, ChevronRight, Eye, EyeOff, User as UserIcon
+  Users, ChevronRight, User as UserIcon, Search,
+  Clock, AlertTriangle,
+  ChevronLeft, ChevronRight as ChevronRightIcon, X,
+  RefreshCw, Inbox, History,
 } from 'lucide-react';
-import { EmailTemplate } from '../../../types/email';
+import { EmailTemplate, EmailLog, EmailType, BookingType, EmailStatus } from '../../../types/email';
 import { emailTemplateService } from '../../../services/emailTemplateService';
+import { emailService } from '../../../services/emailService';
 import { notifySuccess, notifyError } from '../../../utils/toast';
 import { StudentProfile } from '../../../types';
 
@@ -18,16 +22,44 @@ const TEMPLATE_CARDS = [
   { key: 'application_submitted', label: 'Submitted', desc: 'Sent when a student applies' },
   { key: 'application_approved', label: 'Approved', desc: 'Welcome email on approval' },
   { key: 'application_rejected', label: 'Rejected', desc: 'Sent on application rejection' },
+  { key: 'booking_confirmation_visitor', label: 'Booking Confirmation', desc: 'Sent to visitor after booking' },
+  { key: 'booking_notification_mentor', label: 'Mentor Notification', desc: 'Notifies mentor of new booking' },
   { key: 'broadcast', label: 'Broadcast', desc: 'Mass email to students' },
 ];
 
 const AVAILABLE_VARIABLES = [
   '{{name}}', '{{email}}', '{{programTitle}}', '{{feedback}}',
   '{{message}}', '{{senderName}}', '{{tempPassword}}',
+  '{{visitorName}}', '{{visitorEmail}}', '{{visitorPhone}}',
+  '{{callType}}', '{{date}}', '{{time}}', '{{meetingType}}',
+];
+
+const STATUS_CONFIG: Record<EmailStatus, { label: string; color: string; bg: string; icon: React.FC<any> }> = {
+  pending: { label: 'Pending', color: 'text-amber-600', bg: 'bg-amber-50', icon: Clock },
+  sent: { label: 'Sent', color: 'text-emerald-600', bg: 'bg-emerald-50', icon: CheckCircle2 },
+  failed: { label: 'Failed', color: 'text-red-600', bg: 'bg-red-50', icon: XCircle },
+  bounced: { label: 'Bounced', color: 'text-rose-600', bg: 'bg-rose-50', icon: AlertTriangle },
+};
+
+const EMAIL_TYPE_LABELS: Record<EmailType, string> = {
+  visitor_confirmation: 'Visitor Confirmation',
+  mentor_notification: 'Mentor Notification',
+  booking_reminder: 'Booking Reminder',
+  booking_update: 'Booking Update',
+  booking_cancelled: 'Booking Cancelled',
+  booking_rescheduled: 'Booking Rescheduled',
+  system: 'System',
+};
+
+const BOOKING_TYPE_OPTIONS: { value: BookingType | ''; label: string }[] = [
+  { value: '', label: 'All Types' },
+  { value: 'intro', label: 'Free Intro' },
+  { value: 'rapid', label: 'Rapid Response' },
+  { value: 'general', label: 'General' },
 ];
 
 export const EmailsTab: React.FC<EmailsTabProps> = ({ studentProfiles, currentUser }) => {
-  const [subTab, setSubTab] = useState<'templates' | 'broadcast'>('templates');
+  const [subTab, setSubTab] = useState<'history' | 'templates' | 'broadcast'>('history');
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -43,6 +75,18 @@ export const EmailsTab: React.FC<EmailsTabProps> = ({ studentProfiles, currentUs
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
   const [sending, setSending] = useState(false);
 
+  const [emailLogs, setEmailLogs] = useState<EmailLog[]>([]);
+  const [logTotal, setLogTotal] = useState(0);
+  const [logsLoading, setLogsLoading] = useState(false);
+  const [logSearch, setLogSearch] = useState('');
+  const [logStatusFilter, setLogStatusFilter] = useState<EmailStatus | ''>('');
+  const [logTypeFilter, setLogTypeFilter] = useState<EmailType | ''>('');
+  const [logBookingTypeFilter, setLogBookingTypeFilter] = useState<BookingType | ''>('');
+  const [logPage, setLogPage] = useState(0);
+  const [logLimit] = useState(20);
+  const [selectedLog, setSelectedLog] = useState<EmailLog | null>(null);
+  const [resendingId, setResendingId] = useState<string | null>(null);
+
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const broadcastBodyRef = useRef<HTMLTextAreaElement>(null);
 
@@ -55,6 +99,29 @@ export const EmailsTab: React.FC<EmailsTabProps> = ({ studentProfiles, currentUs
   }, []);
 
   useEffect(() => { loadTemplates(); }, [loadTemplates]);
+
+  const loadLogs = useCallback(async () => {
+    setLogsLoading(true);
+    const { data, total, error } = await emailService.fetchLogs({
+      search: logSearch || undefined,
+      status: logStatusFilter || undefined,
+      emailType: logTypeFilter || undefined,
+      bookingType: logBookingTypeFilter || undefined,
+      limit: logLimit,
+      offset: logPage * logLimit,
+      sortBy: 'created_at',
+      sortOrder: 'desc',
+    });
+    if (error) notifyError(error);
+    else { setEmailLogs(data); setLogTotal(total); }
+    setLogsLoading(false);
+  }, [logSearch, logStatusFilter, logTypeFilter, logBookingTypeFilter, logPage, logLimit]);
+
+  useEffect(() => { loadLogs(); }, [loadLogs]);
+
+  useEffect(() => { setLogPage(0); }, [logSearch, logStatusFilter, logTypeFilter, logBookingTypeFilter]);
+
+  const totalPages = Math.ceil(logTotal / logLimit);
 
   const selectedTemplate = templates.find(t => t.key === selectedKey);
 
@@ -172,6 +239,25 @@ export const EmailsTab: React.FC<EmailsTabProps> = ({ studentProfiles, currentUs
     if (result.errors > 0) notifyError(`Failed to send to ${result.errors} recipient(s)`);
   };
 
+  const handleResend = async (logId: string) => {
+    setResendingId(logId);
+    const { success, error } = await emailService.resendEmail(logId);
+    setResendingId(null);
+    if (success) { notifySuccess('Email resent successfully'); loadLogs(); }
+    else notifyError(error || 'Failed to resend email');
+  };
+
+  const getStatusDisplay = (status: EmailStatus) => {
+    const config = STATUS_CONFIG[status];
+    const Icon = config.icon;
+    return (
+      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold ${config.color} ${config.bg}`}>
+        <Icon size={12} />
+        {config.label}
+      </span>
+    );
+  };
+
   if (loading && templates.length === 0) {
     return (
       <div className="flex items-center justify-center py-24">
@@ -185,12 +271,12 @@ export const EmailsTab: React.FC<EmailsTabProps> = ({ studentProfiles, currentUs
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-slate-900">Emails</h1>
-          <p className="text-xs text-slate-500 mt-1 font-medium">Manage email templates and send broadcasts</p>
+          <p className="text-xs text-slate-500 mt-1 font-medium">Manage email templates, history, and send broadcasts</p>
         </div>
       </div>
 
       <div className="flex border-b border-slate-100 gap-1">
-        {(['templates', 'broadcast'] as const).map(tab => (
+        {(['history', 'templates', 'broadcast'] as const).map(tab => (
           <button
             key={tab}
             onClick={() => setSubTab(tab)}
@@ -198,12 +284,153 @@ export const EmailsTab: React.FC<EmailsTabProps> = ({ studentProfiles, currentUs
               subTab === tab ? 'border-black text-black' : 'border-transparent text-slate-400 hover:text-slate-600'
             }`}
           >
-            {tab === 'templates' ? <Settings2 size={14} /> : <Send size={14} />}
-            {tab === 'templates' ? 'Templates' : 'Broadcast'}
+            {tab === 'history' ? <History size={14} /> : tab === 'templates' ? <Settings2 size={14} /> : <Send size={14} />}
+            {tab === 'history' ? 'History' : tab === 'templates' ? 'Templates' : 'Broadcast'}
           </button>
         ))}
       </div>
 
+      {/* ── History Tab ── */}
+      {subTab === 'history' && (
+        <div className="space-y-4">
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search by email, subject, or template..."
+                value={logSearch}
+                onChange={e => setLogSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-white border border-slate-100 rounded-xl text-sm font-medium outline-none focus:border-black transition-all"
+              />
+            </div>
+            <select
+              value={logStatusFilter}
+              onChange={e => setLogStatusFilter(e.target.value as EmailStatus | '')}
+              className="px-4 py-3 bg-white border border-slate-100 rounded-xl text-xs font-bold outline-none focus:border-black transition-all"
+            >
+              <option value="">All Statuses</option>
+              <option value="sent">Sent</option>
+              <option value="pending">Pending</option>
+              <option value="failed">Failed</option>
+              <option value="bounced">Bounced</option>
+            </select>
+            <select
+              value={logTypeFilter}
+              onChange={e => setLogTypeFilter(e.target.value as EmailType | '')}
+              className="px-4 py-3 bg-white border border-slate-100 rounded-xl text-xs font-bold outline-none focus:border-black transition-all"
+            >
+              <option value="">All Types</option>
+              {Object.entries(EMAIL_TYPE_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </select>
+            <select
+              value={logBookingTypeFilter}
+              onChange={e => setLogBookingTypeFilter(e.target.value as BookingType | '')}
+              className="px-4 py-3 bg-white border border-slate-100 rounded-xl text-xs font-bold outline-none focus:border-black transition-all"
+            >
+              {BOOKING_TYPE_OPTIONS.map(opt => (
+                <option key={opt.label} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Email Log List */}
+          <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+            {logsLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 className="animate-spin text-slate-300" size={24} />
+              </div>
+            ) : emailLogs.length === 0 ? (
+              <div className="text-center py-16">
+                <Inbox size={40} className="mx-auto text-slate-300 mb-4" />
+                <p className="text-sm font-bold text-slate-400">No email history found</p>
+                <p className="text-xs text-slate-400 mt-1">Emails sent through the booking system will appear here.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-50">
+                {emailLogs.map(log => (
+                  <div
+                    key={log.id}
+                    className="flex items-center gap-4 p-4 hover:bg-slate-50 transition-all cursor-pointer"
+                    onClick={() => setSelectedLog(log)}
+                  >
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                      log.email_type === 'visitor_confirmation' ? 'bg-blue-50 text-blue-600'
+                      : log.email_type === 'mentor_notification' ? 'bg-purple-50 text-purple-600'
+                      : 'bg-slate-50 text-slate-600'
+                    }`}>
+                      <Mail size={16} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="text-sm font-bold text-slate-900 truncate">{log.subject || '(No subject)'}</span>
+                        {getStatusDisplay(log.status)}
+                      </div>
+                      <div className="flex items-center gap-2 text-[10px] text-slate-400 font-medium">
+                        <span>{log.recipient_email}</span>
+                        <span className="w-1 h-1 rounded-full bg-slate-300" />
+                        <span>{EMAIL_TYPE_LABELS[log.email_type] || log.email_type}</span>
+                        {log.booking_type && (
+                          <>
+                            <span className="w-1 h-1 rounded-full bg-slate-300" />
+                            <span>{log.booking_type === 'intro' ? 'Free Intro' : 'Rapid Response'}</span>
+                          </>
+                        )}
+                        <span className="w-1 h-1 rounded-full bg-slate-300" />
+                        <span>{new Date(log.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {log.status === 'failed' && (
+                        <button
+                          onClick={e => { e.stopPropagation(); handleResend(log.id); }}
+                          disabled={resendingId === log.id}
+                          className="p-2 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100 transition-all disabled:opacity-50"
+                          title="Resend"
+                        >
+                          {resendingId === log.id ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                        </button>
+                      )}
+                      <ChevronRightIcon size={16} className="text-slate-300" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between p-4 border-t border-slate-50">
+                <p className="text-[10px] font-bold text-slate-400">
+                  Showing {logPage * logLimit + 1}–{Math.min((logPage + 1) * logLimit, logTotal)} of {logTotal}
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setLogPage(p => Math.max(0, p - 1))}
+                    disabled={logPage === 0}
+                    className="p-2 bg-slate-50 rounded-xl hover:bg-slate-100 transition-all disabled:opacity-30"
+                  >
+                    <ChevronLeft size={14} />
+                  </button>
+                  <span className="text-[10px] font-bold text-slate-500 px-2">{logPage + 1} / {totalPages}</span>
+                  <button
+                    onClick={() => setLogPage(p => Math.min(totalPages - 1, p + 1))}
+                    disabled={logPage >= totalPages - 1}
+                    className="p-2 bg-slate-50 rounded-xl hover:bg-slate-100 transition-all disabled:opacity-30"
+                  >
+                    <ChevronRightIcon size={14} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Templates Tab ── */}
       {subTab === 'templates' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="space-y-4">
@@ -211,6 +438,14 @@ export const EmailsTab: React.FC<EmailsTabProps> = ({ studentProfiles, currentUs
             {TEMPLATE_CARDS.map(card => {
               const tmpl = templates.find(t => t.key === card.key);
               const isSelected = selectedKey === card.key;
+              const colorMap: Record<string, string> = {
+                application_submitted: 'bg-blue-50 text-blue-600',
+                application_approved: 'bg-emerald-50 text-emerald-600',
+                application_rejected: 'bg-red-50 text-red-600',
+                booking_confirmation_visitor: 'bg-cyan-50 text-cyan-600',
+                booking_notification_mentor: 'bg-purple-50 text-purple-600',
+                broadcast: 'bg-slate-50 text-slate-600',
+              };
               return (
                 <motion.div
                   key={card.key}
@@ -224,12 +459,7 @@ export const EmailsTab: React.FC<EmailsTabProps> = ({ studentProfiles, currentUs
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                        card.key === 'application_submitted' ? 'bg-blue-50 text-blue-600'
-                        : card.key === 'application_approved' ? 'bg-emerald-50 text-emerald-600'
-                        : card.key === 'application_rejected' ? 'bg-red-50 text-red-600'
-                        : 'bg-purple-50 text-purple-600'
-                      }`}>
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${colorMap[card.key] || 'bg-slate-50 text-slate-600'}`}>
                         <Mail size={18} />
                       </div>
                       <div>
@@ -319,6 +549,7 @@ export const EmailsTab: React.FC<EmailsTabProps> = ({ studentProfiles, currentUs
         </div>
       )}
 
+      {/* ── Broadcast Tab ── */}
       {subTab === 'broadcast' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="space-y-6">
@@ -441,6 +672,96 @@ export const EmailsTab: React.FC<EmailsTabProps> = ({ studentProfiles, currentUs
               {sending ? 'Sending...' : `Send Broadcast (${selectedEmails.length})`}
             </button>
           </div>
+        </div>
+      )}
+
+      {/* ── Email Detail Drawer ── */}
+      {selectedLog && (
+        <div className="fixed inset-0 z-[100] flex justify-end">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setSelectedLog(null)} />
+          <motion.div
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+            className="relative w-full max-w-lg bg-white shadow-2xl h-full overflow-y-auto"
+          >
+            <div className="p-6 space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-black uppercase tracking-tight text-slate-900">Email Details</h2>
+                <button onClick={() => setSelectedLog(null)} className="w-10 h-10 flex items-center justify-center bg-slate-50 rounded-xl hover:bg-slate-100 transition-all">
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl">
+                  {getStatusDisplay(selectedLog.status)}
+                  <span className="text-[10px] font-bold text-slate-400">
+                    {new Date(selectedLog.created_at).toLocaleString()}
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Recipient</p>
+                    <p className="text-sm font-bold text-slate-900">{selectedLog.recipient_email}</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Sender</p>
+                    <p className="text-sm font-bold text-slate-900">{selectedLog.sender_email}</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Subject</p>
+                    <p className="text-sm font-bold text-slate-900">{selectedLog.subject || '(No subject)'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Type</p>
+                    <p className="text-sm font-bold text-slate-900">{EMAIL_TYPE_LABELS[selectedLog.email_type] || selectedLog.email_type}</p>
+                  </div>
+                  {selectedLog.booking_type && (
+                    <div>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Booking Type</p>
+                      <p className="text-sm font-bold text-slate-900 capitalize">{selectedLog.booking_type}</p>
+                    </div>
+                  )}
+                  {selectedLog.template_key && (
+                    <div>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Template</p>
+                      <p className="text-sm font-mono font-bold text-slate-900">{selectedLog.template_key}</p>
+                    </div>
+                  )}
+                  {selectedLog.failure_reason && (
+                    <div>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Failure Reason</p>
+                      <p className="text-sm font-bold text-red-600 bg-red-50 p-3 rounded-xl">{selectedLog.failure_reason}</p>
+                    </div>
+                  )}
+                  {selectedLog.sent_at && (
+                    <div>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Sent At</p>
+                      <p className="text-sm font-bold text-slate-900">{new Date(selectedLog.sent_at).toLocaleString()}</p>
+                    </div>
+                  )}
+                </div>
+
+                {selectedLog.status === 'failed' && (
+                  <button
+                    onClick={() => handleResend(selectedLog.id)}
+                    disabled={resendingId === selectedLog.id}
+                    className="w-full py-4 bg-black text-white rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {resendingId === selectedLog.id ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <RefreshCw size={14} />
+                    )}
+                    Resend Email
+                  </button>
+                )}
+              </div>
+            </div>
+          </motion.div>
         </div>
       )}
     </div>

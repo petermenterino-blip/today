@@ -1,0 +1,51 @@
+{
+  "docId": "QA-DB-006",
+  "title": "Database Testing Specification",
+  "totalTests": 120,
+  "tables": [
+    {"name": "profiles", "columns": 11, "tests": 12, "rlz": "Own row only / assigned students / ALL"},
+    {"name": "programs", "columns": 11, "tests": 11, "rlz": "Public read / Public read / ALL CRUD"},
+    {"name": "applications", "columns": 8, "tests": 11, "rlz": "Own / Mentor own programs / ALL"},
+    {"name": "goals", "columns": 10, "tests": 9, "rlz": "Own / Own+student / ALL"},
+    {"name": "tasks", "columns": 11, "tests": 9, "rlz": "Own via goal / Own+student / ALL"},
+    {"name": "sessions", "columns": 13, "tests": 11, "rlz": "Own student / Own mentor / ALL"},
+    {"name": "messages", "columns": 8, "tests": 8, "rlz": "Own sent/received / Own / ALL"},
+    {"name": "resources", "columns": 9, "tests": 6, "rlz": "Public read / Public+own / ALL"},
+    {"name": "journals", "columns": 7, "tests": 6, "rlz": "Own / Assigned / ALL"},
+    {"name": "notifications", "columns": 8, "tests": 8, "rlz": "Own / Own / ALL"},
+    {"name": "reviews", "columns": 8, "tests": 6, "rlz": "Own / Received / ALL"},
+    {"name": "contacts", "columns": 7, "tests": 5, "rlz": "N/A / Own / ALL"},
+    {"name": "consultations", "columns": 9, "tests": 6, "rlz": "Own / Own / ALL"},
+    {"name": "gallery", "columns": 6, "tests": 4, "rlz": "Public read / Public+own / ALL"},
+    {"name": "audit_logs", "columns": 7, "tests": 4, "rlz": "DENY / DENY / ALL"},
+    {"name": "user_roles", "columns": 4, "tests": 4, "rlz": "DENY / DENY / ALL"}
+  ],
+  "triggers": [
+    "trg_set_updated_at — BEFORE UPDATE on all timestamp tables",
+    "trg_audit_insert/update/delete — AFTER on all critical tables",
+    "trg_notify_status_change — AFTER UPDATE on applications",
+    "trg_notify_session_booked — AFTER INSERT on sessions",
+    "trg_queue_email — AFTER INSERT on notifications"
+  ],
+  "rlsPolicySummary": {
+    "principle": "Row-Level Security enforced on all tables with per-role policies",
+    "student": "Can only read/update own rows",
+    "mentor": "Own rows + assigned students' data",
+    "admin": "Full access (BYPASSRLS)",
+    "anon": "Public read only on programs, resources, gallery"
+  },
+  "storageBuckets": [
+    {"name": "profile-photos", "public": true, "types": "image/jpeg, image/png, image/webp", "maxSize": "5 MB"},
+    {"name": "resource-files", "public": false, "types": "application/pdf, text/plain, .docx", "maxSize": "50 MB"},
+    {"name": "gallery-images", "public": true, "types": "image/jpeg, image/png, image/webp", "maxSize": "15 MB"},
+    {"name": "task-attachments", "public": false, "types": "application/pdf, image/*, .zip", "maxSize": "25 MB"}
+  ],
+  "realtimePublications": [
+    {"name": "realtime_messages", "tables": ["messages"]},
+    {"name": "realtime_notifs", "tables": ["notifications"]},
+    {"name": "realtime_sessions", "tables": ["sessions", "goals", "tasks"]},
+    {"name": "realtime_events", "tables": ["events"]},
+    {"name": "realtime_journals", "tables": ["journals"]},
+    {"name": "realtime_audit", "tables": ["audit_logs"]}
+  ]
+}

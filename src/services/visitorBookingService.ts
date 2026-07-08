@@ -3,10 +3,7 @@ import { ServiceResponse } from '../types';
 import { handleError } from '../lib/serviceHelper';
 import { notify } from './notificationService';
 import { edgeFunctionService } from './edgeFunctionService';
-
-function escHtml(str: string): string {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-}
+import { emailService } from './emailService';
 
 export interface VisitorBooking {
   id: string;
@@ -178,11 +175,17 @@ export const visitorBookingService = {
       });
       if (tlError) console.warn('[visitorBookingService] timeline insert failed:', tlError.message);
 
-      edgeFunctionService.sendPublicEmail(
-        created.visitorEmail,
-        'Booking Confirmed — Mentorino',
-        `<h1>Thanks, ${escHtml(created.visitorName)}!</h1><p>Your ${created.callType === 'rapid' ? 'Rapid Response' : 'Intro'} call has been booked for <strong>${escHtml(created.date)}</strong> at <strong>${escHtml(created.time)}</strong>.</p><p>We'll be in touch soon to confirm the details.</p><p>Best,<br/>The Mentorino Team</p>`
-      ).catch(() => {});
+      emailService.sendBookingEmails({
+        bookingId: created.id,
+        visitorName: created.visitorName,
+        visitorEmail: created.visitorEmail,
+        visitorPhone: created.visitorPhone,
+        callType: created.callType,
+        date: created.date,
+        time: created.time,
+        meetingType: created.meetingType,
+        message: created.message,
+      });
 
       supabase.from('profiles').select('id').eq('role', 'mentor').eq('status', 'active').then(({ data: mentors }) => {
         if (mentors) {

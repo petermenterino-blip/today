@@ -1,0 +1,33 @@
+{
+  "docId": "QA-STU-007",
+  "title": "Student Portal Testing Specification",
+  "totalTests": 79,
+  "modules": {
+    "Authentication": {"count": 6, "tests": ["STU-TC-001 to 006"], "features": ["Login valid/invalid", "Unverified email", "Password reset", "Token expired"]},
+    "Dashboard": {"count": 6, "tests": ["STU-TC-007 to 012"], "features": ["Widgets load", "Empty state", "Progress overview", "Recent activity"]},
+    "Programs": {"count": 6, "tests": ["STU-TC-013 to 018"], "features": ["Program list", "Search/filter", "Program detail", "Apply", "Track status"]},
+    "Goals": {"count": 10, "tests": ["STU-TC-019 to 028"], "features": ["Create", "Edit", "Mark complete", "Reopen", "Delete", "Progress calculation", "Filter by status"]},
+    "Tasks": {"count": 8, "tests": ["STU-TC-029 to 036"], "features": ["Create", "Reorder drag", "Mark complete", "Filter status", "Edit"]},
+    "Journal": {"count": 5, "tests": ["STU-TC-037 to 041"], "features": ["Create entry", "Mood tracking", "Mentor access", "Edit/delete"]},
+    "Sessions": {"count": 10, "tests": ["STU-TC-042 to 051"], "features": ["Book", "Cancel", "Reschedule", "Join meeting", "Add notes", "Past sessions"]},
+    "Messaging": {"count": 5, "tests": ["STU-TC-052 to 056"], "features": ["Send message", "Receive realtime", "Attachments", "Search"]},
+    "Resources": {"count": 5, "tests": ["STU-TC-057 to 061"], "features": ["Browse library", "Download", "Search"]},
+    "Ratings": {"count": 5, "tests": ["STU-TC-062 to 066"], "features": ["Submit rating", "View feedback", "Edit rating"]},
+    "Profile": {"count": 5, "tests": ["STU-TC-067 to 071"], "features": ["View profile", "Edit profile", "Upload photo", "Change password"]},
+    "Notifications": {"count": 4, "tests": ["STU-TC-072 to 075"], "features": ["List notifications", "Mark read", "Clear all", "Badge count"]},
+    "Settings": {"count": 4, "tests": ["STU-TC-076 to 079"], "features": ["Preferences", "Email opt-out", "Theme", "Language"]}
+  },
+  "p0Tests": ["STU-TC-001", "STU-TC-002", "STU-TC-005", "STU-TC-007", "STU-TC-013", "STU-TC-015", "STU-TC-019", "STU-TC-021", "STU-TC-022", "STU-TC-029", "STU-TC-031", "STU-TC-037", "STU-TC-042", "STU-TC-043", "STU-TC-045", "STU-TC-052", "STU-TC-053", "STU-TC-057", "STU-TC-062", "STU-TC-067", "STU-TC-072"],
+  "businessRules": [
+    "Only verified accounts with correct credentials may access the portal",
+    "Failed login attempts increment counter; after 5 failures, account locked for 15 minutes",
+    "Reset tokens valid for 60 minutes; one token per request",
+    "Student cannot book two sessions at overlapping times",
+    "Student can only view own goals, tasks, journal entries",
+    "Goal progress recalculated when tasks are completed",
+    "Soft-delete: records hidden but restorable within 30 days"
+  ],
+  "testCaseStructure": {
+    "fields": ["Test ID", "Module", "Feature", "Priority", "Severity", "Objective", "Business Rule", "Preconditions", "Test Data", "Test Steps", "Expected Result", "DB Validation", "API Validation", "UI Validation", "Notification Validation", "Email Validation", "Negative Test", "Edge Cases", "Pass Criteria", "Fail Criteria", "Evidence Required", "Automation Feasibility", "Est. Time"]
+  }
+}

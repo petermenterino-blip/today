@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -9,7 +9,6 @@ import {
 import { notifyError, notifySuccess } from '../utils/toast';
 import { visitorBookingService } from '../services/visitorBookingService';
 import { usePrograms } from '../hooks/usePrograms';
-import { defaultAcademyPrograms } from './Programs';
 
 const TIMEZONES = [
   'UTC', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
@@ -46,9 +45,8 @@ const BookingPage: React.FC = () => {
   const callType = (searchParams.get('type') || 'intro') as 'intro' | 'rapid';
   const isRapid = callType === 'rapid';
   const { programs, loading: programsLoading } = usePrograms();
-  const programOptions = programs.length > 0
-    ? programs.map(p => ({ id: p.id, title: p.title }))
-    : defaultAcademyPrograms.map(p => ({ id: p.id, title: p.title }));
+  const publishedPrograms = programs.filter(p => p.status === 'published');
+  const programOptions = publishedPrograms.map(p => ({ id: p.id, title: p.title }));
 
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
@@ -72,6 +70,36 @@ const BookingPage: React.FC = () => {
   const [meetingType, setMeetingType] = useState<'phone' | 'video' | 'in_person' | null>(null);
   const [message, setMessage] = useState('');
   const [emailError, setEmailError] = useState('');
+
+  useEffect(() => {
+    const saved = sessionStorage.getItem('booking_form_state');
+    if (saved) {
+      try {
+        const p = JSON.parse(saved);
+        if (p.step) setStep(p.step);
+        if (p.name) setName(p.name);
+        if (p.email) setEmail(p.email);
+        if (p.phone) setPhone(p.phone);
+        if (p.company) setCompany(p.company);
+        if (p.studentProfessional) setStudentProfessional(p.studentProfessional);
+        if (p.programOfInterest) setProgramOfInterest(p.programOfInterest);
+        if (p.meetingType) setMeetingType(p.meetingType);
+        if (p.selectedDate) setSelectedDate(p.selectedDate);
+        if (p.selectedTime) setSelectedTime(p.selectedTime);
+        if (p.selectedTimezone) setSelectedTimezone(p.selectedTimezone);
+        if (p.message) setMessage(p.message);
+      } catch {}
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isBooked) return;
+    sessionStorage.setItem('booking_form_state', JSON.stringify({
+      step, name, email, phone, company, studentProfessional,
+      programOfInterest, meetingType, selectedDate, selectedTime,
+      selectedTimezone, message,
+    }));
+  }, [step, name, email, phone, company, studentProfessional, programOfInterest, meetingType, selectedDate, selectedTime, selectedTimezone, message, isBooked]);
 
   const calYear = calViewDate.getFullYear();
   const calMonth = calViewDate.getMonth();
@@ -167,6 +195,7 @@ const BookingPage: React.FC = () => {
     }
 
     setIsBooked(true);
+    sessionStorage.removeItem('booking_form_state');
     notifySuccess(isRapid ? 'Rapid response call booked!' : 'Intro call booked!');
     setTimeout(() => navigate('/'), 2000);
     setSubmitting(false);
@@ -180,16 +209,16 @@ const BookingPage: React.FC = () => {
         const isDone = idx < step;
         return (
           <div key={label} className="flex items-center gap-2 sm:gap-4">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
-                isDone
-                  ? 'bg-emerald-500 text-white'
-                  : isActive
-                    ? isRapid ? 'bg-black text-white' : 'bg-slate-900 text-white'
-                    : 'bg-slate-100 text-slate-400'
-              }`}>
-                {isDone ? <Check size={14} /> : idx}
-              </div>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div data-testid={`booking-step-${idx}`} className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
+            isDone
+              ? 'bg-emerald-500 text-white'
+              : isActive
+                ? isRapid ? 'bg-black text-white' : 'bg-slate-900 text-white'
+                : 'bg-slate-100 text-slate-400'
+          }`}>
+            {isDone ? <Check size={14} /> : idx}
+          </div>
               <span className={`text-[8px] sm:text-[9px] font-black uppercase tracking-widest hidden sm:block ${
                 isActive ? isRapid ? 'text-black' : 'text-slate-900' : 'text-slate-400'
               }`}>
@@ -207,6 +236,7 @@ const BookingPage: React.FC = () => {
 
   const renderBackButton = () => (
     <button
+      data-testid="booking-back"
       onClick={() => { if (step > 1) { setStep(s => s - 1); } else { sessionStorage.setItem('scrollToSection', 'pricing-options'); navigate(-1); } }}
       className="mb-8 sm:mb-12 flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-white border border-black/[0.05] rounded-full shadow-sm hover:scale-110 active:scale-95 transition-all group"
     >
@@ -263,6 +293,7 @@ const BookingPage: React.FC = () => {
             <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
             <input
               type="text"
+              data-testid="booking-name"
               value={name}
               onChange={e => setName(e.target.value)}
               className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-100 text-sm font-medium outline-none focus:border-black transition-all placeholder:text-slate-400"
@@ -277,6 +308,7 @@ const BookingPage: React.FC = () => {
             <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
             <input
               id="booking-email"
+              data-testid="booking-email"
               type="email"
               value={email}
               onChange={e => validateEmail(e.target.value)}
@@ -296,6 +328,7 @@ const BookingPage: React.FC = () => {
             <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
             <input
               type="tel"
+              data-testid="booking-phone"
               value={phone}
               onChange={e => setPhone(e.target.value)}
               className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-100 text-sm font-medium outline-none focus:border-black transition-all placeholder:text-slate-400"
@@ -323,6 +356,7 @@ const BookingPage: React.FC = () => {
           <div className="flex gap-3">
             <button
               type="button"
+              data-testid="booking-type-student"
               onClick={() => setStudentProfessional('student')}
               className={`flex-1 flex items-center justify-center gap-2.5 p-4 rounded-2xl border-2 text-[10px] font-black uppercase tracking-widest transition-all active:scale-[0.98] ${
                 studentProfessional === 'student'
@@ -335,6 +369,7 @@ const BookingPage: React.FC = () => {
             </button>
             <button
               type="button"
+              data-testid="booking-type-professional"
               onClick={() => setStudentProfessional('professional')}
               className={`flex-1 flex items-center justify-center gap-2.5 p-4 rounded-2xl border-2 text-[10px] font-black uppercase tracking-widest transition-all active:scale-[0.98] ${
                 studentProfessional === 'professional'
@@ -374,7 +409,7 @@ const BookingPage: React.FC = () => {
               onChange={e => setProgramOfInterest(e.target.value)}
               className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-100 text-sm font-medium outline-none focus:border-black transition-all appearance-none cursor-pointer"
             >
-              <option value="">{programsLoading ? 'Loading programs...' : 'Select a program'}</option>
+              <option value="">{programsLoading ? 'Loading programs...' : programOptions.length === 0 ? 'No programs available' : 'Select a program'}</option>
               {programOptions.map(p => (
                 <option key={p.id} value={p.id}>{p.title}</option>
               ))}
@@ -629,6 +664,7 @@ const BookingPage: React.FC = () => {
         {step === 4 ? (
           <div className="space-y-3">
             <button
+              data-testid="booking-submit"
               onClick={handleSubmit}
               disabled={submitting}
               className="w-full py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed bg-white text-black hover:bg-slate-100 shadow-xl"
@@ -645,6 +681,7 @@ const BookingPage: React.FC = () => {
           </div>
         ) : (
           <button
+            data-testid="booking-continue"
             onClick={() => canGoNext() && setStep(s => Math.min(s + 1, 4))}
             disabled={!canGoNext()}
             className={`w-full py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${
@@ -702,6 +739,7 @@ const BookingPage: React.FC = () => {
                 ← Back
               </button>
               <button
+                data-testid="booking-next"
                 onClick={() => canGoNext() && setStep(s => Math.min(s + 1, 4))}
                 disabled={!canGoNext()}
                 className={`px-8 py-3.5 rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 transition-all active:scale-[0.98] ${

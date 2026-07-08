@@ -12,6 +12,10 @@ import { idleRecovery } from './lib/idleRecovery';
 import { logger } from './lib/logger';
 import { performStartupValidation, shouldBlockStartup } from './lib/productionGuard';
 
+if (import.meta.env.DEV) {
+  void import('./reticle-dev');
+}
+
 initSentry();
 
 const startup = performStartupValidation();

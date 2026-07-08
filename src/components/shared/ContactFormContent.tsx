@@ -114,6 +114,7 @@ const ContactFormContent: React.FC = () => {
           <input
             type="text"
             name="name"
+            data-testid="contact-name"
             required
             value={form.name}
             onChange={handleChange}
@@ -128,6 +129,7 @@ const ContactFormContent: React.FC = () => {
           <input
             type="email"
             name="email"
+            data-testid="contact-email"
             required
             value={form.email}
             onChange={handleChange}
@@ -144,6 +146,7 @@ const ContactFormContent: React.FC = () => {
           </label>
           <select
             name="discipline"
+            data-testid="contact-discipline"
             value={form.discipline}
             onChange={handleChange}
             className="w-full bg-slate-50 border border-slate-100 focus:border-indigo-500 rounded-2xl py-3.5 px-5 text-sm font-medium focus:outline-none transition-colors text-black appearance-none"
@@ -162,6 +165,7 @@ const ContactFormContent: React.FC = () => {
           </label>
           <select
             name="subject"
+            data-testid="contact-subject"
             value={form.subject}
             onChange={handleChange}
             className="w-full bg-slate-50 border border-slate-100 focus:border-indigo-500 rounded-2xl py-3.5 px-5 text-sm font-medium focus:outline-none transition-colors text-black appearance-none"
@@ -180,6 +184,7 @@ const ContactFormContent: React.FC = () => {
         </label>
         <textarea
           name="message"
+          data-testid="contact-message"
           required
           rows={5}
           value={form.message}
@@ -191,6 +196,7 @@ const ContactFormContent: React.FC = () => {
 
       <button
         type="submit"
+        data-testid="contact-submit"
         disabled={submitting}
         className="btn-normal bg-black text-white hover:bg-slate-800 w-full sm:w-auto inline-flex items-center gap-2 justify-center"
       >

@@ -1,0 +1,58 @@
+{
+  "docId": "QA-SYNC-005",
+  "title": "Cross-Portal Data Synchronization & Integration Testing",
+  "totalTests": 134,
+  "objectives": [
+    {"id": "O1", "name": "Database CRUD Sync", "sla": "< 1s", "priority": "P0"},
+    {"id": "O2", "name": "Realtime UI Sync", "sla": "< 2s", "priority": "P0"},
+    {"id": "O3", "name": "Cross-Portal State Sync", "sla": "identical at point-in-time", "priority": "P0"},
+    {"id": "O4", "name": "Status Transition Sync", "sla": "< 1s", "priority": "P0"},
+    {"id": "O5", "name": "CRUD Operation Sync", "sla": "bidirectional", "priority": "P0"},
+    {"id": "O6", "name": "Notification Sync", "sla": "< 5s", "priority": "P1"},
+    {"id": "O7", "name": "Email Trigger Sync", "sla": "< 60s", "priority": "P1"},
+    {"id": "O8", "name": "Calendar Sync", "sla": "< 5s", "priority": "P1"},
+    {"id": "O9", "name": "File Sync", "sla": "< 10s", "priority": "P2"},
+    {"id": "O10", "name": "Analytics Sync", "sla": "< 15min", "priority": "P2"},
+    {"id": "O11", "name": "Audit Log Sync", "sla": "< 5min", "priority": "P3"},
+    {"id": "O12", "name": "Soft Delete & Restore Sync", "sla": "< 2s", "priority": "P1"},
+    {"id": "O13", "name": "Offline Queue Sync", "sla": "on reconnect", "priority": "P1"},
+    {"id": "O14", "name": "Conflict Resolution", "sla": "no data loss", "priority": "P1"}
+  ],
+  "syncFlows": {
+    "visitorToMentor": [
+      {"action": "Contact form submission", "source": "Public Website", "dest": "Mentor Dashboard", "verification": ["DB insert", "Realtime event received", "Inquiry card in dashboard", "Notification"]},
+      {"action": "Program application", "source": "Public Website", "dest": "Mentor Dashboard", "verification": ["DB record", "Mentor list updated", "Notification"]},
+      {"action": "Consultation booking", "source": "Public Website", "dest": "Mentor Dashboard", "verification": ["Calendar event", "Mentor notified", "No double-booking"]}
+    ],
+    "mentorToStudent": [
+      {"action": "Goal assignment", "source": "Mentor Dashboard", "dest": "Student Dashboard", "verification": ["Goal visible", "Notification received", "Due date correct"]},
+      {"action": "Task assignment", "source": "Mentor Dashboard", "dest": "Student Dashboard", "verification": ["Task under goal", "Notification", "Evidence upload enabled"]},
+      {"action": "Session scheduling", "source": "Mentor Dashboard", "dest": "Student Dashboard", "verification": ["Calendar updated", "Confirmation notification", "No conflict"]},
+      {"action": "Session reschedule", "source": "Mentor Dashboard", "dest": "Student Dashboard", "verification": ["Time updated", "Change notification", "Reason visible"]},
+      {"action": "Session cancellation", "source": "Mentor Dashboard", "dest": "Student Dashboard", "verification": ["Status cancelled", "Cancellation reason", "Notification sent"]},
+      {"action": "Program assignment", "source": "Mentor Dashboard", "dest": "Student Dashboard", "verification": ["Program visible", "Modules unlocked"]},
+      {"action": "Resource sharing", "source": "Mentor Dashboard", "dest": "Student Dashboard", "verification": ["Library updated", "Notification"]},
+      {"action": "Message sending", "source": "Mentor Dashboard", "dest": "Student Dashboard", "verification": ["Message delivered", "Badge updated"]}
+    ],
+    "studentToMentor": [
+      {"action": "Goal progress update", "source": "Student Dashboard", "dest": "Mentor Dashboard", "verification": ["Progress bar updated", "Notification"]},
+      {"action": "Task completion with evidence", "source": "Student Dashboard", "dest": "Mentor Dashboard", "verification": ["Submitted status", "Evidence accessible"]},
+      {"action": "Journal entry", "source": "Student Dashboard", "dest": "Mentor Dashboard", "verification": ["Journal feed updated", "Mentor can comment"]},
+      {"action": "Session booking", "source": "Student Dashboard", "dest": "Mentor Dashboard", "verification": ["Calendar updated", "Notification", "Availability decremented"]},
+      {"action": "Session feedback", "source": "Student Dashboard", "dest": "Mentor Dashboard", "verification": ["Rating recorded", "Aggregate recalculated"]},
+      {"action": "Message sending", "source": "Student Dashboard", "dest": "Mentor Dashboard", "verification": ["Message received", "Badge incremented"]},
+      {"action": "File upload", "source": "Student Dashboard", "dest": "Mentor Dashboard", "verification": ["File accessible", "Metadata correct"]}
+    ]
+  },
+  "latencySLAs": {
+    "dbCrud": "< 1s",
+    "realtimeUI": "< 2s",
+    "statusChanges": "< 1s",
+    "notifications": "< 5s",
+    "emails": "< 60s",
+    "calendar": "< 5s",
+    "files": "< 10s",
+    "analytics": "< 15min",
+    "auditLogs": "< 5min"
+  }
+}

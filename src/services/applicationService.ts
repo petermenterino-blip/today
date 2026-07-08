@@ -122,7 +122,10 @@ export const applicationService = {
     }
 
     const { data, error, count } = await query;
-    if (error) return { data: null, error: handleError(error).error };
+    if (error) {
+      console.warn('[applicationService] fetchAll error:', error.message);
+      return { data: null, error: handleError(error).error };
+    }
     const mapped = (data || []).map(rowToApplication);
     return { data: { data: mapped, count: count ?? mapped.length }, error: null };
   },
@@ -133,7 +136,10 @@ export const applicationService = {
       .select('*')
       .eq('email', email.toLowerCase())
       .single();
-    if (error && error.code !== 'PGRST116') return { data: null, error: handleError(error).error };
+    if (error && error.code !== 'PGRST116') {
+      console.warn('[applicationService] fetchByEmail error:', error.message);
+      return { data: null, error: handleError(error).error };
+    }
     return { data: data ? rowToApplication(data) : null, error: null };
   },
 
@@ -184,7 +190,10 @@ export const applicationService = {
         top_strength: app.top_strength || null,
         needs_focus: app.needs_focus || null,
       });
-    if (error) return { data: null, error: handleError(error).error };
+    if (error) {
+      console.warn('[applicationService] submitApplication error:', error.message);
+      return { data: null, error: handleError(error).error };
+    }
 
     const submitted = rowToApplication((data ?? [{}])[0]);
     edgeFunctionService.sendPublicEmail(
@@ -213,13 +222,19 @@ export const applicationService = {
       .from('applications')
       .update({ status, updated_at: new Date().toISOString() })
       .eq('id', id);
-    if (error) return { data: undefined, error: handleError(error).error };
+    if (error) {
+      console.warn('[applicationService] updateStatus error:', error.message);
+      return { data: undefined, error: handleError(error).error };
+    }
     return { data: undefined, error: null };
   },
 
   async delete(id: string): Promise<ServiceResponse<void>> {
     const { error } = await supabase.from('applications').delete().eq('id', id);
-    if (error) return { data: undefined, error: handleError(error).error };
+    if (error) {
+      console.warn('[applicationService] delete error:', error.message);
+      return { data: undefined, error: handleError(error).error };
+    }
     return { data: undefined, error: null };
   },
 

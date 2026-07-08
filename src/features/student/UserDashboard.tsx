@@ -44,7 +44,6 @@ const StudentTasks = lazy(() => import("./StudentTasks"));
 const WhatsAppMessaging = lazy(() => import("../messaging/WhatsAppMessaging"));
 const GrowthForm = lazy(() => import("./GrowthForm"));
 const StudentForms = lazy(() => import("./StudentForms"));
-const StudentEditProfile = lazy(() => import("./StudentEditProfile"));
 const ResourceDashboard = lazy(() => import("../resources/ResourceDashboard"));
 const StudentReviews = lazy(() => import("./StudentReviews").then(m => ({ default: m.StudentReviews })));
 const StudentSharedFiles = lazy(() => import("./StudentSharedFiles"));
@@ -82,9 +81,13 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
   const {
     events,
     loading: eventsLoading,
-    registerForEvent: attendEvent,
+    registerForEvent,
     refresh: refreshEvents,
   } = useEvents();
+
+  const attendEvent = useCallback(async (eventId: string, userId: string) => {
+    await registerForEvent({ eventId, userId, name: currentUser?.name, email: currentUser?.email });
+  }, [registerForEvent, currentUser]);
   const { sessions } = useSessions(currentUser?.id, "student");
   const upcomingSessions = sessions.filter(
     (s) => s.attendanceStatus === "pending",
@@ -913,10 +916,6 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
                     onAttend={attendEvent}
                   /></Suspense>
                 }
-              />
-              <Route
-                path="/profile"
-                element={<Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><StudentEditProfile currentUser={currentUser} /></Suspense>}
               />
               <Route
                 path="/files"

@@ -22,6 +22,7 @@ import {
   StudentProgress 
 } from '../../services/studentProgressService';
 import { getProgramCurriculum } from '../../services/curriculumService';
+import { programModuleService } from '../../services/programModuleService';
 import { Module, Lesson } from '../../types';
 import { programService } from '../../services/programService';
 import { toast } from 'sonner';
@@ -94,8 +95,24 @@ const StudentProgramView: React.FC<StudentProgramViewProps> = ({ currentUser }) 
       }
       setProgram(matchedProg);
 
-      // Fetch curriculum
-      const cur = await getProgramCurriculum(programId);
+      // Fetch curriculum (with fallback to program_modules table)
+      let cur = await getProgramCurriculum(programId);
+      if (!cur || cur.length === 0) {
+        const { data: mods } = await programModuleService.fetchByProgram(programId);
+        if (mods && mods.length > 0) {
+          cur = mods.map(m => ({
+            id: m.id,
+            title: m.title,
+            description: m.description || '',
+            lessons: (m.videos || []).map(v => ({
+              id: v.url,
+              title: v.title,
+              videoUrl: v.url,
+              topics: [],
+            })),
+          }));
+        }
+      }
       setCurriculum(cur);
 
       // Initialize program progress if not already

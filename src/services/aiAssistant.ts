@@ -249,9 +249,11 @@ export async function chatWithContext(
   messages: AIChatMessage[],
   userId: string,
   onToken?: (token: string) => void,
+  signal?: AbortSignal,
 ) {
   checkCallRate('chatWithContext');
   const context = await contextEngine.getFullContext(userId);
+  if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
   const provider = createAIProvider();
 
   const systemWithContext = `${SYSTEM_PROMPT}
@@ -272,13 +274,17 @@ ${JSON.stringify(context, null, 2).slice(0, 15000)}
       maxTokens: 4096,
       temperature: 0.7,
       onToken,
+      signal,
     });
   } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') throw err;
     logger.error('aiAssistant', 'chatWithContext failed, using fallback', { error: err instanceof Error ? err.message : 'Unknown error' });
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
     const fallback = generateFallbackResponse(messages, context);
-    if (onToken) {
+    if (onToken && !signal?.aborted) {
       let idx = 0;
       const interval = setInterval(() => {
+        if (signal?.aborted) { clearInterval(interval); return; }
         if (idx < fallback.length) {
           const chunkSize = Math.min(3, fallback.length - idx);
           onToken(fallback.slice(idx, idx + chunkSize));
@@ -287,7 +293,11 @@ ${JSON.stringify(context, null, 2).slice(0, 15000)}
           clearInterval(interval);
         }
       }, 30);
-      await new Promise(resolve => setTimeout(resolve, fallback.length * 12));
+      await new Promise(resolve => {
+        const onAbort = () => { clearInterval(interval); resolve(undefined); };
+        signal?.addEventListener('abort', onAbort, { once: true });
+        setTimeout(() => { clearInterval(interval); resolve(undefined); }, fallback.length * 12 + 100);
+      });
     }
     return fallback;
   }

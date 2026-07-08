@@ -50,3 +50,25 @@ playwright/.auth/*.json
 
 # Schema dumps
 _schema_dump.sql
+
+# Debug scripts
+_*.mjs
+_test_profile*/
+*.tsbuildinfo
+vite.config.d.ts
+
+# Screenshots
+*.png
+_netlog.json
+
+# Playwright debug
+playwright-errors.json
+
+# Staging seed scripts (contain service role keys)
+scripts/seed-staging.*
+scripts/seed-data.mjs
+
+# Audit reports (generated, not source)
+*REPORT.md
+*AUDIT.md
+IMPLEMENTATION_PLAN.md

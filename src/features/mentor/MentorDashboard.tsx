@@ -2,11 +2,9 @@ import React, { Suspense, lazy } from 'react';
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import {
-  X, Trash, Briefcase, ShieldCheck, ClipboardList, CalendarDays,
-  CheckCircle2
+  X, Trash, Briefcase, CheckCircle2
 } from 'lucide-react';
 import ErrorBoundary from '../../components/shared/ErrorBoundary';
-import { defaultAcademyPrograms } from '../../pages/Programs';
 import { Link } from 'react-router-dom';
 
 const EventManagement = lazy(() => import('../admin/EventManagement').then(m => ({ default: m.EventManagement })));
@@ -23,6 +21,7 @@ const VisitorBookingsTab = lazy(() => import('./components/VisitorBookingsTab').
 const ContactSubmissionsTab = lazy(() => import('./components/ContactSubmissionsTab').then(m => ({ default: m.ContactSubmissionsTab })));
 const GrowthAuditTab = lazy(() => import('./components/GrowthAuditTab'));
 const ProgramProgressTab = lazy(() => import('./components/ProgramProgressTab').then(m => ({ default: m.ProgramProgressTab })));
+const ProgramsTab = lazy(() => import('./components/ProgramsTab').then(m => ({ default: m.ProgramsTab })));
 const ReviewsTab = lazy(() => import('./components/ReviewsTab').then(m => ({ default: m.ReviewsTab })));
 const AnalyticsBI = lazy(() => import('./components/AnalyticsBI'));
 const AIDashboard = lazy(() => import('./components/AIDashboard'));
@@ -87,7 +86,7 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
   }
 
   return (
-    <ErrorBoundary>
+    <ErrorBoundary resetKey={d.activeTab}>
     <div className={`animate-in fade-in duration-700 ${d.activeTab === 'messaging' ? 'h-full flex flex-col' : 'space-y-8'}`}>
       {d.activeTab === 'overview' && (
         <ErrorBoundary><Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><OverviewTab
@@ -289,77 +288,9 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
       {d.activeTab === 'events' && <ErrorBoundary><Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><EventListView /></Suspense></ErrorBoundary>}
 
       {d.activeTab === 'programs' && (
-        <div className="space-y-8 animate-in fade-in duration-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-slate-900">Academy Programs</h1>
-              <p className="text-xs text-slate-500 mt-1 font-medium">Curated Learning Paths — Specialized Academy Programs</p>
-            </div>
-            <Link
-              to="/programs"
-              className="px-5 py-2.5 bg-black text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-sm"
-            >
-              View All Programs →
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {defaultAcademyPrograms.map((prog, idx) => {
-              const IconComp = prog.icon;
-              const colorMap: Record<string, string> = {
-                career: 'bg-blue-500', cybersecurity: 'bg-purple-500',
-                'project-management': 'bg-emerald-500', 'academic-success': 'bg-orange-500',
-              };
-              return (
-                <div key={prog.id} className="bg-white rounded-[32px] border border-slate-100 shadow-sm hover:shadow-lg hover:border-slate-200 transition-all duration-300 p-6 md:p-8 flex flex-col">
-                  <div className="flex items-start gap-4 mb-4">
-                    <div className={`w-12 h-12 ${colorMap[prog.id] || 'bg-slate-500'} rounded-2xl flex items-center justify-center text-white shadow-sm shrink-0`}>
-                      <IconComp size={22} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-base font-black uppercase tracking-tight text-slate-900">{prog.title}</h3>
-                      <div className="flex items-center gap-2 mt-1.5 text-[9px] font-black uppercase tracking-widest text-slate-400">
-                        <span>{prog.duration}</span>
-                        <span className="w-1 h-1 rounded-full bg-slate-300" />
-                        <span>{prog.level}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <p className="text-xs text-slate-500 font-medium leading-relaxed mb-4">{prog.desc}</p>
-                  <ul className="space-y-2 mb-6 flex-1">
-                    {prog.points.map(point => (
-                      <li key={point} className="flex items-center gap-2.5 text-[11px] font-semibold text-slate-700">
-                        <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
-                        {point}
-                      </li>
-                    ))}
-                  </ul>
-                  <Link
-                    to="/programs"
-                    className="w-full py-3 bg-slate-50 hover:bg-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-700 text-center transition-all"
-                  >
-                    View Details
-                  </Link>
-                </div>
-              );
-            })}
-          </div>
-
-          {d.programs.length > 0 && (
-            <div className="pt-6 border-t border-slate-100">
-              <h2 className="text-sm font-black uppercase tracking-tight text-slate-700 mb-4">Custom Programs</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {d.programs.map((prg: any) => (
-                  <div key={prg.id} className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm hover:shadow-md transition-all">
-                    <h3 className="text-sm font-black uppercase tracking-tight text-slate-900">{prg.title}</h3>
-                    <p className="text-[10px] text-slate-500 mt-1 font-medium">{prg.modules?.length || 0} modules</p>
-                    <p className="text-xs text-slate-600 mt-2 line-clamp-2">{prg.description}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+        <ErrorBoundary><Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}>
+          <ProgramsTab currentUser={d.currentUser} />
+        </Suspense></ErrorBoundary>
       )}
 
       {d.activeTab === 'sessions' && (

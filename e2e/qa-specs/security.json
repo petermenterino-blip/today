@@ -1,0 +1,24 @@
+{
+  "docId": "QA-SEC-008",
+  "title": "Security Testing Specification",
+  "totalTests": 30,
+  "domains": [
+    {"name": "Authentication", "tests": 5, "items": ["Brute force: 5 attempts → 429 lockout 60s", "Password policy: 12 chars, upper+lower+digit+special", "Session: JWT 15min access, 7d refresh, httpOnly cookie", "Email verification: single-use, 24h expiry", "Password reset: 15min expiry, 3/hr rate limit"]},
+    {"name": "Authorization", "tests": 4, "items": ["RBAC: Student→mentor endpoint = 403", "IDOR: Cannot access another user's data", "Privilege escalation: attempts blocked", "Admin-only endpoints protected"]},
+    {"name": "RLS Testing", "tests": 5, "items": ["Student RLS: own rows only verified", "Mentor RLS: own + assigned students", "Admin RLS: BYPASSRLS confirmed", "Anon: public tables only", "Direct Supabase API with tampered JWT blocked"]},
+    {"name": "Input Validation", "tests": 5, "items": ["SQL injection in query params", "XSS in profile bio", "XSS in messages", "Template injection", "Command injection"]},
+    {"name": "CSRF", "tests": 2, "items": ["Anti-CSRF token validation", "SameSite cookie attributes"]},
+    {"name": "File Upload", "tests": 3, "items": ["Malicious file rejection", "Path traversal blocked", "MIME validation enforced"]},
+    {"name": "Rate Limiting", "tests": 3, "items": ["Auth endpoint: 10 req/60s", "Global: 100 req/60s", "Rate limit headers present"]},
+    {"name": "JWT Security", "tests": 3, "items": ["Expired token rejected 401", "Tampered token rejected 401", "Refresh token rotation: old token invalidated"]}
+  ],
+  "owaspMapping": {
+    "A01: Broken Access Control": ["RBAC tests", "IDOR tests", "RLS tests"],
+    "A02: Cryptographic Failures": ["JWT tests", "Password storage tests"],
+    "A03: Injection": ["SQLi tests", "XSS tests", "Command injection tests"],
+    "A04: Insecure Design": ["Rate limiting tests", "Session management"],
+    "A05: Security Misconfiguration": ["CORS tests", "Security headers"],
+    "A07: Identification & Authentication Failures": ["Brute force", "Password policy", "Session tests"],
+    "A08: Software & Data Integrity Failures": ["File upload tests"]
+  }
+}

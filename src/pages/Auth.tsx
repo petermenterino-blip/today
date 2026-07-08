@@ -45,7 +45,7 @@ const AuthPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] flex flex-col items-center justify-center px-4 py-12 animate-in fade-in duration-700">
-      <Link to="/" className="absolute top-8 left-8 flex items-center gap-2 text-slate-400 hover:text-black transition-colors text-[10px] font-black uppercase tracking-widest">
+      <Link to="/" data-testid="auth-back" className="absolute top-8 left-8 flex items-center gap-2 text-slate-400 hover:text-black transition-colors text-[10px] font-black uppercase tracking-widest">
         <ArrowLeft size={14} /> BACK
       </Link>
 
@@ -77,6 +77,7 @@ const AuthPage: React.FC = () => {
               <div className="relative">
                 <input 
                   id="auth-email"
+                  data-testid="auth-email"
                   type="email" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -90,11 +91,12 @@ const AuthPage: React.FC = () => {
             <div className="space-y-1 sm:space-y-1.5">
               <div className="flex justify-between items-center ml-1">
                 <label htmlFor="auth-password" className="text-[7px] sm:text-[8px] font-black text-slate-400 uppercase tracking-widest">PASSWORD</label>
-                <button type="button" onClick={handleForgotPassword} className="text-[7px] sm:text-[8px] font-black text-slate-400 uppercase tracking-widest hover:text-black">FORGOT?</button>
+                <button type="button" data-testid="auth-forgot" onClick={handleForgotPassword} className="text-[7px] sm:text-[8px] font-black text-slate-400 uppercase tracking-widest hover:text-black">FORGOT?</button>
               </div>
               <div className="relative">
                 <input 
                   id="auth-password"
+                  data-testid="auth-password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -115,6 +117,7 @@ const AuthPage: React.FC = () => {
 
             <button 
               type="submit"
+              data-testid="auth-submit"
               disabled={isLoading}
               className="btn-normal bg-black text-white w-full flex items-center justify-center gap-2"
             >

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { applicationService } from '../services/applicationService';
@@ -60,6 +60,38 @@ const ApplicationPage: React.FC = () => {
   // File Uploader state
   const [uploadingResume, setUploadingResume] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+
+  useEffect(() => {
+    const saved = sessionStorage.getItem('application_form_state');
+    if (saved) {
+      try {
+        const p = JSON.parse(saved);
+        if (p.step) setStep(p.step);
+        if (p.mentorType) setMentorType(p.mentorType);
+        if (p.name) setName(p.name);
+        if (p.countryCode) setCountryCode(p.countryCode);
+        if (p.phone) setPhone(p.phone);
+        if (p.email) setEmail(p.email);
+        if (p.meetingPreference) setMeetingPreference(p.meetingPreference);
+        if (p.frequency) setFrequency(p.frequency);
+        if (p.goals) setGoals(p.goals);
+        if (p.seriousness) setSeriousness(p.seriousness);
+        if (p.linkedinUrl) setLinkedinUrl(p.linkedinUrl);
+        if (p.portfolioUrl) setPortfolioUrl(p.portfolioUrl);
+        if (p.resumeUrl) setResumeUrl(p.resumeUrl);
+        if (p.messageToMentor) setMessageToMentor(p.messageToMentor);
+      } catch {}
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isSubmitted) return;
+    sessionStorage.setItem('application_form_state', JSON.stringify({
+      step, mentorType, name, countryCode, phone, email,
+      meetingPreference, frequency, goals, seriousness,
+      linkedinUrl, portfolioUrl, resumeUrl, messageToMentor,
+    }));
+  }, [step, mentorType, name, countryCode, phone, email, meetingPreference, frequency, goals, seriousness, linkedinUrl, portfolioUrl, resumeUrl, messageToMentor, isSubmitted]);
 
   const wordCount = useMemo(() => {
     if (!goals.trim()) return 0;
@@ -124,6 +156,7 @@ const ApplicationPage: React.FC = () => {
       if (error) throw new Error(error);
       
       setIsSubmitted(true);
+      sessionStorage.removeItem('application_form_state');
       notifySuccess('Application submitted successfully!');
     } catch (error: any) {
       notifyError(error.message || 'Failed to submit application. Please try again.');
@@ -154,11 +187,12 @@ const ApplicationPage: React.FC = () => {
 
   return (
     <div className="max-w-2xl lg:max-w-4xl mx-auto py-6 sm:py-8 md:py-16 px-4">
-      <button 
-        onClick={() => navigate(-1)}
-        className="mb-8 sm:mb-10 flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-white border border-black/[0.05] rounded-full shadow-sm hover:scale-110 active:scale-95 transition-all group"
-        aria-label="Go back"
-      >
+        <button 
+          data-testid="apply-back"
+          onClick={() => navigate(-1)}
+          className="mb-8 sm:mb-10 flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-white border border-black/[0.05] rounded-full shadow-sm hover:scale-110 active:scale-95 transition-all group"
+          aria-label="Go back"
+        >
         <ArrowLeft size={18} className="sm:w-5 sm:h-5 text-black group-hover:-translate-x-1 transition-transform" />
       </button>
 
@@ -188,6 +222,7 @@ const ApplicationPage: React.FC = () => {
                 <label className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">1. What type of Mentor are you seeking?</label>
                 <select 
                   value={mentorType} 
+                  data-testid="apply-mentor-type"
                   onChange={e => setMentorType(e.target.value)}
                   className="w-full px-4 py-3 sm:py-4 md:p-5 bg-slate-50 border border-slate-100 rounded-xl sm:rounded-3xl text-sm font-medium outline-none focus:border-black transition-all appearance-none" 
                 >
@@ -204,6 +239,7 @@ const ApplicationPage: React.FC = () => {
                 <div className="relative">
                   <input 
                     type="text" 
+                    data-testid="apply-name"
                     value={name} 
                     onChange={e => setName(e.target.value)}
                     className="w-full px-4 py-3 sm:py-4 md:px-5 md:py-5 bg-slate-50 border border-slate-100 rounded-xl sm:rounded-3xl text-sm font-medium outline-none focus:border-black transition-all" 
@@ -238,6 +274,7 @@ const ApplicationPage: React.FC = () => {
                   <div className="relative">
                     <input 
                       type="email" 
+                      data-testid="apply-email"
                       value={email} 
                       onChange={e => setEmail(e.target.value)}
                       className="w-full px-4 py-3 sm:py-4 md:px-5 md:py-5 bg-slate-50 border border-slate-100 rounded-xl sm:rounded-3xl text-sm font-medium outline-none focus:border-black transition-all" 
@@ -433,17 +470,19 @@ const ApplicationPage: React.FC = () => {
         )}
 
         <div className="flex items-center justify-between mt-8 sm:mt-12 pt-6 sm:pt-10 border-t border-black/[0.02]">
-          <button 
-            type="button"
-            onClick={prevStep}
-            disabled={step === 1 || isSubmitting}
-            className={`flex items-center gap-2 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] ${step === 1 ? 'opacity-20 pointer-events-none' : 'text-slate-400 hover:text-black'}`}
-          >
+            <button 
+              type="button"
+              data-testid="apply-prev"
+              onClick={prevStep}
+              disabled={step === 1 || isSubmitting}
+              className={`flex items-center gap-2 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] ${step === 1 ? 'opacity-20 pointer-events-none' : 'text-slate-400 hover:text-black'}`}
+            >
             <ArrowLeft size={16} /> Back
           </button>
           {step < totalSteps ? (
             <button 
               type="button"
+              data-testid="apply-next"
               onClick={nextStep}
               className="btn-compact bg-black text-white flex items-center gap-2"
             >
@@ -452,6 +491,7 @@ const ApplicationPage: React.FC = () => {
           ) : (
             <button 
               type="button"
+              data-testid="apply-submit"
               onClick={handleSubmit}
               disabled={isSubmitting || uploadingResume}
               className="btn-compact bg-black text-white disabled:opacity-50"
