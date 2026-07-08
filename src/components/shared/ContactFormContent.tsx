@@ -1,9 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { CheckCircle2, Send } from 'lucide-react';
 import { notifySuccess, notifyError } from '../../utils/toast';
-import { contactSubmissionService } from '../../services/contactSubmissionService';
-import { notify } from '../../services/notificationService';
 
 interface ContactForm {
   name: string;
@@ -23,7 +21,6 @@ const ContactFormContent: React.FC = () => {
   });
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-  const submittedRef = useRef(false);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
@@ -31,48 +28,46 @@ const ContactFormContent: React.FC = () => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.email || !form.message) {
       notifyError('Please fill in all required fields.');
       return;
     }
-    if (submittedRef.current) return;
-    submittedRef.current = true;
 
     setSubmitting(true);
 
-    try {
-      const { error } = await contactSubmissionService.submit({
-        name: form.name,
-        email: form.email,
-        discipline: form.discipline,
-        subject: form.subject,
-        message: form.message,
-      });
+    setTimeout(() => {
+      try {
+        const submissions = JSON.parse(
+          localStorage.getItem('contact_submissions_v1') || '[]',
+        );
+        const newSubmission = {
+          ...form,
+          id: 'sub-' + Date.now(),
+          timestamp: new Date().toISOString(),
+        };
+        submissions.push(newSubmission);
+        localStorage.setItem(
+          'contact_submissions_v1',
+          JSON.stringify(submissions),
+        );
 
-      if (error) {
+        setSuccess(true);
+        setSubmitting(false);
+        notifySuccess('Your message has been sent successfully!');
+        setForm({
+          name: '',
+          email: '',
+          discipline: 'IT & Tech',
+          subject: 'Career Guidance',
+          message: '',
+        });
+      } catch {
         setSubmitting(false);
         notifyError('Failed to send message. Please try again.');
-        return;
       }
-    } catch {
-      setSubmitting(false);
-      notifyError('Network error. Please check your connection and try again.');
-      return;
-    }
-
-    setSuccess(true);
-    setSubmitting(false);
-    notify.contactReceived().catch(() => {});
-    notifySuccess('Your message has been sent successfully!');
-    setForm({
-      name: '',
-      email: '',
-      discipline: 'IT & Tech',
-      subject: 'Career Guidance',
-      message: '',
-    });
+    }, 1200);
   };
 
   if (success) {
@@ -114,7 +109,6 @@ const ContactFormContent: React.FC = () => {
           <input
             type="text"
             name="name"
-            data-testid="contact-name"
             required
             value={form.name}
             onChange={handleChange}
@@ -129,7 +123,6 @@ const ContactFormContent: React.FC = () => {
           <input
             type="email"
             name="email"
-            data-testid="contact-email"
             required
             value={form.email}
             onChange={handleChange}
@@ -146,7 +139,6 @@ const ContactFormContent: React.FC = () => {
           </label>
           <select
             name="discipline"
-            data-testid="contact-discipline"
             value={form.discipline}
             onChange={handleChange}
             className="w-full bg-slate-50 border border-slate-100 focus:border-indigo-500 rounded-2xl py-3.5 px-5 text-sm font-medium focus:outline-none transition-colors text-black appearance-none"
@@ -165,7 +157,6 @@ const ContactFormContent: React.FC = () => {
           </label>
           <select
             name="subject"
-            data-testid="contact-subject"
             value={form.subject}
             onChange={handleChange}
             className="w-full bg-slate-50 border border-slate-100 focus:border-indigo-500 rounded-2xl py-3.5 px-5 text-sm font-medium focus:outline-none transition-colors text-black appearance-none"
@@ -184,7 +175,6 @@ const ContactFormContent: React.FC = () => {
         </label>
         <textarea
           name="message"
-          data-testid="contact-message"
           required
           rows={5}
           value={form.message}
@@ -196,7 +186,6 @@ const ContactFormContent: React.FC = () => {
 
       <button
         type="submit"
-        data-testid="contact-submit"
         disabled={submitting}
         className="btn-normal bg-black text-white hover:bg-slate-800 w-full sm:w-auto inline-flex items-center gap-2 justify-center"
       >

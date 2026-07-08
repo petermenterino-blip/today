@@ -69,7 +69,7 @@ export const journalStorage = {
   },
 
   async create(data: Partial<JournalEntry>): Promise<JournalEntry> {
-    const row = journalToRow(data as Partial<JournalEntry>);
+    const row = journalToRow(data as any);
     const result = await safeMutate<JournalEntry>(
       'journalStorage.create',
       () => supabase.from('journals').insert(row).select().single(),
@@ -84,7 +84,7 @@ export const journalStorage = {
         .eq('student_id', journal.studentId)
         .maybeSingle();
       const mentorId: string = (enrollment as any)?.program?.mentor_id || '';
-      notify.journalSubmitted(journal.studentId, mentorId).catch((err) => { console.warn('journalStorage: notification failed', err); });
+      notify.journalSubmitted(journal.studentId, mentorId).catch(() => {});
     }
     return journal;
   },

@@ -1,12 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Instagram, Twitter, Linkedin, Youtube, Facebook, Github, FileText, Globe2, Palette, Mail } from 'lucide-react';
+import { Instagram, Twitter, Linkedin, Youtube, Facebook, Github, FileText, Globe2, Palette } from 'lucide-react';
 import { socialLinksService, SocialLink } from '../../services/socialLinksService';
 import { websiteSettingsService } from '../../services/websiteSettingsService';
 import { QK } from '../../constants/queryKeys';
 import { useRealtimeData } from '../../hooks/useRealtimeData';
-import NewsletterSignup from './NewsletterSignup';
 
 const SOCIAL_ICONS: Record<string, React.FC<{ size?: number }>> = {
   Instagram: (props) => <Instagram size={props.size || 16} />,
@@ -105,18 +104,7 @@ const Footer: React.FC = () => {
           </div>
         </div>
 
-        <div className="py-10 sm:py-12 border-t border-slate-100">
-          <div className="max-w-md mx-auto text-center">
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <Mail size={14} className="text-indigo-500" />
-              <h4 className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.4em] text-indigo-500">Newsletter</h4>
-            </div>
-            <p className="text-slate-500 text-xs font-medium mb-4">Get notified about new programs and updates.</p>
-            <NewsletterSignup />
-          </div>
-        </div>
-
-        <div className="pt-6 sm:pt-8 border-t border-slate-100 flex flex-col md:flex-row items-center justify-center gap-6">
+        <div className="pt-10 sm:pt-12 border-t border-slate-100 flex flex-col md:flex-row items-center justify-center gap-6">
           <p className="text-slate-500 text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-center">
             {settings?.copyright || '© 2026 MEntorino ALL RIGHTS RESERVED'}
           </p>

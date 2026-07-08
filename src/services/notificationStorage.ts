@@ -79,8 +79,17 @@ export const notificationStorage = {
       }),
     );
 
-    if (rpcResult.data && typeof rpcResult.data === 'object' && 'id' in (rpcResult.data as any)) {
-      return rowToNotification(rpcResult.data);
+    if (!rpcResult.error && rpcResult.data) {
+      return {
+        id: '',
+        userId: data.userId || '',
+        title: data.title || '',
+        message: data.message || '',
+        read: data.read ?? false,
+        type: data.type || 'system',
+        link: data.link,
+        createdAt: new Date().toISOString(),
+      };
     }
 
     const fallbackResult = await safeMutate(

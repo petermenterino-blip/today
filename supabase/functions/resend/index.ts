@@ -1,5 +1,5 @@
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts'
-import { verifyAuth, requireRole, getCorsHeaders, CORS_HEADERS, checkRateLimit, getRateLimitKey, checkPublicRateLimit } from '../middleware/auth.ts'
+import { verifyAuth, requireRole, getCorsHeaders, CORS_HEADERS, checkRateLimit, getRateLimitKey } from '../middleware/auth.ts'
 
 interface EmailRequest {
   to: string
@@ -7,7 +7,6 @@ interface EmailRequest {
   data?: Record<string, any>
   subject?: string
   html?: string
-  public?: boolean
 }
 
 function esc(str: string): string {
@@ -55,54 +54,32 @@ serve(async (req) => {
     })
   }
 
-  let requestUserId: string | null = null
+  const authHeader = req.headers.get('Authorization')
+  const { user, error } = await verifyAuth(authHeader)
+  if (error) return error
 
-  const body: EmailRequest = await req.json()
+  const { to, template, data, subject: customSubject, html: customHtml }: EmailRequest = await req.json()
 
-  if (!body.to || typeof body.to !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.to)) {
+  if (!to || typeof to !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
     return new Response(JSON.stringify({ error: 'A valid recipient email is required' }), { status: 400, headers: corsHeaders })
   }
 
-  if (body.public) {
-    if (body.template || body.data) {
-      return new Response(JSON.stringify({ error: 'Template emails are not available on public endpoint' }), { status: 400, headers: corsHeaders })
-    }
-    if (!body.subject || !body.html) {
-      return new Response(JSON.stringify({ error: 'subject and html are required for public emails' }), { status: 400, headers: corsHeaders })
-    }
-    const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
-    const { allowed, retryAfterMs } = await checkPublicRateLimit(ip, 'resend')
-    if (!allowed) {
-      return new Response(
-        JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
-        { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': String(Math.ceil(retryAfterMs / 1000)), ...corsHeaders } },
-      )
-    }
+  if (customSubject && customHtml) {
+    const roleError = requireRole(user, ['student', 'mentor'])
+    if (roleError) return roleError
   } else {
-    const authHeader = req.headers.get('Authorization')
-    const { user, error } = await verifyAuth(authHeader)
-    if (error) return error
-    requestUserId = user.id
-
-    if (body.subject && body.html) {
-      const roleError = requireRole(user, ['student', 'mentor'])
-      if (roleError) return roleError
-    } else {
-      const roleError = requireRole(user, ['mentor'])
-      if (roleError) return roleError
-    }
-
-    const rateKey = getRateLimitKey('resend', user.id, req.headers.get('x-forwarded-for') || '')
-    const { allowed, retryAfterMs } = await checkRateLimit(rateKey, 'resend')
-    if (!allowed) {
-      return new Response(
-        JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
-        { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': String(Math.ceil(retryAfterMs / 1000)), ...corsHeaders } },
-      )
-    }
+    const roleError = requireRole(user, ['mentor'])
+    if (roleError) return roleError
   }
 
-  const { to, template, data, subject: customSubject, html: customHtml } = body
+  const rateKey = getRateLimitKey('resend', user.id, req.headers.get('x-forwarded-for') || '')
+  const { allowed, retryAfterMs } = await checkRateLimit(rateKey, 'resend')
+  if (!allowed) {
+    return new Response(
+      JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
+      { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': String(Math.ceil(retryAfterMs / 1000)), ...corsHeaders } },
+    )
+  }
 
   const resendApiKey = Deno.env.get('RESEND_API_KEY')
   if (!resendApiKey) {
@@ -149,11 +126,11 @@ serve(async (req) => {
     const result = await response.json()
 
     if (!response.ok) {
-      console.error(`[resend] API error: ${response.status} to=${to} template=${template} userId=${requestUserId || 'public'}`)
+      console.error(`[resend] API error: ${response.status} to=${to} template=${template} userId=${user.id.slice(0, 8)}`)
       return new Response(JSON.stringify({ error: 'Failed to send email. Please try again later.' }), { status: 502, headers: corsHeaders })
     }
 
-    console.log(`[resend] success: to=${to} template=${template || 'custom'} userId=${requestUserId || 'public'} duration=${Date.now() - startTime}ms`)
+    console.log(`[resend] success: to=${to} template=${template || 'custom'} userId=${user.id.slice(0, 8)} duration=${Date.now() - startTime}ms`)
     return new Response(JSON.stringify({ success: true, id: result.id }), {
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     })

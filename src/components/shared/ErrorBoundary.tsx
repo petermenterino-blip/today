@@ -2,7 +2,7 @@ import { Component, ErrorInfo, ReactNode } from 'react';
 import { logger } from '../../lib/logger';
 import { analyzeError } from '../../lib/errorHandler';
 
-type EBProps = { children: ReactNode; fallback?: ReactNode; onError?: (error: Error, info: ErrorInfo) => void; resetKey?: string };
+type EBProps = { children: ReactNode; fallback?: ReactNode; onError?: (error: Error, info: ErrorInfo) => void };
 type EBState = { hasError: boolean; error: Error | null; };
 
 export default class ErrorBoundary extends Component<EBProps, EBState> {
@@ -16,12 +16,6 @@ export default class ErrorBoundary extends Component<EBProps, EBState> {
 
   static getDerivedStateFromError(error: Error): Partial<EBState> {
     return { hasError: true, error };
-  }
-
-  componentDidUpdate(prevProps: EBProps) {
-    if (prevProps.resetKey !== this.props.resetKey) {
-      (this as Component<EBProps, EBState>).setState({ hasError: false, error: null });
-    }
   }
 
   componentDidCatch(error: Error) {

@@ -22,7 +22,6 @@ import {
   StudentProgress 
 } from '../../services/studentProgressService';
 import { getProgramCurriculum } from '../../services/curriculumService';
-import { programModuleService } from '../../services/programModuleService';
 import { Module, Lesson } from '../../types';
 import { programService } from '../../services/programService';
 import { toast } from 'sonner';
@@ -87,32 +86,17 @@ const StudentProgramView: React.FC<StudentProgramViewProps> = ({ currentUser }) 
       if (!programId || !currentUser?.id) return;
 
       // Fetch program details
-      const { data: matchedProg, error: progErr } = await programService.getById(programId);
-      if (progErr || !matchedProg) {
+      const { data: allProgs } = await programService.fetchAll();
+      const matchedProg = allProgs?.find(p => p.id === programId);
+      if (!matchedProg) {
         toast.error("Program not found or you do not have access.");
         navigate('/student/programs');
         return;
       }
       setProgram(matchedProg);
 
-      // Fetch curriculum (with fallback to program_modules table)
-      let cur = await getProgramCurriculum(programId);
-      if (!cur || cur.length === 0) {
-        const { data: mods } = await programModuleService.fetchByProgram(programId);
-        if (mods && mods.length > 0) {
-          cur = mods.map(m => ({
-            id: m.id,
-            title: m.title,
-            description: m.description || '',
-            lessons: (m.videos || []).map(v => ({
-              id: v.url,
-              title: v.title,
-              videoUrl: v.url,
-              topics: [],
-            })),
-          }));
-        }
-      }
+      // Fetch curriculum
+      const cur = getProgramCurriculum(programId);
       setCurriculum(cur);
 
       // Initialize program progress if not already

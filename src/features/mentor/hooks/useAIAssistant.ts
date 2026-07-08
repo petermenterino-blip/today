@@ -57,21 +57,6 @@ export function useAIAssistant({ studentProfiles, sessions, applications, progra
 
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  const abortRef = useRef<AbortController | null>(null);
-  const mountedRef = useRef(true);
-
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => { mountedRef.current = false; };
-  }, []);
-
-  const cancelAllRequests = useCallback(() => {
-    if (abortRef.current) {
-      abortRef.current.abort();
-      abortRef.current = null;
-    }
-  }, []);
-
   const scrollToBottom = useCallback(() => {
     setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
   }, []);
@@ -104,10 +89,6 @@ export function useAIAssistant({ studentProfiles, sessions, applications, progra
     const input = userInput;
     setUserInput('');
 
-    cancelAllRequests();
-    const ac = new AbortController();
-    abortRef.current = ac;
-
     try {
       let accumulated = '';
       const response = await chatWithContext(
@@ -115,24 +96,19 @@ export function useAIAssistant({ studentProfiles, sessions, applications, progra
         userId,
         (token: string) => {
           accumulated += token;
-          if (mountedRef.current) setStreamingContent(accumulated);
+          setStreamingContent(accumulated);
         },
-        ac.signal,
       );
-      if (!mountedRef.current) return;
       const finalContent = response || 'Analysis unavailable.';
       setChatHistory(prev => [...prev, userMsg, { role: 'model', content: finalContent }]);
       setStreamingContent('');
       scrollToBottom();
     } catch (err: any) {
-      if (err?.name === 'AbortError' || !mountedRef.current) return;
       notifyError(err.message || 'AI request failed. Please try again.');
-      if (!mountedRef.current) return;
       setStreamingContent('');
       setChatHistory(prev => [...prev, userMsg, { role: 'model', content: `I encountered an error: ${err.message || 'Unable to process your request.'}` }]);
     } finally {
-      if (abortRef.current === ac) abortRef.current = null;
-      if (mountedRef.current) setIsAiLoading(false);
+      setIsAiLoading(false);
     }
   };
 
@@ -142,10 +118,6 @@ export function useAIAssistant({ studentProfiles, sessions, applications, progra
     setIsAiLoading(true);
     setStreamingContent('');
 
-    cancelAllRequests();
-    const ac = new AbortController();
-    abortRef.current = ac;
-
     try {
       let accumulated = '';
       const response = await chatWithContext(
@@ -153,33 +125,27 @@ export function useAIAssistant({ studentProfiles, sessions, applications, progra
         userId,
         (token: string) => {
           accumulated += token;
-          if (mountedRef.current) setStreamingContent(accumulated);
+          setStreamingContent(accumulated);
         },
-        ac.signal,
       );
-      if (!mountedRef.current) return;
       const finalContent = response || 'Analysis unavailable.';
       setChatHistory(prev => [...prev, { role: 'model', content: finalContent }]);
       setStreamingContent('');
     } catch (err: any) {
-      if (err?.name === 'AbortError' || !mountedRef.current) return;
       notifyError(err.message || 'AI request failed.');
-      if (mountedRef.current) setStreamingContent('');
+      setStreamingContent('');
     } finally {
-      if (abortRef.current === ac) abortRef.current = null;
-      if (mountedRef.current) setIsAiLoading(false);
+      setIsAiLoading(false);
     }
   };
 
   const stopGeneration = useCallback(() => {
-    cancelAllRequests();
     setIsAiLoading(false);
-    setChatHistory(prev => streamingContent
-      ? [...prev, { role: 'model', content: streamingContent }]
-      : prev
-    );
-    setStreamingContent('');
-  }, [cancelAllRequests]);
+    if (streamingContent) {
+      setChatHistory(prev => [...prev, { role: 'model', content: streamingContent }]);
+      setStreamingContent('');
+    }
+  }, [streamingContent]);
 
   const fetchWorkspaceSummary = useCallback(async () => {
     if (!userId) return;
@@ -364,12 +330,12 @@ Return as JSON array: [{title, type: "session"|"student"|"application"|"resource
 
   const aiLoaded = useRef(false);
   useEffect(() => {
-    if (!userId || aiLoaded.current) return;
-    aiLoaded.current = true;
-
-    fetchWorkspaceSummary();
-    fetchAiRecommendations();
-    fetchAiInsights();
+    if (userId && !aiLoaded.current) {
+      aiLoaded.current = true;
+      fetchWorkspaceSummary();
+      fetchAiRecommendations();
+      fetchAiInsights();
+    }
   }, [userId]);
 
   const generateWeeklyReportNarrative = async () => {
@@ -510,12 +476,13 @@ Return as JSON array: [{title, type: "session"|"student"|"application"|"resource
   }, [savedConversations]);
 
   const togglePinned = useCallback((id: string) => {
-    setPinnedConversationIds(prev => {
-      const next = prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id];
-      localStorage.setItem('mentorino_pinned_conversations', JSON.stringify(next));
-      return next;
-    });
-  }, []);
+    setPinnedConversationIds(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]);
+    localStorage.setItem('mentorino_pinned_conversations', JSON.stringify(
+      pinnedConversationIds.includes(id)
+        ? pinnedConversationIds.filter(p => p !== id)
+        : [...pinnedConversationIds, id]
+    ));
+  }, [pinnedConversationIds]);
 
   const clearChat = useCallback(() => {
     setChatHistory([]);

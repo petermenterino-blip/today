@@ -5,7 +5,8 @@ import { crmInitializationService } from './crmInitializationService';
 import { Application, ServiceResponse } from '../types';
 import { handleError } from '../lib/serviceHelper';
 import { features } from '../config/features';
-import { notify } from './notificationService';
+
+const AUTH_SIGNUP_DISABLED = !import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 function escHtml(str: string): string {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
@@ -122,10 +123,7 @@ export const applicationService = {
     }
 
     const { data, error, count } = await query;
-    if (error) {
-      console.warn('[applicationService] fetchAll error:', error.message);
-      return { data: null, error: handleError(error).error };
-    }
+    if (error) return { data: null, error: handleError(error).error };
     const mapped = (data || []).map(rowToApplication);
     return { data: { data: mapped, count: count ?? mapped.length }, error: null };
   },
@@ -136,10 +134,7 @@ export const applicationService = {
       .select('*')
       .eq('email', email.toLowerCase())
       .single();
-    if (error && error.code !== 'PGRST116') {
-      console.warn('[applicationService] fetchByEmail error:', error.message);
-      return { data: null, error: handleError(error).error };
-    }
+    if (error && error.code !== 'PGRST116') return { data: null, error: handleError(error).error };
     return { data: data ? rowToApplication(data) : null, error: null };
   },
 
@@ -190,29 +185,14 @@ export const applicationService = {
         top_strength: app.top_strength || null,
         needs_focus: app.needs_focus || null,
       });
-    if (error) {
-      console.warn('[applicationService] submitApplication error:', error.message);
-      return { data: null, error: handleError(error).error };
-    }
+    if (error) return { data: null, error: handleError(error).error };
 
     const submitted = rowToApplication((data ?? [{}])[0]);
-    edgeFunctionService.sendPublicEmail(
+    edgeFunctionService.sendCustomEmail(
       app.user_email,
       'Application Received - Mentorino',
       `<h1>Thanks, ${escHtml(app.full_name)}!</h1><p>Your application for <strong>Mentorino Program</strong> has been received. We will review it and get back to you within 48 hours.</p><p>Best,<br/>The Mentorino Team</p>`
     ).catch(() => {});
-
-    if (app.user_id) {
-      notify.applicationReceived(app.user_id, app.full_name || 'Applicant').catch(() => {});
-    } else {
-      supabase.from('profiles').select('id').eq('role', 'mentor').eq('status', 'active').then(({ data: mentors }) => {
-        if (mentors) {
-          for (const m of mentors) {
-            notify.applicationReceived(m.id, app.full_name || 'Applicant').catch(() => {});
-          }
-        }
-      });
-    }
 
     return { data: submitted, error: null };
   },
@@ -222,19 +202,13 @@ export const applicationService = {
       .from('applications')
       .update({ status, updated_at: new Date().toISOString() })
       .eq('id', id);
-    if (error) {
-      console.warn('[applicationService] updateStatus error:', error.message);
-      return { data: undefined, error: handleError(error).error };
-    }
+    if (error) return { data: undefined, error: handleError(error).error };
     return { data: undefined, error: null };
   },
 
   async delete(id: string): Promise<ServiceResponse<void>> {
     const { error } = await supabase.from('applications').delete().eq('id', id);
-    if (error) {
-      console.warn('[applicationService] delete error:', error.message);
-      return { data: undefined, error: handleError(error).error };
-    }
+    if (error) return { data: undefined, error: handleError(error).error };
     return { data: undefined, error: null };
   },
 
@@ -390,17 +364,8 @@ export const applicationService = {
 
     let userId: string | null = null;
 
-    const { error: signUpError, data: signUpData } = await supabase.auth.signUp({
-      email,
-      password: tempPassword,
-      options: {
-        data: { full_name: fullName, role: 'student' },
-      },
-    });
-    if (signUpError) return { data: null, error: signUpError.message };
-
-    if (signUpData?.user) {
-      userId = signUpData.user.id;
+    if (AUTH_SIGNUP_DISABLED) {
+      userId = app.user_id || crypto.randomUUID();
       await supabase.from('profiles').upsert({
         id: userId,
         email,
@@ -416,6 +381,34 @@ export const applicationService = {
         metrics: { attendanceRate: 0, goalCompletionRate: 0, activityLevel: 0 },
         tags: [],
       });
+    } else {
+      const { error: signUpError, data: signUpData } = await supabase.auth.signUp({
+        email,
+        password: tempPassword,
+        options: {
+          data: { full_name: fullName, role: 'student' },
+        },
+      });
+      if (signUpError) return { data: null, error: signUpError.message };
+
+      if (signUpData?.user) {
+        userId = signUpData.user.id;
+        await supabase.from('profiles').upsert({
+          id: userId,
+          email,
+          name: fullName,
+          role: 'student',
+          application_status: 'approved',
+          mentor_id: app.mentor_id || null,
+          first_name: app.first_name || null,
+          last_name: app.last_name || null,
+          status: 'active',
+          health_status: 'active',
+          growth_score: 0,
+          metrics: { attendanceRate: 0, goalCompletionRate: 0, activityLevel: 0 },
+          tags: [],
+        });
+      }
     }
 
     const { error: updateError } = await supabase

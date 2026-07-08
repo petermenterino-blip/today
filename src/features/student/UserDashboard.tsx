@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, Suspense, lazy } from "react";
 import { studentService } from "../../services/studentService";
 import { programService } from "../../services/programService";
+import { useDatabaseSync } from "../../hooks/useDatabaseSync";
 import { useRealtime } from "../../hooks/useRealtime";
 import { studentProgressService } from "../../services/studentProgressService";
 import { applicationService } from "../../services/applicationService";
@@ -44,6 +45,7 @@ const StudentTasks = lazy(() => import("./StudentTasks"));
 const WhatsAppMessaging = lazy(() => import("../messaging/WhatsAppMessaging"));
 const GrowthForm = lazy(() => import("./GrowthForm"));
 const StudentForms = lazy(() => import("./StudentForms"));
+const StudentEditProfile = lazy(() => import("./StudentEditProfile"));
 const ResourceDashboard = lazy(() => import("../resources/ResourceDashboard"));
 const StudentReviews = lazy(() => import("./StudentReviews").then(m => ({ default: m.StudentReviews })));
 const StudentSharedFiles = lazy(() => import("./StudentSharedFiles"));
@@ -81,13 +83,9 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
   const {
     events,
     loading: eventsLoading,
-    registerForEvent,
+    registerForEvent: attendEvent,
     refresh: refreshEvents,
   } = useEvents();
-
-  const attendEvent = useCallback(async (eventId: string, userId: string) => {
-    await registerForEvent({ eventId, userId, name: currentUser?.name, email: currentUser?.email });
-  }, [registerForEvent, currentUser]);
   const { sessions } = useSessions(currentUser?.id, "student");
   const upcomingSessions = sessions.filter(
     (s) => s.attendanceStatus === "pending",
@@ -102,19 +100,6 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
   useRealtime([
     { table: 'student_profiles', callback: () => { studentService.getAll().then(setStudentProfiles); } },
     { table: 'programs', callback: () => { programService.fetchAll().then(({ data }) => { if (data) setPrograms(data); }); } },
-    { table: 'tasks', callback: () => refreshUserTasks() },
-    { table: 'bookings', callback: () => refreshBookings() },
-    { table: 'events', callback: () => refreshEvents() },
-    { table: 'event_attendees', callback: () => refreshEvents() },
-    { table: 'applications', callback: () => refreshApps() },
-    { table: 'student_progress', callback: () => { window.dispatchEvent(new Event('learning-progress-sync')); } },
-    { table: 'sessions', callback: () => { window.dispatchEvent(new Event('learning-progress-sync')); } },
-    { table: 'goals', callback: () => { window.dispatchEvent(new Event('learning-progress-sync')); } },
-    { table: 'journals', callback: () => { window.dispatchEvent(new Event('learning-progress-sync')); } },
-    { table: 'notifications', callback: () => { window.dispatchEvent(new CustomEvent('notifications-updated')); } },
-    { table: 'reviews', callback: () => { window.dispatchEvent(new CustomEvent('student-reviews-updated')); } },
-    { table: 'shared_files', callback: () => { window.dispatchEvent(new CustomEvent('student-files-updated')); } },
-    { table: 'form_assignments', callback: () => { window.dispatchEvent(new Event('learning-progress-sync')); } },
   ]);
 
   const refreshProfilesAndPrograms = useCallback(async () => {
@@ -130,6 +115,19 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
     refreshProfilesAndPrograms();
 
   }, [currentUser?.id, refreshProfilesAndPrograms]);
+
+  // Handle auto-update on Database changes/sync
+  useDatabaseSync(
+    useCallback(() => {
+      refreshApps();
+      refreshBookings();
+      refreshEvents();
+      refreshProfilesAndPrograms();
+      if (currentUser?.id) {
+        refreshUserTasks(currentUser.id);
+      }
+    }, [currentUser?.id, refreshApps, refreshBookings, refreshEvents, refreshProfilesAndPrograms, refreshUserTasks])
+  );
 
   // Synchronize dynamic student learning progress changes
   useEffect(() => {
@@ -916,6 +914,10 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
                     onAttend={attendEvent}
                   /></Suspense>
                 }
+              />
+              <Route
+                path="/profile"
+                element={<Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><StudentEditProfile currentUser={currentUser} /></Suspense>}
               />
               <Route
                 path="/files"

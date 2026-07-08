@@ -30,163 +30,62 @@ const hasSupabaseCredentials = (): boolean => {
   return true;
 };
 
-const supabaseFetch = async <T>(path: string, accessToken: string): Promise<T | null> => {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const res = await fetch(`${supabaseUrl}${path}`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      apikey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
-    },
-  });
-  if (!res.ok && res.status !== 406) {
-    const body = await res.text().catch(() => '');
-    throw new Error(`DB request failed: ${res.status} ${body.substring(0, 200)}`);
-  }
-  if (res.status === 406) return null;
-  const json = await res.json();
-  return json as T;
-};
-
 const getOrCreateProfileForUser = async (authUser: {
   id: string;
   email?: string | null;
   created_at?: string;
   user_metadata?: Record<string, any>;
-}, options?: { accessToken?: string }) => {
+}) => {
   const fallbackRole = (authUser.user_metadata?.role as UserRole) || 'student';
   const fallbackName = authUser.user_metadata?.full_name || authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User';
 
-  const queryPath = `/rest/v1/profiles?id=eq.${authUser.id}&select=id,name,email,role,avatar_url,application_status,created_at`;
-  let profile: any = null;
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('id,name,email,role,avatar_url,application_status,created_at')
+    .eq('id', authUser.id)
+    .single();
 
-  if (options?.accessToken) {
-    const result = await supabaseFetch<any[]>(queryPath, options.accessToken);
-    profile = result?.[0] ?? null;
-  } else {
-    const { data, error } = await supabase
+  if (profile) return profile;
+  if (profileError && profileError.code !== 'PGRST116') throw profileError;
+
+  const { data: createdProfile, error: createError } = await supabase
+    .from('profiles')
+    .insert({
+      id: authUser.id,
+      email: authUser.email || '',
+      name: fallbackName,
+      role: fallbackRole,
+      created_at: authUser.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .select()
+    .single();
+
+  if (createError && createError.code !== '23505') throw createError;
+  if (createError?.code === '23505') {
+    const { data: existingProfile } = await supabase
       .from('profiles')
       .select('id,name,email,role,avatar_url,application_status,created_at')
       .eq('id', authUser.id)
       .single();
-    if (error && error.code !== 'PGRST116') throw error;
-    profile = data;
+    return existingProfile || {
+      id: authUser.id,
+      email: authUser.email || '',
+      name: fallbackName,
+      role: fallbackRole,
+      created_at: authUser.created_at || new Date().toISOString(),
+      application_status: null,
+    };
   }
 
-  if (profile) return profile;
-
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-
-  const doInsert = async () => {
-    const res = await fetch(`${supabaseUrl}/rest/v1/profiles?select=id,name,email,role,avatar_url,application_status,created_at`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${options?.accessToken || anonKey}`,
-        apikey: anonKey,
-        'Content-Type': 'application/json',
-        Prefer: 'return=representation',
-      },
-      body: JSON.stringify({
-        id: authUser.id,
-        email: authUser.email || '',
-        name: fallbackName,
-        role: fallbackRole,
-        created_at: authUser.created_at || new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }),
-    });
-    if (res.status === 409) {
-      const existingRes = await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${authUser.id}&select=id,name,email,role,avatar_url,application_status,created_at`, {
-        headers: {
-          Authorization: `Bearer ${options?.accessToken || anonKey}`,
-          apikey: anonKey,
-        },
-      });
-      if (existingRes.ok) {
-        const arr = await existingRes.json();
-        if (arr?.length) return arr[0];
-      }
-      return getFallbackProfile(authUser, fallbackName, fallbackRole);
-    }
-    if (!res.ok) throw new Error(`Profile insert failed: ${res.status}`);
-    const arr = await res.json();
-    return arr?.[0] || getFallbackProfile(authUser, fallbackName, fallbackRole);
+  return createdProfile || {
+    id: authUser.id,
+    email: authUser.email || '',
+    name: fallbackName,
+    role: fallbackRole,
+    created_at: authUser.created_at || new Date().toISOString(),
+    application_status: null,
   };
-
-  return doInsert();
-};
-
-const getFallbackProfile = (authUser: { id: string; email?: string | null; created_at?: string }, name: string, role: UserRole) => ({
-  id: authUser.id,
-  email: authUser.email || '',
-  name,
-  role,
-  created_at: authUser.created_at || new Date().toISOString(),
-  application_status: null,
-});
-
-const signInDirect = async (email: string, password: string): Promise<ServiceResponse<User & { profile?: UserProfileDetails }>> => {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-  if (!supabaseUrl || !anonKey) {
-    return { data: null, error: 'Supabase not configured.' };
-  }
-
-  const ac = new AbortController();
-  const timeoutId = setTimeout(() => ac.abort(), 20000);
-  let tokenRes;
-  try {
-    tokenRes = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
-      method: 'POST',
-      headers: { 'apikey': anonKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-      signal: ac.signal,
-      cache: 'no-store',
-    });
-  } catch (e: any) {
-    clearTimeout(timeoutId);
-    if (e.name === 'AbortError') return { data: null, error: 'Login request timed out' };
-    return { data: null, error: e.message || 'Network error during login' };
-  }
-  clearTimeout(timeoutId);
-  if (!tokenRes.ok) {
-    const body = await tokenRes.text().catch(() => '');
-    return { data: null, error: `Login failed: ${tokenRes.status} ${body.substring(0, 200)}` };
-  }
-  const authData = await tokenRes.json();
-  const user = authData.user;
-  if (!user) return { data: null, error: 'Login failed: no user returned' };
-  if (!user.email_confirmed_at) {
-    return { data: null, error: 'Please verify your email before signing in. Check your inbox for the confirmation link.' };
-  }
-
-  const session = {
-    access_token: authData.access_token,
-    refresh_token: authData.refresh_token,
-    expires_in: authData.expires_in,
-    expires_at: authData.expires_at ?? Math.floor(Date.now() / 1000) + (authData.expires_in || 3600),
-    token_type: authData.token_type || 'bearer',
-    user,
-  };
-
-  const storageKey = `sb-${new URL(supabaseUrl).hostname.split('.')[0]}-auth-token`;
-  try {
-    localStorage.setItem(storageKey, JSON.stringify(session));
-  } catch { /* storage may be full or blocked */ }
-
-  const profile = await getOrCreateProfileForUser(user, { accessToken: authData.access_token });
-
-  const userData: User & { profile?: UserProfileDetails } = {
-    id: user.id,
-    email: user.email || email,
-    name: profile?.name || user.user_metadata?.full_name || email.split('@')[0],
-    role: (profile?.role as UserRole) || (user.user_metadata?.role as UserRole) || 'visitor',
-    application_status: profile?.application_status || null,
-    created_at: user.created_at,
-    profile: profile || undefined,
-  };
-
-  return { data: userData, error: null };
 };
 
 // ===================== Auth Service =====================
@@ -197,7 +96,26 @@ export const authService = {
       return { data: null, error: 'Supabase not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.' };
     }
 
-    return signInDirect(email, password);
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return { data: null, error: handleError(error).error };
+    if (!data.user) return { data: null, error: 'Login failed' };
+    if (!data.user.email_confirmed_at) {
+      return { data: null, error: 'Please verify your email before signing in. Check your inbox for the confirmation link.' };
+    }
+
+    const profile = await getOrCreateProfileForUser(data.user);
+
+    const userData: User & { profile?: UserProfileDetails } = {
+      id: data.user.id,
+      email: data.user.email || email,
+      name: profile?.name || data.user.user_metadata?.full_name || email.split('@')[0],
+      role: (profile?.role as UserRole) || (data.user.user_metadata?.role as UserRole) || 'visitor',
+      application_status: profile?.application_status || null,
+      created_at: data.user.created_at,
+      profile: profile || undefined,
+    };
+
+    return { data: userData, error: null };
   },
 
   async signUp(email: string, password: string, fullName: string): Promise<ServiceResponse<User>> {
@@ -242,7 +160,7 @@ export const authService = {
     if (error) return { data: null, error: handleError(error).error };
     if (!session?.user) return { data: null, error: 'No active session' };
 
-    const profile = await getOrCreateProfileForUser(session.user, { accessToken: session.access_token });
+    const profile = await getOrCreateProfileForUser(session.user);
 
     const userData: User & { profile?: UserProfileDetails } = {
       id: session.user.id,
@@ -329,7 +247,7 @@ export const authService = {
           callback(userData);
 
           // Fire-and-forget profile enrichment
-          getOrCreateProfileForUser(session.user, { accessToken: session.access_token }).then(profile => {
+          getOrCreateProfileForUser(session.user).then(profile => {
             if (profile && (profile.name !== userData.name || (profile.role as UserRole) !== userData.role)) {
               callback({
                 ...userData,

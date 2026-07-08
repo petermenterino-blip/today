@@ -28,6 +28,7 @@ import { notificationStorage } from '../../../services/notificationStorage';
 import { customFormService } from '../../../services/customFormService';
 import { notifySuccess, notifyError } from '../../../utils/toast';
 import { profileService } from '../../../services/profileService';
+import { useDatabaseSync } from '../../../hooks/useDatabaseSync';
 import { useRealtime } from '../../../hooks/useRealtime';
 import { useMentees } from './useMentees';
 import { useFeedback } from './useFeedback';
@@ -37,7 +38,7 @@ import { useProgramManager } from './useProgramManager';
 import { useReviews } from '../../../hooks/useReviews';
 import { useAIAssistant } from './useAIAssistant';
 
-export type MentorTab = 'overview' | 'applications' | 'mentees' | 'programs' | 'sessions' | 'feedback' | 'resources' | 'events' | 'messaging' | 'analytics' | 'ai' | 'gallery' | 'bookings' | 'contacts' | 'growth-audit' | 'program-progress' | 'emails';
+export type MentorTab = 'overview' | 'applications' | 'mentees' | 'programs' | 'sessions' | 'feedback' | 'resources' | 'events' | 'messaging' | 'analytics' | 'ai' | 'gallery' | 'bookings' | 'growth-audit' | 'program-progress' | 'emails';
 
 interface UseDashboardProps {
   currentUser: User | null;
@@ -307,20 +308,6 @@ export function useDashboard({ currentUser }: UseDashboardProps) {
     { table: 'form_submissions', callback: () => { customFormService.getAllSubmissions().then(setFormSubmissions); } },
     { table: 'conversations', callback: () => { messageService.getConversations(currentUser?.id || '', 'mentor').then(setConversations); } },
     { table: 'messages', callback: () => { messageService.getConversations(currentUser?.id || '', 'mentor').then(setConversations); } },
-    { table: 'applications', callback: () => rawRefreshApps() },
-    { table: 'sessions', callback: () => refreshSessions() },
-    { table: 'tasks', callback: () => { window.dispatchEvent(new CustomEvent('mentor-tasks-updated')); } },
-    { table: 'goals', callback: () => { window.dispatchEvent(new CustomEvent('mentor-goals-updated')); } },
-    { table: 'journals', callback: () => { window.dispatchEvent(new CustomEvent('mentor-journals-updated')); } },
-    { table: 'bookings', callback: () => { window.dispatchEvent(new CustomEvent('mentor-bookings-updated')); } },
-    { table: 'events', callback: () => { window.dispatchEvent(new CustomEvent('mentor-events-updated')); } },
-    { table: 'event_attendees', callback: () => { window.dispatchEvent(new CustomEvent('mentor-events-updated')); } },
-    { table: 'reviews', callback: () => { window.dispatchEvent(new CustomEvent('mentor-reviews-updated')); } },
-    { table: 'student_progress', callback: () => { window.dispatchEvent(new CustomEvent('mentor-progress-updated')); } },
-    { table: 'student_timeline_events', callback: () => { window.dispatchEvent(new CustomEvent('mentor-timeline-updated')); } },
-    { table: 'profiles', callback: () => { window.dispatchEvent(new CustomEvent('mentor-profiles-updated')); } },
-    { table: 'shared_files', callback: () => { window.dispatchEvent(new CustomEvent('mentor-files-updated')); } },
-    { table: 'notifications', callback: () => { window.dispatchEvent(new CustomEvent('mentor-notifications-updated')); } },
   ]);
 
   useEffect(() => {
@@ -335,6 +322,11 @@ export function useDashboard({ currentUser }: UseDashboardProps) {
     customFormService.getAllSubmissions().then(setFormSubmissions);
     messageService.getConversations(currentUser?.id || '', 'mentor').then(setConversations);
   }, [currentUser?.id]);
+
+  useDatabaseSync(useCallback(() => {
+    customFormService.getAllSubmissions().then(setFormSubmissions);
+    messageService.getConversations(currentUser?.id || '', 'mentor').then(setConversations);
+  }, [currentUser?.id]));
 
   // ── Communities ──
   useEffect(() => {

@@ -17,7 +17,6 @@ export interface AIRequestOptions {
   onToken?: (token: string) => void;
   onComplete?: (full: string) => void;
   onError?: (error: string) => void;
-  signal?: AbortSignal;
 }
 
 export interface AIProviderInterface {
@@ -59,13 +58,11 @@ export class GeminiProvider implements AIProviderInterface {
         const decoder = new TextDecoder();
         try {
           while (true) {
-            if (options.signal?.aborted) break;
             const { done, value } = await reader.read();
             if (done) break;
             const chunk = decoder.decode(value, { stream: true });
             const lines = chunk.split('\n').filter(Boolean);
             for (const line of lines) {
-              if (options.signal?.aborted) break;
               try {
                 const parsed = JSON.parse(line);
                 if (parsed.token) { accumulated += parsed.token; options.onToken(parsed.token); }
@@ -74,7 +71,7 @@ export class GeminiProvider implements AIProviderInterface {
             }
           }
         } finally {
-          try { reader.releaseLock(); } catch {}
+          reader.releaseLock();
         }
         options.onComplete?.(accumulated);
         return accumulated;

@@ -419,102 +419,26 @@ export interface ResourceLink {
   is_pinned: boolean;
 }
 
-export type ProgramStatus = 'draft' | 'published' | 'archived' | 'active' | 'completed' | 'not_started';
-export type EnrollmentStatus = 'Assigned' | 'Active' | 'Completed' | 'Paused';
-export type SkillLevel = 'Beginner' | 'Intermediate' | 'Advanced';
-
 export interface Program {
   id: string;
   title: string;
   description: string;
-  short_description?: string;
-  full_description?: string;
   duration?: string;
   mentor?: string;
   image?: string;
-  thumbnail?: string;
-  cover_banner?: string;
   category?: string;
-  difficulty?: SkillLevel;
+  difficulty?: 'Beginner' | 'Intermediate' | 'Advanced';
   outcomes?: string[];
-  learning_objectives?: string[];
   progress: number;
-  status: ProgramStatus;
+  status: 'active' | 'completed' | 'not_started' | 'draft' | 'published';
   studentCount?: number;
   visibility?: 'public' | 'private';
   skillsCovered?: string[];
-  prerequisites?: string[];
-  tags?: string[];
-  program_order?: number;
-  maxStudents?: number;
-  modules?: ProgramModule[];
+  modules?: { id: string; title: string; description?: string }[];
   resources?: { id: string; title: string; url?: string }[];
   assignments?: { id: string; title: string; description?: string }[];
-  curriculum?: any;
-  mentor_id?: string;
-  created_at?: string;
-  updated_at?: string;
-  deleted_at?: string;
-}
-
-export interface ProgramModule {
-  id: string;
-  program_id: string;
-  title: string;
-  description?: string;
-  module_order: number;
-  learning_outcomes?: string[];
-  resources?: ProgramModuleResource[];
-  attachments?: ProgramModuleAttachment[];
-  videos?: ProgramModuleVideo[];
-  external_links?: ProgramModuleLink[];
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface ProgramModuleResource {
-  title: string;
-  url?: string;
-  type?: string;
-}
-
-export interface ProgramModuleAttachment {
-  name: string;
-  url: string;
-  type?: string;
-}
-
-export interface ProgramModuleVideo {
-  title: string;
-  url: string;
-  duration?: string;
-}
-
-export interface ProgramModuleLink {
-  title: string;
-  url: string;
-}
-
-export interface ProgramEnrollment {
-  id: string;
-  program_id: string;
-  student_id: string;
-  status: 'active' | 'completed' | 'dropped';
-  enrollment_status: EnrollmentStatus;
-  enrolled_at: string;
-  start_date?: string;
-  target_completion_date?: string;
-  completed_at?: string;
-  mentor_notes?: string;
-  student_notes?: string;
-  current_module_id?: string;
-  completed_modules: number;
-  remaining_modules: number;
-  percentage_complete: number;
-  last_activity?: string;
-  student_name?: string;
-  student_email?: string;
-  program_title?: string;
+  prerequisites?: string[];
+  maxStudents?: number;
 }
 
 export interface Topic {

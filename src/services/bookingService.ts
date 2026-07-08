@@ -97,6 +97,11 @@ export const bookingService = {
     const conflict = await checkTimeslotConflict(booking.user_id, booking.date, booking.time);
     if (conflict) return { data: null, error: conflict };
 
+    if (booking.program_id) {
+      const cap = await checkEventCapacity(booking.program_id);
+      if (cap) return { data: null, error: cap };
+    }
+
     const row = { ...bookingToRow(booking as any) };
     delete row.id;
     const { data, error } = await supabase
@@ -106,7 +111,7 @@ export const bookingService = {
       .single();
     if (error) return { data: null, error: handleError(error).error };
     const created = rowToBooking(data);
-    notify.bookingConfirmed(created.user_id, created.mentor_id || '', created.date, created.time).catch((err) => { console.warn('bookingService: notification failed', err); });
+    notify.bookingConfirmed(created.user_id, created.mentor_id || '', created.date, created.time).catch(() => {});
     return { data: created, error: null };
   },
 };

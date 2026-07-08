@@ -2,8 +2,6 @@ import { supabase } from '../lib/supabase';
 import { ServiceResponse } from '../types';
 import { handleError } from '../lib/serviceHelper';
 import { notify } from './notificationService';
-import { edgeFunctionService } from './edgeFunctionService';
-import { emailService } from './emailService';
 
 export interface VisitorBooking {
   id: string;
@@ -167,33 +165,14 @@ export const visitorBookingService = {
       if (error) return { data: null, error: handleError(error).error };
       const created = rowToVisitorBooking(data);
 
-      const { error: tlError } = await supabase.from('booking_timeline').insert({
+      await supabase.from('booking_timeline').insert({
         booking_id: created.id,
         action: 'booking_created',
         description: `Booking created by ${created.visitorName}`,
         metadata: { visitorEmail: created.visitorEmail, callType: created.callType },
       });
-      if (tlError) console.warn('[visitorBookingService] timeline insert failed:', tlError.message);
 
-      emailService.sendBookingEmails({
-        bookingId: created.id,
-        visitorName: created.visitorName,
-        visitorEmail: created.visitorEmail,
-        visitorPhone: created.visitorPhone,
-        callType: created.callType,
-        date: created.date,
-        time: created.time,
-        meetingType: created.meetingType,
-        message: created.message,
-      });
-
-      supabase.from('profiles').select('id').eq('role', 'mentor').eq('status', 'active').then(({ data: mentors }) => {
-        if (mentors) {
-          for (const m of mentors) {
-            notify.bookingConfirmed(created.id, m.id, created.date, created.time).catch(() => {});
-          }
-        }
-      });
+      notify.bookingConfirmed(created.assignedMentorId || 'system', created.assignedMentorId || 'system', created.date, created.time).catch(() => {});
 
       return { data: created, error: null };
     } catch (err: any) {
@@ -283,9 +262,7 @@ export const visitorBookingService = {
       if (updates.status && updates.status !== existing.data.status) {
         timelineMeta.oldStatus = existing.data.status;
         timelineMeta.newStatus = updates.status;
-        if (existing.data.assignedMentorId) {
-          notify.bookingConfirmed(id, existing.data.assignedMentorId, existing.data.date, existing.data.time).catch(() => {});
-        }
+        notify.bookingConfirmed(id, existing.data.assignedMentorId || 'system', existing.data.date, existing.data.time).catch(() => {});
       }
       await supabase.from('booking_timeline').insert({
         booking_id: id,

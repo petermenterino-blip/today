@@ -53,10 +53,7 @@ export const contactSubmissionService = {
         .insert(row)
         .select()
         .single();
-      if (error) {
-        console.warn('[contactSubmissionService] submit error:', error.message);
-        return { data: null, error: handleError(error).error };
-      }
+      if (error) return { data: null, error: handleError(error).error };
       return { data: rowToContactSubmission(result), error: null };
     } catch (err: any) {
       return { data: null, error: handleError(err).error };
@@ -84,10 +81,7 @@ export const contactSubmissionService = {
       query = query.order(sortCol, { ascending: sortOrd === 'asc' });
 
       const { data, error } = await query;
-      if (error) {
-        console.warn('[contactSubmissionService] fetchAll error:', error.message);
-        return { data: null, error: handleError(error).error };
-      }
+      if (error) return { data: null, error: handleError(error).error };
 
       return { data: (data || []).map(rowToContactSubmission), error: null };
     } catch (err: any) {
@@ -103,10 +97,7 @@ export const contactSubmissionService = {
         .eq('id', id)
         .select()
         .single();
-      if (error) {
-        console.warn('[contactSubmissionService] updateStatus error:', error.message);
-        return { data: null, error: handleError(error).error };
-      }
+      if (error) return { data: null, error: handleError(error).error };
       return { data: rowToContactSubmission(data), error: null };
     } catch (err: any) {
       return { data: null, error: handleError(err).error };
@@ -119,10 +110,7 @@ export const contactSubmissionService = {
         .from('contact_submissions')
         .update({ status: 'archived', updated_at: new Date().toISOString() })
         .eq('id', id);
-      if (error) {
-        console.warn('[contactSubmissionService] archive error:', error.message);
-        return { data: undefined, error: handleError(error).error };
-      }
+      if (error) return { data: undefined, error: handleError(error).error };
       return { data: undefined, error: null };
     } catch (err: any) {
       return { data: undefined, error: handleError(err).error };

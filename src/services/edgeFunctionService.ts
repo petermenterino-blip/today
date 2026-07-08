@@ -52,20 +52,6 @@ export const edgeFunctionService = {
     }
   },
 
-  async sendPublicEmail(to: string, subject: string, html: string): Promise<EmailResponse> {
-    try {
-      const { data: result, error } = await supabase.functions.invoke<EmailResponse>('resend', {
-        body: { to, subject, html, public: true },
-      })
-      if (error) throw new Error(error.message)
-      return result || { success: false }
-    } catch (err: any) {
-      if (isNetworkError(err)) return { success: false }
-      console.warn('[EdgeFunction] sendPublicEmail error:', err?.message || err)
-      return { success: false }
-    }
-  },
-
   async sendCustomEmail(to: string, subject: string, html: string): Promise<EmailResponse> {
     try {
       const { data: result, error } = await supabase.functions.invoke<EmailResponse>('resend', {

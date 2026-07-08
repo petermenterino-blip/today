@@ -8,6 +8,7 @@ import {
   Settings,
   Menu,
   X,
+  User,
   ClipboardList,
   BookOpen,
   MessageCircle,
@@ -22,8 +23,7 @@ import {
   Image as ImageIcon,
   CalendarCheck,
   TrendingUp,
-  Mail,
-  MessageSquare,
+  Mail
 } from 'lucide-react';
 import { UserRole } from '../../types';
 import { profileService } from '../../services/profileService';
@@ -107,6 +107,7 @@ const Layout: React.FC<LayoutProps> = ({ children, role, onLogout }) => {
     { label: 'Messages', path: '/student/messages', icon: MessageCircle, roles: ['student'] },
     { label: 'Resources', path: '/student/resources', icon: LayoutDashboard, roles: ['student'] },
     { label: 'Events', path: '/student/events', icon: CalendarDays, roles: ['student'] },
+    { label: 'Profile', path: '/student/profile', icon: User, roles: ['student'] },
     { label: 'Settings', path: '/settings', icon: Settings, roles: ['student'] },
     { label: 'Overview', path: '/mentor', icon: LayoutDashboard, roles: ['mentor'] },
     { label: 'Messaging', path: '/mentor?tab=messaging', icon: Send, roles: ['mentor'] },
@@ -122,7 +123,6 @@ const Layout: React.FC<LayoutProps> = ({ children, role, onLogout }) => {
     { label: 'AI Insights', path: '/mentor?tab=ai', icon: Zap, roles: ['mentor'] },
     { label: 'Gallery', path: '/mentor?tab=gallery', icon: ImageIcon, roles: ['mentor'] },
     { label: 'Bookings', path: '/mentor?tab=bookings', icon: CalendarCheck, roles: ['mentor'] },
-    { label: 'Contacts', path: '/mentor?tab=contacts', icon: MessageSquare, roles: ['mentor'] },
     { label: 'Emails', path: '/mentor?tab=emails', icon: Mail, roles: ['mentor'] },
     { label: 'Settings', path: '/settings', icon: Settings, roles: ['mentor'] },
   ].filter(item => item.roles.includes(role))
@@ -173,13 +173,11 @@ const Layout: React.FC<LayoutProps> = ({ children, role, onLogout }) => {
                       ? 'bg-indigo-50/70 border border-indigo-400/30 text-indigo-600 ring-1 ring-indigo-400/10 shadow-sm' 
                       : 'bg-slate-900 text-white shadow-lg shadow-slate-200 border border-transparent')
                   : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 border border-transparent';
-                const testid = item.label.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
                 return (
                   <div key={item.path} className="relative group/tooltip flex justify-center w-full">
                     <Link
                       to={item.path}
-                      data-testid={`nav-${testid}`}
                       onClick={() => setIsSidebarOpen(false)}
                       className={`
                         flex items-center transition-all duration-250 ease-in-out overflow-hidden
@@ -232,13 +230,13 @@ const Layout: React.FC<LayoutProps> = ({ children, role, onLogout }) => {
         >
            <Link to="/" className="text-sm font-black tracking-tighter text-black uppercase">Mentorino</Link>
            <div className="flex items-center gap-2">
-               <button data-testid="sidebar-logout-mobile" onClick={onLogout} className="w-8 h-8 bg-slate-50 border border-slate-100 rounded-full flex items-center justify-center text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-colors" title="Sign Out" aria-label="Sign out">
+              <button onClick={onLogout} className="w-8 h-8 bg-slate-50 border border-slate-100 rounded-full flex items-center justify-center text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-colors" title="Sign Out" aria-label="Sign out">
                 <LogOut size={14} />
               </button>
               <Link to="/settings" aria-label="Settings" className="w-8 h-8 bg-black rounded-full flex items-center justify-center text-white text-[10px] font-black hover:scale-110 transition-transform active:scale-95">
                  {role === 'mentor' ? 'M' : 'S'}
                </Link>
-              <button data-testid="sidebar-mobile-open" onClick={() => setIsSidebarOpen(true)} className="w-8 h-8 bg-slate-50 border border-slate-100 rounded-full flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-colors" aria-label="Open navigation menu">
+              <button onClick={() => setIsSidebarOpen(true)} className="w-8 h-8 bg-slate-50 border border-slate-100 rounded-full flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-colors" aria-label="Open navigation menu">
                 <Menu size={16} />
               </button>
            </div>
@@ -271,7 +269,7 @@ const Layout: React.FC<LayoutProps> = ({ children, role, onLogout }) => {
                   <span className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white text-xs font-bold shrink-0">M</span>
                   <span className="font-black text-sm tracking-widest uppercase shrink-0">MENTORINO</span>
                 </Link>
-                <button data-testid="sidebar-mobile-close" onClick={() => setIsSidebarOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full" aria-label="Close navigation menu">
+                <button onClick={() => setIsSidebarOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full" aria-label="Close navigation menu">
                   <X size={20} />
                 </button>
               </div>
@@ -310,10 +308,9 @@ const Layout: React.FC<LayoutProps> = ({ children, role, onLogout }) => {
                   <span className="font-black text-sm tracking-widest uppercase shrink-0 transition-opacity duration-150">MENTORINO</span>
                 </Link>
                 <div className="flex items-center gap-1">
-                  <div data-testid="notification-bell"><NotificationDropdown /></div>
+                  <NotificationDropdown />
                   <button 
-                    data-testid="sidebar-collapse"
-              onClick={() => {
+                    onClick={() => {
                       const nextState = !isCollapsed;
                       setIsCollapsed(nextState);
                       localStorage.setItem('sidebar-collapsed', String(nextState));
@@ -332,7 +329,6 @@ const Layout: React.FC<LayoutProps> = ({ children, role, onLogout }) => {
                   M
                 </Link>
                 <button 
-                  data-testid="sidebar-expand"
                   onClick={() => {
                     const nextState = !isCollapsed;
                     setIsCollapsed(nextState);
@@ -354,7 +350,6 @@ const Layout: React.FC<LayoutProps> = ({ children, role, onLogout }) => {
           {/* Sign Out */}
           <div className={`p-4 border-t border-slate-100 ${isCollapsed ? 'flex flex-col items-center' : ''}`}>
             <button
-              data-testid="sidebar-logout"
               onClick={onLogout}
               className={`flex items-center transition-all duration-250 ease-in-out group ${
                 isCollapsed

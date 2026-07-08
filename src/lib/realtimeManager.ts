@@ -24,6 +24,22 @@ function makeFilterStr(filter?: { column: string; value: string }): string | und
   return filter ? `${filter.column}=eq.${filter.value}` : undefined
 }
 
+const debounceTimers = new Map<string, ReturnType<typeof setTimeout>>()
+
+function debouncedInvalidate(queryClient: ReturnType<typeof useQueryClient>, queryKey: string[], delay = 2000) {
+  const key = queryKey.join('|')
+  const existing = debounceTimers.get(key)
+  if (existing) clearTimeout(existing)
+  debounceTimers.set(key, setTimeout(() => {
+    debounceTimers.delete(key)
+    try {
+      queryClient.invalidateQueries({ queryKey, refetchType: 'active' })
+    } catch (err) {
+      logger.error('realtimeManager', `Invalidation error for ${key}`, { error: String(err) })
+    }
+  }, delay))
+}
+
 function generateChannelName(kind: string, table: string): string {
   return `rt-${kind}-${table}-${crypto.randomUUID().slice(0, 8)}`
 }
@@ -35,7 +51,7 @@ export function getActiveChannelCount(): number {
 export function useSharedRealtimeData(configs: ChannelEntry[]) {
   const queryClient = useQueryClient()
   const channelsRef = useRef<RealtimeChannel[]>([])
-  const debounceMapRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
+  const configsKeyRef = useRef('')
 
   const currentKey = configs.map(c => `${c.table}|${c.queryKey.join(',')}|${c.filter?.column ?? ''}|${c.filter?.value ?? ''}`).join('||')
 
@@ -44,21 +60,6 @@ export function useSharedRealtimeData(configs: ChannelEntry[]) {
     if (configs.length === 0) return
 
     const channels: RealtimeChannel[] = []
-    const debounceMap = debounceMapRef.current
-
-    function debouncedInvalidate(queryKey: string[], delay = 2000) {
-      const key = queryKey.join('|')
-      const existing = debounceMap.get(key)
-      if (existing) clearTimeout(existing)
-      debounceMap.set(key, setTimeout(() => {
-        debounceMap.delete(key)
-        try {
-          queryClient.invalidateQueries({ queryKey, refetchType: 'active' })
-        } catch (err) {
-          logger.error('realtimeManager', `Invalidation error for ${key}`, { error: String(err) })
-        }
-      }, delay))
-    }
 
     for (const { table, queryKey, filter } of configs) {
       const filterStr = makeFilterStr(filter)
@@ -76,7 +77,7 @@ export function useSharedRealtimeData(configs: ChannelEntry[]) {
           filter: filterStr,
         },
         () => {
-          debouncedInvalidate(queryKey, 2000)
+          debouncedInvalidate(queryClient, queryKey, 2000)
         }
       )
 
@@ -93,6 +94,7 @@ export function useSharedRealtimeData(configs: ChannelEntry[]) {
     }
 
     channelsRef.current = channels
+    configsKeyRef.current = currentKey
 
     return () => {
       for (const ch of channelsRef.current) {
@@ -103,10 +105,6 @@ export function useSharedRealtimeData(configs: ChannelEntry[]) {
         }
       }
       channelsRef.current = []
-      for (const [key, timer] of debounceMap) {
-        clearTimeout(timer)
-      }
-      debounceMap.clear()
     }
   }, [currentKey, queryClient])
 

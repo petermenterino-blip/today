@@ -77,26 +77,17 @@ export function useMentees(currentUser: User | null) {
   useRealtime([
     { table: 'profiles', callback: () => { loadProfiles(); } },
     { table: 'tags', callback: () => { tagService.getAll().then(setAllTags); } },
-    { table: 'tasks', callback: () => { loadProfiles(); } },
-    { table: 'goals', callback: () => { loadProfiles(); } },
-    { table: 'reviews', callback: () => { loadProfiles(); } },
-    { table: 'student_progress', callback: () => { loadProfiles(); } },
-    { table: 'student_timeline_events', callback: () => { loadProfiles(); } },
-    { table: 'sessions', callback: () => { loadProfiles(); } },
-    { table: 'form_submissions', callback: () => { loadProfiles(); } },
   ]);
 
   const loadProfiles = async () => {
-    const profiles = currentUser?.id
-      ? await studentService.getByMentor(currentUser.id)
-      : await studentService.getAll();
+    const profiles = await studentService.getAll();
     setStudentProfiles(profiles);
   };
 
   useEffect(() => {
     loadProfiles();
     tagService.getAll().then(setAllTags);
-  }, [currentUser?.id]);
+  }, []);
 
   useEffect(() => {
     if (selectedMenteeId) {

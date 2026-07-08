@@ -58,14 +58,6 @@ const GrowthForm = () => {
     e.preventDefault();
     if (!user) return;
 
-    const hasAnyCheckbox = formData.pb_card_creation || formData.pb_linkedin_review || formData.pb_resume_review || formData.pb_cover_letter || formData.pb_dress_code || formData.pb_greeting_intro;
-    const hasAnyText = formData.roadmap_topic || formData.interview_recommendation;
-
-    if (!hasAnyCheckbox && !hasAnyText) {
-      notifyError('Please complete at least one section before submitting');
-      return;
-    }
-
     setIsSubmitting(true);
     try {
       await addTask({
@@ -89,8 +81,8 @@ const GrowthForm = () => {
       setTimeout(() => {
         navigate('/student');
       }, 2000);
-    } catch (err: unknown) {
-      notifyError(err instanceof Error ? err.message : 'Failed to save strategy');
+    } catch (err: any) {
+      notifyError(err.message || 'Failed to save strategy');
     } finally {
       setIsSubmitting(false);
     }
