@@ -30,63 +30,100 @@ const hasSupabaseCredentials = (): boolean => {
   return true;
 };
 
+const supabaseFetch = async <T>(path: string, accessToken: string): Promise<T | null> => {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const res = await fetch(`${supabaseUrl}${path}`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      apikey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+    },
+  });
+  if (!res.ok && res.status !== 406) {
+    const body = await res.text().catch(() => '');
+    throw new Error(`DB request failed: ${res.status} ${body.substring(0, 200)}`);
+  }
+  if (res.status === 406) return null;
+  const json = await res.json();
+  return json as T;
+};
+
 const getOrCreateProfileForUser = async (authUser: {
   id: string;
   email?: string | null;
   created_at?: string;
   user_metadata?: Record<string, any>;
-}) => {
+}, options?: { accessToken?: string }) => {
   const fallbackRole = (authUser.user_metadata?.role as UserRole) || 'student';
   const fallbackName = authUser.user_metadata?.full_name || authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User';
 
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('id,name,email,role,avatar_url,application_status,created_at')
-    .eq('id', authUser.id)
-    .single();
+  const queryPath = `/rest/v1/profiles?id=eq.${authUser.id}&select=id,name,email,role,avatar_url,application_status,created_at`;
+  let profile: any = null;
 
-  if (profile) return profile;
-  if (profileError && profileError.code !== 'PGRST116') throw profileError;
-
-  const { data: createdProfile, error: createError } = await supabase
-    .from('profiles')
-    .insert({
-      id: authUser.id,
-      email: authUser.email || '',
-      name: fallbackName,
-      role: fallbackRole,
-      created_at: authUser.created_at || new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .select()
-    .single();
-
-  if (createError && createError.code !== '23505') throw createError;
-  if (createError?.code === '23505') {
-    const { data: existingProfile } = await supabase
+  if (options?.accessToken) {
+    const result = await supabaseFetch<any[]>(queryPath, options.accessToken);
+    profile = result?.[0] ?? null;
+  } else {
+    const { data, error } = await supabase
       .from('profiles')
       .select('id,name,email,role,avatar_url,application_status,created_at')
       .eq('id', authUser.id)
       .single();
-    return existingProfile || {
-      id: authUser.id,
-      email: authUser.email || '',
-      name: fallbackName,
-      role: fallbackRole,
-      created_at: authUser.created_at || new Date().toISOString(),
-      application_status: null,
-    };
+    if (error && error.code !== 'PGRST116') throw error;
+    profile = data;
   }
 
-  return createdProfile || {
-    id: authUser.id,
-    email: authUser.email || '',
-    name: fallbackName,
-    role: fallbackRole,
-    created_at: authUser.created_at || new Date().toISOString(),
-    application_status: null,
+  if (profile) return profile;
+
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+
+  const doInsert = async () => {
+    const res = await fetch(`${supabaseUrl}/rest/v1/profiles?select=id,name,email,role,avatar_url,application_status,created_at`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${options?.accessToken || anonKey}`,
+        apikey: anonKey,
+        'Content-Type': 'application/json',
+        Prefer: 'return=representation',
+      },
+      body: JSON.stringify({
+        id: authUser.id,
+        email: authUser.email || '',
+        name: fallbackName,
+        role: fallbackRole,
+        created_at: authUser.created_at || new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }),
+    });
+    if (res.status === 409) {
+      const existingRes = await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${authUser.id}&select=id,name,email,role,avatar_url,application_status,created_at`, {
+        headers: {
+          Authorization: `Bearer ${options?.accessToken || anonKey}`,
+          apikey: anonKey,
+        },
+      });
+      if (existingRes.ok) {
+        const arr = await existingRes.json();
+        if (arr?.length) return arr[0];
+      }
+      return getFallbackProfile(authUser, fallbackName, fallbackRole);
+    }
+    if (!res.ok) throw new Error(`Profile insert failed: ${res.status}`);
+    const arr = await res.json();
+    return arr?.[0] || getFallbackProfile(authUser, fallbackName, fallbackRole);
   };
+
+  return doInsert();
 };
+
+const getFallbackProfile = (authUser: { id: string; email?: string | null; created_at?: string }, name: string, role: UserRole) => ({
+  id: authUser.id,
+  email: authUser.email || '',
+  name,
+  role,
+  created_at: authUser.created_at || new Date().toISOString(),
+  application_status: null,
+});
 
 // ===================== Auth Service =====================
 
@@ -105,7 +142,7 @@ export const authService = {
           return { data: null, error: 'Please verify your email before signing in. Check your inbox for the confirmation link.' };
         }
 
-        const profile = await getOrCreateProfileForUser(data.user);
+        const profile = await getOrCreateProfileForUser(data.user, { accessToken: data.session?.access_token });
 
     const userData: User & { profile?: UserProfileDetails } = {
       id: data.user.id,
@@ -169,7 +206,7 @@ export const authService = {
     if (error) return { data: null, error: handleError(error).error };
     if (!session?.user) return { data: null, error: 'No active session' };
 
-    const profile = await getOrCreateProfileForUser(session.user);
+    const profile = await getOrCreateProfileForUser(session.user, { accessToken: session.access_token });
 
     const userData: User & { profile?: UserProfileDetails } = {
       id: session.user.id,
@@ -256,7 +293,7 @@ export const authService = {
           callback(userData);
 
           // Fire-and-forget profile enrichment
-          getOrCreateProfileForUser(session.user).then(profile => {
+          getOrCreateProfileForUser(session.user, { accessToken: session.access_token }).then(profile => {
             if (profile && (profile.name !== userData.name || (profile.role as UserRole) !== userData.role)) {
               callback({
                 ...userData,
