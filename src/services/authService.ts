@@ -160,16 +160,15 @@ const signInDirect = async (email: string, password: string): Promise<ServiceRes
     access_token: authData.access_token,
     refresh_token: authData.refresh_token,
     expires_in: authData.expires_in,
-    expires_at: authData.expires_at,
+    expires_at: authData.expires_at ?? Math.floor(Date.now() / 1000) + (authData.expires_in || 3600),
     token_type: authData.token_type || 'bearer',
     user,
   };
 
+  const storageKey = `sb-${new URL(supabaseUrl).hostname.split('.')[0]}-auth-token`;
   try {
-    await supabase.auth.setSession(session);
-  } catch {
-    // setSession may fail if session is already set; continue anyway
-  }
+    localStorage.setItem(storageKey, JSON.stringify(session));
+  } catch { /* storage may be full or blocked */ }
 
   const profile = await getOrCreateProfileForUser(user, { accessToken: authData.access_token });
 
