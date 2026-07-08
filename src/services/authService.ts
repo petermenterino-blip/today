@@ -96,7 +96,13 @@ export const authService = {
       return { data: null, error: 'Supabase not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.' };
     }
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const authResult = await Promise.race([
+      supabase.auth.signInWithPassword({ email, password }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Authentication service timed out. Please try again.')), 20000)
+      ),
+    ]);
+    const { data, error } = authResult;
     if (error) return { data: null, error: handleError(error).error };
     if (!data.user) return { data: null, error: 'Login failed' };
     if (!data.user.email_confirmed_at) {

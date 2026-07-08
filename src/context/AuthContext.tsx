@@ -59,7 +59,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     let mounted = true;
     let initialized = false;
 
-    const AUTH_INIT_TIMEOUT = 8000;
+    const AUTH_INIT_TIMEOUT = 15000;
     const timeoutId = setTimeout(() => {
       if (mounted && !initialized) {
         logger.warn('AuthContext', 'Auth init timed out, proceeding as visitor');
@@ -174,12 +174,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
+  const LOGIN_TIMEOUT = 30000;
+
   const login = async (email: string, password: string): Promise<User & { profile?: UserProfileDetails }> => {
     loginInProgress.current = true;
     setAuthLoading(true);
     setAuthError(null);
     try {
-      const { data, error } = await authService.signIn(email, password);
+      const result = await Promise.race([
+        authService.signIn(email, password),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Connection timed out. Please check your internet and try again.')), LOGIN_TIMEOUT)
+        ),
+      ]);
+      const { data, error } = result;
       if (error || !data) {
         setAuthError(interpretError(error));
         throw new Error(error || 'Login failed');
