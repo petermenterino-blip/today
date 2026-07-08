@@ -27,16 +27,6 @@ WHERE user_id IN (
   SELECT id FROM profiles WHERE email LIKE '%@example.com'
 );
 
-DELETE FROM tags
-WHERE mentor_id IN (
-  SELECT id FROM profiles WHERE email LIKE '%@example.com'
-);
-
-DELETE FROM student_tags
-WHERE student_id IN (
-  SELECT id FROM profiles WHERE email LIKE '%@example.com'
-);
-
 DELETE FROM dashboard_layouts
 WHERE user_id IN (
   SELECT id FROM profiles WHERE email LIKE '%@example.com'

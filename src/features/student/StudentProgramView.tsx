@@ -86,9 +86,8 @@ const StudentProgramView: React.FC<StudentProgramViewProps> = ({ currentUser }) 
       if (!programId || !currentUser?.id) return;
 
       // Fetch program details
-      const { data: allProgs } = await programService.fetchAll();
-      const matchedProg = allProgs?.find(p => p.id === programId);
-      if (!matchedProg) {
+      const { data: matchedProg, error: progErr } = await programService.getById(programId);
+      if (progErr || !matchedProg) {
         toast.error("Program not found or you do not have access.");
         navigate('/student/programs');
         return;
@@ -96,7 +95,7 @@ const StudentProgramView: React.FC<StudentProgramViewProps> = ({ currentUser }) 
       setProgram(matchedProg);
 
       // Fetch curriculum
-      const cur = getProgramCurriculum(programId);
+      const cur = await getProgramCurriculum(programId);
       setCurriculum(cur);
 
       // Initialize program progress if not already

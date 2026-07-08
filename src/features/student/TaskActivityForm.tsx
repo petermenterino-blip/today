@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { Send, CheckCircle2, Upload, User, GraduationCap, Briefcase, Code2, FileText, Users, Target, AlertCircle, ClipboardList, BookOpen, MessageSquare, Award } from 'lucide-react';
+import { Send, CheckCircle2, Upload, User, GraduationCap, Briefcase, Code2, FileText, Users, Target, AlertCircle, ClipboardList, BookOpen, MessageSquare } from 'lucide-react';
 import { TaskActivity } from '../../types';
 
 interface TaskActivityFormProps {
@@ -273,7 +273,9 @@ const TaskActivityForm: React.FC<TaskActivityFormProps> = ({ onSubmit, userName,
         counselor_consultation_summary: consultationSummary
       });
       setIsSuccess(true);
-    } catch (error) {
+    } catch (error: any) {
+      const msg = error?.message || 'An unexpected error occurred. Please try again.';
+      alert(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -453,37 +455,7 @@ const TaskActivityForm: React.FC<TaskActivityFormProps> = ({ onSubmit, userName,
         <TextAreaField value={additionalInfo} onChange={setAdditionalInfo} rows={4} placeholder="Share anything else..." />
       </div>
 
-      {/* Counselor Section */}
-      <div className="space-y-6 border-t-2 border-amber-200 pt-10 mt-16">
-        <div className="bg-amber-50 -mx-6 md:-mx-8 p-6 md:p-8 rounded-[32px] space-y-8">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-amber-500 text-white rounded-2xl flex items-center justify-center shadow-lg"><Award size={22} /></div>
-            <div>
-              <h3 className="text-xl font-black uppercase tracking-tighter text-amber-900">For Counselor (Peter) Only</h3>
-              <p className="text-[9px] text-amber-600 font-bold uppercase tracking-widest">Consultation Notes</p>
-            </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <FormField label="Consultation Notes"><TextAreaField value={counselorNotes} onChange={setCounselorNotes} rows={3} placeholder="Peter's notes..." /></FormField>
-            <FormField label="Student Strengths"><TextAreaField value={studentStrengths} onChange={setStudentStrengths} rows={3} placeholder="Key strengths observed..." /></FormField>
-            <FormField label="Areas for Improvement"><TextAreaField value={areasForImprovement} onChange={setAreasForImprovement} rows={3} placeholder="Growth areas..." /></FormField>
-            <FormField label="Recommended Action Items"><TextAreaField value={recommendedActions} onChange={setRecommendedActions} rows={3} placeholder="Action steps..." /></FormField>
-            <FormField label="Resume Feedback"><TextAreaField value={resumeFeedback} onChange={setResumeFeedback} rows={3} placeholder="Feedback on resume..." /></FormField>
-            <FormField label="LinkedIn Feedback"><TextAreaField value={linkedinFeedback} onChange={setLinkedinFeedback} rows={3} placeholder="Feedback on LinkedIn..." /></FormField>
-            <FormField label="Career Roadmap"><TextAreaField value={careerRoadmap} onChange={setCareerRoadmap} rows={3} placeholder="Suggested career path..." /></FormField>
-            <FormField label="Certifications Recommended"><TextAreaField value={certsRecommended} onChange={setCertsRecommended} rows={3} placeholder="Certifications to pursue..." /></FormField>
-            <FormField label="Interview Preparation Plan"><TextAreaField value={interviewPlan} onChange={setInterviewPlan} rows={3} placeholder="Interview prep strategy..." /></FormField>
-            <FormField label="Networking Recommendations"><TextAreaField value={networkingRecs} onChange={setNetworkingRecs} rows={3} placeholder="Networking suggestions..." /></FormField>
-            <FormField label="Resources Shared"><TextAreaField value={resourcesShared} onChange={setResourcesShared} rows={3} placeholder="Links, docs, tools..." /></FormField>
-            <FormField label="Next Meeting Date"><TextInput value={nextMeetingDate} onChange={setNextMeetingDate} type="date" /></FormField>
-            <FormField label="Follow-up Tasks"><TextAreaField value={followUpTasks} onChange={setFollowUpTasks} rows={3} placeholder="Tasks before next meeting..." /></FormField>
-            <div className="md:col-span-2">
-              <FormField label="Overall Consultation Summary"><TextAreaField value={consultationSummary} onChange={setConsultationSummary} rows={4} placeholder="Complete summary of the consultation..." /></FormField>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Submit */}
       <div className="pt-4">

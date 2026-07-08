@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { applicationService } from '../services/applicationService';
@@ -40,6 +40,7 @@ const ApplicationPage: React.FC = () => {
   const [step, setStep] = useState(1);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submittedRef = useRef(false);
   
   // Form Fields
   const [mentorType, setMentorType] = useState('');
@@ -101,6 +102,8 @@ const ApplicationPage: React.FC = () => {
   const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
 
   const handleSubmit = async () => {
+    if (submittedRef.current) return;
+    submittedRef.current = true;
     setIsSubmitting(true);
     try {
       const { error } = await applicationService.submitApplication({

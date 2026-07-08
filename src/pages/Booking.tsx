@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -53,6 +53,7 @@ const BookingPage: React.FC = () => {
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [isBooked, setIsBooked] = useState(false);
+  const submittedRef = useRef(false);
 
   const [calViewDate, setCalViewDate] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState<number | null>(null);
@@ -135,37 +136,40 @@ const BookingPage: React.FC = () => {
 
   const handleSubmit = async () => {
     if (!selectedDate || !selectedTime) return;
+    if (submittedRef.current) return;
+    submittedRef.current = true;
     setSubmitting(true);
 
     const formattedDate = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(selectedDate).padStart(2, '0')}`;
 
-    try {
-      await visitorBookingService.submit({
-        visitorName: name,
-        visitorEmail: email,
-        visitorPhone: phone,
-        company: company || undefined,
-        studentProfessional: studentProfessional || undefined,
-        callType,
-        preferredMentor: preferredMentor || undefined,
-        programOfInterest,
-        meetingType: meetingType || undefined,
-        date: formattedDate,
-        time: selectedTime,
-        timezone: selectedTimezone,
-        message: message || undefined,
-        sourcePage: window.location.pathname,
-        priority: 'medium',
-      });
+    const result = await visitorBookingService.submit({
+      visitorName: name,
+      visitorEmail: email,
+      visitorPhone: phone,
+      company: company || undefined,
+      studentProfessional: studentProfessional || undefined,
+      callType,
+      preferredMentor: preferredMentor || undefined,
+      programOfInterest,
+      meetingType: meetingType || undefined,
+      date: formattedDate,
+      time: selectedTime,
+      timezone: selectedTimezone,
+      message: message || undefined,
+      sourcePage: window.location.pathname,
+      priority: 'medium',
+    });
 
-      setIsBooked(true);
-      notifySuccess(isRapid ? 'Rapid response call booked!' : 'Intro call booked!');
-      setTimeout(() => navigate('/'), 2000);
-    } catch {
-      notifyError('Failed to submit booking. Please try again.');
-    } finally {
+    if (result.error) {
+      notifyError(result.error || 'Failed to submit booking. Please try again.');
       setSubmitting(false);
+      return;
     }
+
+    setIsBooked(true);
+    notifySuccess(isRapid ? 'Rapid response call booked!' : 'Intro call booked!');
+    setTimeout(() => navigate('/'), 2000);
+    setSubmitting(false);
   };
 
   const renderStepIndicator = () => (

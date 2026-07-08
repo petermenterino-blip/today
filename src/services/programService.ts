@@ -70,6 +70,17 @@ export const programService = {
     return { data: undefined, error: null };
   },
 
+  async getById(id: string): Promise<ServiceResponse<Program>> {
+    const { data, error } = await supabase
+      .from('programs')
+      .select(PROGRAM_FIELDS)
+      .eq('id', id)
+      .maybeSingle();
+    if (error) return { data: null, error: handleError(error).error };
+    if (!data) return { data: null, error: 'Program not found' };
+    return { data: rowToProgram(data), error: null };
+  },
+
   async update(id: string, program: Partial<Program>): Promise<ServiceResponse<Program>> {
     const row = programToRow(program);
     const { data, error } = await supabase

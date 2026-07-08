@@ -20,6 +20,7 @@ const MenteesTab = lazy(() => import('./components/MenteesTab').then(m => ({ def
 const TasksTab = lazy(() => import('./components/TasksTab').then(m => ({ default: m.TasksTab })));
 const ApplicationsTab = lazy(() => import('./components/ApplicationsTab').then(m => ({ default: m.ApplicationsTab })));
 const VisitorBookingsTab = lazy(() => import('./components/VisitorBookingsTab').then(m => ({ default: m.VisitorBookingsTab })));
+const ContactSubmissionsTab = lazy(() => import('./components/ContactSubmissionsTab').then(m => ({ default: m.ContactSubmissionsTab })));
 const GrowthAuditTab = lazy(() => import('./components/GrowthAuditTab'));
 const ProgramProgressTab = lazy(() => import('./components/ProgramProgressTab').then(m => ({ default: m.ProgramProgressTab })));
 const ReviewsTab = lazy(() => import('./components/ReviewsTab').then(m => ({ default: m.ReviewsTab })));
@@ -275,6 +276,10 @@ const MentorDashboard: React.FC<MentorDashboardProps> = ({ currentUser }) => {
 
       {d.activeTab === 'bookings' && (
         <ErrorBoundary><Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><VisitorBookingsTab /></Suspense></ErrorBoundary>
+      )}
+
+      {d.activeTab === 'contacts' && (
+        <ErrorBoundary><Suspense fallback={<div className="h-64 bg-slate-50 rounded-[32px] animate-pulse" />}><ContactSubmissionsTab /></Suspense></ErrorBoundary>
       )}
 
       {d.activeTab === 'messaging' && (

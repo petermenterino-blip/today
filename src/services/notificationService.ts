@@ -1,9 +1,12 @@
+import { supabase } from '../lib/supabase';
 import { notificationStorage } from './notificationStorage';
+import { emailNotificationService } from './emailNotificationService';
 
 export const notify = {
   async bookingConfirmed(userId: string, mentorId: string, date: string, time: string): Promise<void> {
     await notificationStorage.create({ userId, title: 'Booking Confirmed', message: `Your booking on ${date} at ${time} has been confirmed.`, type: 'session', read: false });
     await notificationStorage.create({ userId: mentorId, title: 'New Booking', message: `A new booking has been made for ${date} at ${time}.`, type: 'session', read: false });
+    emailNotificationService.sendNotification(userId, 'Booking Confirmed', `Your booking on ${date} at ${time} has been confirmed.`).catch(() => {});
   },
 
   async goalCompleted(studentId: string, mentorId: string, goalTitle: string): Promise<void> {
@@ -13,15 +16,18 @@ export const notify = {
 
   async taskCompleted(studentId: string, mentorId: string, taskTitle: string): Promise<void> {
     await notificationStorage.create({ userId: mentorId, title: 'Task Completed', message: `Your student completed "${taskTitle}".`, type: 'task', read: false });
+    emailNotificationService.sendNotification(mentorId, 'Task Completed', `Your student completed "${taskTitle}".`).catch(() => {});
   },
 
   async taskAssigned(studentId: string, mentorId: string, taskTitle: string): Promise<void> {
     await notificationStorage.create({ userId: studentId, title: 'New Task Assigned', message: `You have a new task: "${taskTitle}".`, type: 'task', read: false });
+    emailNotificationService.sendNotification(studentId, 'New Task Assigned', `You have a new task: "${taskTitle}".`).catch(() => {});
   },
 
   async sessionScheduled(studentId: string, mentorId: string, sessionTitle: string, startTime: string): Promise<void> {
     await notificationStorage.create({ userId: studentId, title: 'Session Scheduled', message: `"${sessionTitle}" scheduled for ${new Date(startTime).toLocaleDateString()}.`, type: 'session', read: false });
     await notificationStorage.create({ userId: mentorId, title: 'Session Scheduled', message: `"${sessionTitle}" scheduled for ${new Date(startTime).toLocaleDateString()}.`, type: 'session', read: false });
+    emailNotificationService.sendNotification(studentId, 'Session Scheduled', `"${sessionTitle}" scheduled for ${new Date(startTime).toLocaleDateString()}.`).catch(() => {});
   },
 
   async sessionRescheduled(studentId: string, mentorId: string, sessionTitle: string, startTime: string): Promise<void> {
@@ -36,10 +42,29 @@ export const notify = {
 
   async journalSubmitted(studentId: string, mentorId: string): Promise<void> {
     await notificationStorage.create({ userId: mentorId, title: 'New Journal Entry', message: `A student has submitted a new journal entry.`, type: 'journal', read: false });
+    emailNotificationService.sendNotification(mentorId, 'New Journal Entry', 'A student has submitted a new journal entry.').catch(() => {});
   },
 
   async applicationReceived(mentorId: string, applicantName: string): Promise<void> {
     await notificationStorage.create({ userId: mentorId, title: 'New Application', message: `${applicantName} submitted a new application.`, type: 'system', read: false });
+  },
+
+  async contactReceived(): Promise<void> {
+    const { data: mentors } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('role', 'mentor')
+      .eq('status', 'active');
+    if (!mentors) return;
+    for (const mentor of mentors) {
+      await notificationStorage.create({
+        userId: mentor.id,
+        title: 'New Contact Form Submission',
+        message: 'A new message has been submitted via the contact form.',
+        type: 'system',
+        read: false,
+      });
+    }
   },
 
   // ── Review Notifications ──
@@ -100,6 +125,7 @@ export const notify = {
 
   async eventRegistered(userId: string, eventTitle: string): Promise<void> {
     await notificationStorage.create({ userId, title: 'Registration Confirmed', message: `You are registered for "${eventTitle}".`, type: 'event', read: false });
+    emailNotificationService.sendNotification(userId, 'Event Registration Confirmed', `You are registered for "${eventTitle}".`).catch(() => {});
   },
 
   async eventRegistrationCancelled(userId: string, eventTitle: string): Promise<void> {

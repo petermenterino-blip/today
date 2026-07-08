@@ -73,8 +73,8 @@ const StudentEditProfile: React.FC<StudentEditProfileProps> = ({ currentUser }) 
       await profileService.updateProfile(currentUser.id, form as any);
       window.dispatchEvent(new Event('user-profile-changed'));
       notifySuccess('Profile updated successfully');
-    } catch {
-      notifyError('Failed to update profile');
+    } catch (err: any) {
+      notifyError(err?.message || 'Failed to update profile');
     } finally {
       setSaving(false);
     }

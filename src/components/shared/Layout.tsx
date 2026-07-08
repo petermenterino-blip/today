@@ -23,7 +23,8 @@ import {
   Image as ImageIcon,
   CalendarCheck,
   TrendingUp,
-  Mail
+  Mail,
+  MessageSquare,
 } from 'lucide-react';
 import { UserRole } from '../../types';
 import { profileService } from '../../services/profileService';
@@ -123,6 +124,7 @@ const Layout: React.FC<LayoutProps> = ({ children, role, onLogout }) => {
     { label: 'AI Insights', path: '/mentor?tab=ai', icon: Zap, roles: ['mentor'] },
     { label: 'Gallery', path: '/mentor?tab=gallery', icon: ImageIcon, roles: ['mentor'] },
     { label: 'Bookings', path: '/mentor?tab=bookings', icon: CalendarCheck, roles: ['mentor'] },
+    { label: 'Contacts', path: '/mentor?tab=contacts', icon: MessageSquare, roles: ['mentor'] },
     { label: 'Emails', path: '/mentor?tab=emails', icon: Mail, roles: ['mentor'] },
     { label: 'Settings', path: '/settings', icon: Settings, roles: ['mentor'] },
   ].filter(item => item.roles.includes(role))

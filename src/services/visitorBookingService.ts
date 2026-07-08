@@ -2,6 +2,11 @@ import { supabase } from '../lib/supabase';
 import { ServiceResponse } from '../types';
 import { handleError } from '../lib/serviceHelper';
 import { notify } from './notificationService';
+import { edgeFunctionService } from './edgeFunctionService';
+
+function escHtml(str: string): string {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
 
 export interface VisitorBooking {
   id: string;
@@ -165,14 +170,27 @@ export const visitorBookingService = {
       if (error) return { data: null, error: handleError(error).error };
       const created = rowToVisitorBooking(data);
 
-      await supabase.from('booking_timeline').insert({
+      const { error: tlError } = await supabase.from('booking_timeline').insert({
         booking_id: created.id,
         action: 'booking_created',
         description: `Booking created by ${created.visitorName}`,
         metadata: { visitorEmail: created.visitorEmail, callType: created.callType },
       });
+      if (tlError) console.warn('[visitorBookingService] timeline insert failed:', tlError.message);
 
-      notify.bookingConfirmed(created.assignedMentorId || 'system', created.assignedMentorId || 'system', created.date, created.time).catch(() => {});
+      edgeFunctionService.sendPublicEmail(
+        created.visitorEmail,
+        'Booking Confirmed — Mentorino',
+        `<h1>Thanks, ${escHtml(created.visitorName)}!</h1><p>Your ${created.callType === 'rapid' ? 'Rapid Response' : 'Intro'} call has been booked for <strong>${escHtml(created.date)}</strong> at <strong>${escHtml(created.time)}</strong>.</p><p>We'll be in touch soon to confirm the details.</p><p>Best,<br/>The Mentorino Team</p>`
+      ).catch(() => {});
+
+      supabase.from('profiles').select('id').eq('role', 'mentor').eq('status', 'active').then(({ data: mentors }) => {
+        if (mentors) {
+          for (const m of mentors) {
+            notify.bookingConfirmed(created.id, m.id, created.date, created.time).catch(() => {});
+          }
+        }
+      });
 
       return { data: created, error: null };
     } catch (err: any) {
@@ -262,7 +280,9 @@ export const visitorBookingService = {
       if (updates.status && updates.status !== existing.data.status) {
         timelineMeta.oldStatus = existing.data.status;
         timelineMeta.newStatus = updates.status;
-        notify.bookingConfirmed(id, existing.data.assignedMentorId || 'system', existing.data.date, existing.data.time).catch(() => {});
+        if (existing.data.assignedMentorId) {
+          notify.bookingConfirmed(id, existing.data.assignedMentorId, existing.data.date, existing.data.time).catch(() => {});
+        }
       }
       await supabase.from('booking_timeline').insert({
         booking_id: id,

@@ -5,7 +5,7 @@ import { NetworkEvent, EventComment } from '../../types';
 import { eventService } from '../../services/eventService';
 import { useAuth } from '../../context/AuthContext';
 import { notifySuccess, notifyError } from '../../utils/toast';
-import { notificationStorage } from '../../services/notificationStorage';
+import { notify } from '../../services/notificationService';
 import { trackRecentlyViewed } from '../../utils/recentlyViewed';
 
 const EVENT_TYPE_COLORS: Record<string, string> = {
@@ -70,8 +70,7 @@ const EventDetailView: React.FC<EventDetailViewProps> = ({ eventId, onBack, onEd
     const { error } = await eventService.register(eventId, user.id, user.name, user.email);
     if (!error) {
       notifySuccess('Registered successfully!');
-      notificationStorage.create({ userId: user.id, title: 'Registration Confirmed', message: `You are registered for "${event.title}"`, type: 'event', read: false } as any);
-      await eventService.logActivity(eventId, user.id, 'registration', `User registered for event`);
+      notify.eventRegistered(user.id, event.title).catch(() => {});
       loadEvent();
     } else notifyError('Failed to register');
   };

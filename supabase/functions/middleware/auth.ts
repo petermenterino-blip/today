@@ -84,6 +84,7 @@ const ALLOWED_ORIGINS = [
   'https://mentorino.app',
   'https://www.mentorino.app',
   'https://mentorino.vercel.app',
+  'https://today-ten-zeta.vercel.app',
   'http://localhost:5173',
   'http://localhost:3000',
 ]
@@ -108,6 +109,7 @@ const RATE_LIMIT_CONFIG: Record<string, { maxRequests: number; windowMs: number 
   resend: { maxRequests: 10, windowMs: 60000 },
   'approve-application': { maxRequests: 5, windowMs: 60000 },
   scheduled: { maxRequests: 2, windowMs: 60000 },
+  'resend-public': { maxRequests: 5, windowMs: 60000 },
   default: { maxRequests: 60, windowMs: 60000 },
 }
 
@@ -154,4 +156,9 @@ export async function checkRateLimit(key: string, functionName: string): Promise
   }).eq('key', key)
 
   return { allowed: true, retryAfterMs: 0 }
+}
+
+export async function checkPublicRateLimit(ip: string, functionName: string): Promise<{ allowed: boolean; retryAfterMs: number }> {
+  const key = `public:${functionName}:${ip}`
+  return checkRateLimit(key, `${functionName}-public`)
 }

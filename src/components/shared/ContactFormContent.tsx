@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion } from 'motion/react';
 import { CheckCircle2, Send } from 'lucide-react';
 import { notifySuccess, notifyError } from '../../utils/toast';
+import { contactSubmissionService } from '../../services/contactSubmissionService';
+import { notify } from '../../services/notificationService';
 
 interface ContactForm {
   name: string;
@@ -21,6 +23,7 @@ const ContactFormContent: React.FC = () => {
   });
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const submittedRef = useRef(false);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
@@ -28,46 +31,48 @@ const ContactFormContent: React.FC = () => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.email || !form.message) {
       notifyError('Please fill in all required fields.');
       return;
     }
+    if (submittedRef.current) return;
+    submittedRef.current = true;
 
     setSubmitting(true);
 
-    setTimeout(() => {
-      try {
-        const submissions = JSON.parse(
-          localStorage.getItem('contact_submissions_v1') || '[]',
-        );
-        const newSubmission = {
-          ...form,
-          id: 'sub-' + Date.now(),
-          timestamp: new Date().toISOString(),
-        };
-        submissions.push(newSubmission);
-        localStorage.setItem(
-          'contact_submissions_v1',
-          JSON.stringify(submissions),
-        );
+    try {
+      const { error } = await contactSubmissionService.submit({
+        name: form.name,
+        email: form.email,
+        discipline: form.discipline,
+        subject: form.subject,
+        message: form.message,
+      });
 
-        setSuccess(true);
-        setSubmitting(false);
-        notifySuccess('Your message has been sent successfully!');
-        setForm({
-          name: '',
-          email: '',
-          discipline: 'IT & Tech',
-          subject: 'Career Guidance',
-          message: '',
-        });
-      } catch {
+      if (error) {
         setSubmitting(false);
         notifyError('Failed to send message. Please try again.');
+        return;
       }
-    }, 1200);
+    } catch {
+      setSubmitting(false);
+      notifyError('Network error. Please check your connection and try again.');
+      return;
+    }
+
+    setSuccess(true);
+    setSubmitting(false);
+    notify.contactReceived().catch(() => {});
+    notifySuccess('Your message has been sent successfully!');
+    setForm({
+      name: '',
+      email: '',
+      discipline: 'IT & Tech',
+      subject: 'Career Guidance',
+      message: '',
+    });
   };
 
   if (success) {

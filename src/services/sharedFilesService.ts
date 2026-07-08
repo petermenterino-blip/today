@@ -120,6 +120,7 @@ export const sharedFilesService = {
         .from('shared_files')
         .insert({
           user_id: userId,
+          mentor_id: mentorId || null,
           name: file.name,
           url: urlData.signedUrl,
           type: fileType,

@@ -82,13 +82,19 @@ export const goalStorage = {
         title: m.title,
         completed: m.completed || false,
       }));
-      const { data: createdMilestones } = await supabase
-        .from('goal_milestones')
-        .insert(milestoneRows)
-        .select();
-      goal.milestones = (createdMilestones || []).map((m: any) => ({
-        id: m.id, title: m.title, completed: m.completed,
-      }));
+      try {
+        const { data: createdMilestones, error: msError } = await supabase
+          .from('goal_milestones')
+          .insert(milestoneRows)
+          .select();
+        if (msError) throw msError;
+        goal.milestones = (createdMilestones || []).map((m: any) => ({
+          id: m.id, title: m.title, completed: m.completed,
+        }));
+      } catch (msErr) {
+        await supabase.from('goals').delete().eq('id', goal.id).maybeSingle();
+        throw new Error(interpretError(msErr as any));
+      }
     }
     return goal;
   },
@@ -108,12 +114,21 @@ export const goalStorage = {
       }
     }
     if (updates.milestones) {
+      const { data: oldMilestones } = await supabase
+        .from('goal_milestones')
+        .select('title, completed')
+        .eq('goal_id', id);
       await supabase.from('goal_milestones').delete().eq('goal_id', id);
       if (updates.milestones.length > 0) {
         const milestoneRows = updates.milestones.map((m: any) => ({
           goal_id: id, title: m.title, completed: m.completed || false,
         }));
-        await supabase.from('goal_milestones').insert(milestoneRows);
+        const { error: insertError } = await supabase.from('goal_milestones').insert(milestoneRows);
+        if (insertError && oldMilestones && oldMilestones.length > 0) {
+          await supabase.from('goal_milestones').insert(
+            oldMilestones.map((m: any) => ({ goal_id: id, title: m.title, completed: m.completed }))
+          );
+        }
       }
     }
     if (updates.status === 'completed') {
@@ -125,7 +140,7 @@ export const goalStorage = {
           .eq('student_id', current.data.student_id)
           .maybeSingle();
         const mentorId: string = (enrollment as any)?.program?.mentor_id || '';
-        notify.goalCompleted(current.data.student_id, mentorId, current.data.title).catch(() => {});
+        notify.goalCompleted(current.data.student_id, mentorId, current.data.title).catch((err) => { console.warn('goalStorage: notification failed', err); });
       }
     }
     return this.getById(id);
