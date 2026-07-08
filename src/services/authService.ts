@@ -96,20 +96,16 @@ export const authService = {
       return { data: null, error: 'Supabase not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.' };
     }
 
-    const authResult = await Promise.race([
-      supabase.auth.signInWithPassword({ email, password }),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Authentication service timed out. Please try again.')), 20000)
-      ),
-    ]);
-    const { data, error } = authResult;
-    if (error) return { data: null, error: handleError(error).error };
-    if (!data.user) return { data: null, error: 'Login failed' };
-    if (!data.user.email_confirmed_at) {
-      return { data: null, error: 'Please verify your email before signing in. Check your inbox for the confirmation link.' };
-    }
+    const result = await Promise.race([
+      (async () => {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) return { data: null, error: handleError(error).error };
+        if (!data.user) return { data: null, error: 'Login failed' };
+        if (!data.user.email_confirmed_at) {
+          return { data: null, error: 'Please verify your email before signing in. Check your inbox for the confirmation link.' };
+        }
 
-    const profile = await getOrCreateProfileForUser(data.user);
+        const profile = await getOrCreateProfileForUser(data.user);
 
     const userData: User & { profile?: UserProfileDetails } = {
       id: data.user.id,
@@ -122,6 +118,13 @@ export const authService = {
     };
 
     return { data: userData, error: null };
+      })(),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Authentication service timed out. Please try again.')), 25000)
+      ),
+    ]);
+
+    return result;
   },
 
   async signUp(email: string, password: string, fullName: string): Promise<ServiceResponse<User>> {
