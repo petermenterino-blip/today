@@ -125,6 +125,60 @@ const getFallbackProfile = (authUser: { id: string; email?: string | null; creat
   application_status: null,
 });
 
+const signInDirect = async (email: string, password: string): Promise<ServiceResponse<User & { profile?: UserProfileDetails }>> => {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+  if (!supabaseUrl || !anonKey) {
+    return { data: null, error: 'Supabase not configured.' };
+  }
+
+  const tokenRes = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+    method: 'POST',
+    headers: { 'apikey': anonKey, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!tokenRes.ok) {
+    const body = await tokenRes.text().catch(() => '');
+    return { data: null, error: `Login failed: ${tokenRes.status} ${body.substring(0, 200)}` };
+  }
+
+  const authData = await tokenRes.json();
+  const user = authData.user;
+  if (!user) return { data: null, error: 'Login failed: no user returned' };
+  if (!user.email_confirmed_at) {
+    return { data: null, error: 'Please verify your email before signing in. Check your inbox for the confirmation link.' };
+  }
+
+  const session = {
+    access_token: authData.access_token,
+    refresh_token: authData.refresh_token,
+    expires_in: authData.expires_in,
+    expires_at: authData.expires_at,
+    token_type: authData.token_type || 'bearer',
+    user,
+  };
+
+  try {
+    await supabase.auth.setSession(session);
+  } catch {
+    // setSession may fail if session is already set; continue anyway
+  }
+
+  const profile = await getOrCreateProfileForUser(user, { accessToken: authData.access_token });
+
+  const userData: User & { profile?: UserProfileDetails } = {
+    id: user.id,
+    email: user.email || email,
+    name: profile?.name || user.user_metadata?.full_name || email.split('@')[0],
+    role: (profile?.role as UserRole) || (user.user_metadata?.role as UserRole) || 'visitor',
+    application_status: profile?.application_status || null,
+    created_at: user.created_at,
+    profile: profile || undefined,
+  };
+
+  return { data: userData, error: null };
+};
+
 // ===================== Auth Service =====================
 
 export const authService = {
@@ -133,35 +187,7 @@ export const authService = {
       return { data: null, error: 'Supabase not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.' };
     }
 
-    const result = await Promise.race([
-      (async () => {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) return { data: null, error: handleError(error).error };
-        if (!data.user) return { data: null, error: 'Login failed' };
-        if (!data.user.email_confirmed_at) {
-          return { data: null, error: 'Please verify your email before signing in. Check your inbox for the confirmation link.' };
-        }
-
-        const profile = await getOrCreateProfileForUser(data.user, { accessToken: data.session?.access_token });
-
-    const userData: User & { profile?: UserProfileDetails } = {
-      id: data.user.id,
-      email: data.user.email || email,
-      name: profile?.name || data.user.user_metadata?.full_name || email.split('@')[0],
-      role: (profile?.role as UserRole) || (data.user.user_metadata?.role as UserRole) || 'visitor',
-      application_status: profile?.application_status || null,
-      created_at: data.user.created_at,
-      profile: profile || undefined,
-    };
-
-    return { data: userData, error: null };
-      })(),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Authentication service timed out. Please try again.')), 25000)
-      ),
-    ]);
-
-    return result;
+    return signInDirect(email, password);
   },
 
   async signUp(email: string, password: string, fullName: string): Promise<ServiceResponse<User>> {
