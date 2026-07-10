@@ -333,7 +333,7 @@ describe('authService', () => {
       expect(result.data).toBeNull();
     });
 
-    it('throws on profile fetch permission error', async () => {
+    it('gracefully falls back when profile fetch has permission error', async () => {
       mockSignIn.mockResolvedValue({
         data: {
           user: {
@@ -352,7 +352,12 @@ describe('authService', () => {
         error: { code: '42501', message: 'permission denied for table profiles' },
       });
 
-      await expect(authService.signIn('test@mentorino.com', 'correct')).rejects.toThrow();
+      const result = await authService.signIn('test@mentorino.com', 'correct');
+
+      expect(result.error).toBeNull();
+      expect(result.data).not.toBeNull();
+      expect(result.data!.id).toBe('user-1');
+      expect(result.data!.role).toBe('student');
     });
   });
 
@@ -454,7 +459,7 @@ describe('authService', () => {
       expect(result.data).toBeNull();
     });
 
-    it('returns error when profile fetch fails', async () => {
+    it('returns minimal profile when profile fetch fails', async () => {
       mockSingle.mockResolvedValue({
         data: null,
         error: { message: 'Internal server error' },
@@ -462,8 +467,11 @@ describe('authService', () => {
 
       const result = await authService.getFullProfile('user-1', 'test@mentorino.com');
 
-      expect(result.error).toBe('Internal server error');
-      expect(result.data).toBeNull();
+      expect(result.error).toBeNull();
+      expect(result.data).not.toBeNull();
+      expect(result.data!.id).toBe('user-1');
+      expect(result.data!.email).toBe('test@mentorino.com');
+      expect(result.data!.role).toBe('visitor');
     });
   });
 

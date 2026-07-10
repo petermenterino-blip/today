@@ -99,6 +99,10 @@ describe('taskService', () => {
 
   describe('insert', () => {
     it('creates a new task', async () => {
+      mockSingle.mockResolvedValue({
+        data: { email: 'test@mentorino.com' },
+        error: null,
+      });
       mockInsertSingle.mockResolvedValue({
         data: mockTaskRow(),
         error: null,
@@ -137,12 +141,19 @@ describe('taskService', () => {
 
   describe('updateStatus', () => {
     it('updates task status', async () => {
+      const mockSingleFn = vi.fn().mockResolvedValue({
+        data: { student_id: 'student-1', mentor_id: 'mentor-1', title: 'Test Task' },
+        error: null,
+      });
       const mockUpdateEq = vi.fn().mockResolvedValue({ error: null });
 
-      mockFrom.mockReturnValue({
-        select: vi.fn(),
-        update: vi.fn(() => ({ eq: mockUpdateEq })),
-      });
+      mockFrom
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ single: mockSingleFn }) }),
+        })
+        .mockReturnValueOnce({
+          update: vi.fn(() => ({ eq: mockUpdateEq })),
+        });
 
       const result = await taskService.updateStatus('task-1', 'completed', 'Great work!');
 

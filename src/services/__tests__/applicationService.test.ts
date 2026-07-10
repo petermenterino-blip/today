@@ -66,13 +66,15 @@ describe('applicationService', () => {
 
   describe('submitApplication', () => {
     it('submits an application successfully', async () => {
-      mockFrom.mockReturnValue({
-        insert: vi.fn().mockResolvedValue({
-          data: [mockRow()],
-          error: null,
-        }),
-        select: vi.fn(),
-      });
+      const mockMaybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
+      const mockIn = vi.fn().mockReturnValue({ maybeSingle: mockMaybeSingle });
+      const mockEq = vi.fn().mockReturnValue({ in: mockIn });
+      const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
+
+      mockFrom
+        .mockReturnValueOnce({ select: mockSelect })
+        .mockReturnValueOnce({ insert: vi.fn().mockResolvedValue({ data: [mockRow()], error: null }) })
+        .mockReturnValueOnce({ select: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ limit: vi.fn().mockReturnValue({ maybeSingle: mockMaybeSingle }) }) }) });
 
       const result = await applicationService.submitApplication({
         user_email: 'test@mentorino.com',
@@ -100,13 +102,19 @@ describe('applicationService', () => {
     });
 
     it('returns error on submission failure', async () => {
-      mockFrom.mockReturnValue({
-        insert: vi.fn().mockResolvedValue({
-          data: null,
-          error: { message: 'Database error' },
-        }),
-        select: vi.fn(),
-      });
+      const mockMaybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
+      const mockIn = vi.fn().mockReturnValue({ maybeSingle: mockMaybeSingle });
+      const mockEq = vi.fn().mockReturnValue({ in: mockIn });
+      const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
+
+      mockFrom
+        .mockReturnValueOnce({ select: mockSelect })
+        .mockReturnValueOnce({
+          insert: vi.fn().mockResolvedValue({
+            data: null,
+            error: { message: 'Database error' },
+          }),
+        });
 
       const result = await applicationService.submitApplication({
         user_email: 'test@mentorino.com',
@@ -165,10 +173,21 @@ describe('applicationService', () => {
   describe('updateStatus', () => {
     it('updates application status to approved', async () => {
       const mockUpdateEq = vi.fn().mockResolvedValue({ error: null });
-      mockFrom.mockReturnValue({
-        update: vi.fn(() => ({ eq: mockUpdateEq })),
-        select: vi.fn(),
-      });
+
+      mockFrom
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({ data: { status: 'pending_review' }, error: null }),
+            }),
+          }),
+        })
+        .mockReturnValueOnce({
+          update: vi.fn(() => ({ eq: mockUpdateEq })),
+        })
+        .mockReturnValueOnce({
+          insert: vi.fn().mockResolvedValue({ error: null }),
+        });
 
       const result = await applicationService.updateStatus('app-1', 'approved');
 
@@ -177,10 +196,21 @@ describe('applicationService', () => {
 
     it('updates application status to rejected', async () => {
       const mockUpdateEq = vi.fn().mockResolvedValue({ error: null });
-      mockFrom.mockReturnValue({
-        update: vi.fn(() => ({ eq: mockUpdateEq })),
-        select: vi.fn(),
-      });
+
+      mockFrom
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({ data: { status: 'pending_review' }, error: null }),
+            }),
+          }),
+        })
+        .mockReturnValueOnce({
+          update: vi.fn(() => ({ eq: mockUpdateEq })),
+        })
+        .mockReturnValueOnce({
+          insert: vi.fn().mockResolvedValue({ error: null }),
+        });
 
       const result = await applicationService.updateStatus('app-1', 'rejected');
 
