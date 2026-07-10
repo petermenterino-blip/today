@@ -131,7 +131,7 @@ export const galleryService = {
     if (error) return { error: error.message };
 
     if (item?.image_url && item.image_url.startsWith('http')) {
-      storageService.delete('gallery-images', item.image_url).catch(() => {});
+      storageService.delete('gallery-images', item.image_url).catch((err) => console.error('[galleryService] Image deletion failed:', err));
     }
 
     return { error: null };

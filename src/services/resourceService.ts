@@ -101,7 +101,9 @@ export const resourceService = {
     if (error) return { data: null as Resource | null, error: handleError(error).error };
 
     const created = rowToResource(data);
-    this.notifyResourceCreated(created).catch(() => {});
+    this.notifyResourceCreated(created).catch((err) =>
+      console.error('[resourceService] Failed to notify resource created:', err)
+    );
 
     return { data: created, error: null };
   },
@@ -518,9 +520,9 @@ export const resourceService = {
       userId,
       title,
       message,
-      type: 'resource' as any,
+      type: 'system',
       link: link || '/resources',
-    }).catch(() => {});
+    }).catch((err) => console.error('[resourceService] Failed to send notification:', err));
   },
 
   async notifyResourceCreated(resource: Resource) {

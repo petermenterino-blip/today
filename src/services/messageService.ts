@@ -202,7 +202,7 @@ export const messageService = {
       logger.error('messageService', 'sendMessage: conversation update failed', { conversationId: msg.conversationId, error: updateError.message });
     }
 
-    try { localStorage.setItem('message_sync_ts', Date.now().toString()) } catch {}
+    try { localStorage.setItem('message_sync_ts', Date.now().toString()) } catch (e) { console.error('[messageService] localStorage write failed:', e); }
 
     return fromDbMessage(data);
   },

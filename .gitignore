@@ -11,12 +11,14 @@ node_modules
 dist
 dist-ssr
 *.local
-.env.local
 
 # Environment files (contain real secrets)
 .env
+.env.local
 .env.staging
+.env.production
 .env.local.bak
+.env.*.local
 
 # Editor directories and files
 .vscode/*
@@ -36,10 +38,12 @@ coverage/
 
 # Build cache
 tsconfig.tsbuildinfo
+tsconfig.node.tsbuildinfo
 
 # Build artifacts
 vite-err.txt
 vite-out.txt
+vite.config.d.ts
 
 # Test artifacts
 playwright-report/
@@ -48,5 +52,64 @@ test-results/
 # Playwright auth state (generated at runtime)
 playwright/.auth/*.json
 
+# Debug/test browser profiles
+_test_profile/
+_test_profile2/
+_test_profile3/
+_test_profile4/
+_test_profile5/
+
+# Screenshots and images (debug/QA artifacts)
+*.png
+*.jpg
+*.jpeg
+qa_screenshots/
+runtime-screenshots/
+
+# Debug/test scripts (root-level)
+_*.mjs
+_*.json
+test-*.mjs
+qa_*.cjs
+qa_*.json
+qa_seed.cjs
+
+# E2E debug files
+e2e/debug-*
+
+# Scripts with secrets or operational scripts
+scripts/debug-*.mjs
+scripts/debug-*.cjs
+scripts/verify-*.mjs
+scripts/verify_production.ts
+scripts/cleanup_*.ts
+scripts/probe_db.ts
+scripts/restore_*.ts
+scripts/quick-*.mjs
+scripts/runtime-*.mjs
+scripts/seed-staging.*
+scripts/seed-data.mjs
+
+# Network logs with captured credentials
+_netlog.json
+
 # Schema dumps
 _schema_dump.sql
+
+# Schema dumps and operational SQL (not needed in repo)
+_schema_dump.sql
+_schema_dump_*.sql
+clean_db.sql
+clear_realtime.sql
+drop_storage_policies.sql
+down_migration_*.sql
+
+# Reticle/development tools
+.reticle.json
+.opencode/
+
+# Temporary docs/reports at root level
+reborn/
+backups/
+codex/
+codex docs/

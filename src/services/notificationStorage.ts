@@ -52,7 +52,8 @@ export const notificationStorage = {
         return 0;
       }
       return count || 0;
-    } catch {
+    } catch (e) {
+      console.error('[notificationStorage] Count query failed:', e);
       return 0;
     }
   },

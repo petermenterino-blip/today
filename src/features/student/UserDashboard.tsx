@@ -108,8 +108,8 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
       setPrograms(progData);
     }
     studentService.getAll().then(setStudentProfiles);
-    studentProgressService.initCache();
-  }, []);
+    studentProgressService.initCache(currentUser?.id);
+  }, [currentUser?.id]);
 
   useEffect(() => {
     refreshProfilesAndPrograms();

@@ -132,10 +132,10 @@ export const sharedFilesService = {
 
     if (result.error || !result.data) throw new Error('Failed to save file record');
     
-    timelineService.autoLogFileShared(userId, file.name).catch(() => {});
+    timelineService.autoLogFileShared(userId, file.name).catch((err) => console.error('[sharedFilesService] File shared timeline failed:', err));
 
     if (mentorId) {
-      notify.fileShared(userId, mentorId, file.name).catch(() => {});
+      notify.fileShared(userId, mentorId, file.name).catch((err) => console.error('[sharedFilesService] File shared notification failed:', err));
     }
 
     return fromDb(result.data);

@@ -13,7 +13,7 @@ export const eventRsvpService = {
       .from('event_attendees')
       .insert({ event_id: eventId, user_id: userId, name, registration_status: 'confirmed' });
     if (error) return false;
-    try { localStorage.setItem('event_rsvp_sync', Date.now().toString()) } catch {}
+    try { localStorage.setItem('event_rsvp_sync', Date.now().toString()) } catch (e) { console.error('[eventRsvpService] localStorage write failed:', e); }
     return true;
   },
 
@@ -24,7 +24,7 @@ export const eventRsvpService = {
       .eq('event_id', eventId)
       .eq('user_id', userId);
     if (error) return false;
-    try { localStorage.setItem('event_rsvp_sync', Date.now().toString()) } catch {}
+    try { localStorage.setItem('event_rsvp_sync', Date.now().toString()) } catch (e) { console.error('[eventRsvpService] localStorage write failed:', e); }
     return true;
   },
 

@@ -67,7 +67,7 @@ export class GeminiProvider implements AIProviderInterface {
                 const parsed = JSON.parse(line);
                 if (parsed.token) { accumulated += parsed.token; options.onToken(parsed.token); }
                 if (parsed.error) throw new Error(parsed.error);
-              } catch { /* skip malformed */ }
+              } catch (e) { console.error('[aiProvider] Skipped malformed stream chunk:', e); }
             }
           }
         } finally {

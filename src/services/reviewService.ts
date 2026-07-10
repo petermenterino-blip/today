@@ -157,7 +157,7 @@ export const reviewService = {
       type: 'review_assigned',
       title: 'Review Assigned',
       description: `New review assigned: "${review.title}"`,
-    }).catch(() => {});
+    }).catch((err) => console.error('[reviewService] Failed to log timeline:', err));
 
     // Notification for student
     notificationStorage.create({
@@ -166,7 +166,7 @@ export const reviewService = {
       message: `You have a new review to complete: "${review.title}"`,
       type: 'review',
       link: '/student/reviews',
-    }).catch(() => {});
+    }).catch((err) => console.error('[reviewService] Failed to create notification:', err));
 
     return { data: reviewData, error: null };
   },
@@ -223,13 +223,13 @@ export const reviewService = {
         message: `"${current.title}" has been submitted for your review`,
         type: 'review',
         link: '/mentor?tab=feedback',
-      }).catch(() => {});
+      }).catch((err) => console.error('[reviewService] Failed to send submitted notification:', err));
       timelineService.create({
         student_id: current.student_id,
         type: 'review_submitted',
         title: 'Review Submitted',
         description: `Review submitted: "${current.title}"`,
-      }).catch(() => {});
+      }).catch((err) => console.error('[reviewService] Failed to log submitted timeline:', err));
     }
 
     if (newStatus === 'in_review') {
@@ -239,7 +239,7 @@ export const reviewService = {
         message: `Your mentor is reviewing "${current.title}"`,
         type: 'review',
         link: '/student/reviews',
-      }).catch(() => {});
+      }).catch((err) => console.error('[reviewService] Failed to send in-review notification:', err));
     }
 
     if (newStatus === 'completed') {
@@ -249,17 +249,19 @@ export const reviewService = {
         message: `Your review "${current.title}" has been completed with feedback`,
         type: 'review',
         link: '/student/reviews',
-      }).catch(() => {});
+      }).catch((err) => console.error('[reviewService] Failed to send completed notification:', err));
 
       timelineService.create({
         student_id: current.student_id,
         type: 'review_completed',
         title: 'Review Completed',
         description: `Review completed: "${current.title}"`,
-      }).catch(() => {});
+      }).catch((err) => console.error('[reviewService] Failed to log completed timeline:', err));
 
       if (current.program_id) {
-        studentProgressService.getProgress(current.student_id, current.program_id).catch(() => {});
+        studentProgressService.getProgress(current.student_id, current.program_id).catch((err) =>
+          console.error('[reviewService] Failed to update progress:', err)
+        );
       }
     }
 
@@ -269,7 +271,7 @@ export const reviewService = {
         type: 'review_archived',
         title: 'Review Archived',
         description: `Review archived: "${current.title}"`,
-      }).catch(() => {});
+      }).catch((err) => console.error('[reviewService] Failed to log archived timeline:', err));
     }
 
     return { data: updated, error: null };

@@ -2,6 +2,15 @@ import { supabase } from '../lib/supabase';
 import { ServiceResponse, User, UserRole } from '../types';
 import { handleError } from '../lib/serviceHelper';
 
+const PROFILE_QUERY_TIMEOUT = 5000;
+
+const queryWithTimeout = <T>(thenable: { then: (onfulfilled: (value: T) => any) => any }, ms: number): Promise<T> => {
+  const timeoutPromise = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error('Query timed out')), ms)
+  );
+  return Promise.race([Promise.resolve(thenable) as Promise<T>, timeoutPromise]);
+};
+
 export interface UserProfileDetails {
   id: string;
   email: string;
@@ -30,7 +39,38 @@ const hasSupabaseCredentials = (): boolean => {
   return true;
 };
 
+const buildFallbackProfile = (authUser: {
+  id: string;
+  email?: string | null;
+  created_at?: string;
+  user_metadata?: Record<string, any>;
+}) => ({
+  id: authUser.id,
+  email: authUser.email || '',
+  name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User',
+  role: (authUser.user_metadata?.role as UserRole) || 'student',
+  avatar_url: '',
+  application_status: null,
+  created_at: authUser.created_at || new Date().toISOString(),
+});
+
+const pendingProfileFetches = new Map<string, Promise<any>>();
+
 const getOrCreateProfileForUser = async (authUser: {
+  id: string;
+  email?: string | null;
+  created_at?: string;
+  user_metadata?: Record<string, any>;
+}) => {
+  const existing = pendingProfileFetches.get(authUser.id);
+  if (existing) return existing;
+  const promise = doGetOrCreateProfile(authUser);
+  pendingProfileFetches.set(authUser.id, promise);
+  promise.finally(() => pendingProfileFetches.delete(authUser.id));
+  return promise;
+};
+
+const doGetOrCreateProfile = async (authUser: {
   id: string;
   email?: string | null;
   created_at?: string;
@@ -39,53 +79,53 @@ const getOrCreateProfileForUser = async (authUser: {
   const fallbackRole = (authUser.user_metadata?.role as UserRole) || 'student';
   const fallbackName = authUser.user_metadata?.full_name || authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User';
 
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('id,name,email,role,avatar_url,application_status,created_at')
-    .eq('id', authUser.id)
-    .single();
+  try {
+    const { data: profile, error: profileError } = await queryWithTimeout(
+      supabase
+        .from('profiles')
+        .select('id,name,email,role,avatar_url,application_status,created_at')
+        .eq('id', authUser.id)
+        .single(),
+      PROFILE_QUERY_TIMEOUT
+    );
 
-  if (profile) return profile;
-  if (profileError && profileError.code !== 'PGRST116') throw profileError;
+    if (profile) return profile;
+    if (profileError && profileError.code !== 'PGRST116') throw profileError;
 
-  const { data: createdProfile, error: createError } = await supabase
-    .from('profiles')
-    .insert({
-      id: authUser.id,
-      email: authUser.email || '',
-      name: fallbackName,
-      role: fallbackRole,
-      created_at: authUser.created_at || new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .select()
-    .single();
+    const { data: createdProfile, error: createError } = await queryWithTimeout(
+      supabase
+        .from('profiles')
+        .insert({
+          id: authUser.id,
+          email: authUser.email || '',
+          name: fallbackName,
+          role: fallbackRole,
+          created_at: authUser.created_at || new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .select()
+        .single(),
+      PROFILE_QUERY_TIMEOUT
+    );
 
-  if (createError && createError.code !== '23505') throw createError;
-  if (createError?.code === '23505') {
-    const { data: existingProfile } = await supabase
-      .from('profiles')
-      .select('id,name,email,role,avatar_url,application_status,created_at')
-      .eq('id', authUser.id)
-      .single();
-    return existingProfile || {
-      id: authUser.id,
-      email: authUser.email || '',
-      name: fallbackName,
-      role: fallbackRole,
-      created_at: authUser.created_at || new Date().toISOString(),
-      application_status: null,
-    };
+    if (createError && createError.code !== '23505') throw createError;
+    if (createError?.code === '23505') {
+      const { data: existingProfile } = await queryWithTimeout(
+        supabase
+          .from('profiles')
+          .select('id,name,email,role,avatar_url,application_status,created_at')
+          .eq('id', authUser.id)
+          .single(),
+        PROFILE_QUERY_TIMEOUT
+      );
+      return existingProfile || buildFallbackProfile(authUser);
+    }
+
+    return createdProfile || buildFallbackProfile(authUser);
+  } catch (err) {
+    console.warn('[authService] Profile query failed, using auth metadata fallback:', err);
+    return buildFallbackProfile(authUser);
   }
-
-  return createdProfile || {
-    id: authUser.id,
-    email: authUser.email || '',
-    name: fallbackName,
-    role: fallbackRole,
-    created_at: authUser.created_at || new Date().toISOString(),
-    application_status: null,
-  };
 };
 
 // ===================== Auth Service =====================
@@ -180,25 +220,43 @@ export const authService = {
       return { data: null, error: 'Supabase not configured.' };
     }
 
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('id,name,email,role,avatar_url,application_status,created_at,phone,bio,specialization')
-      .eq('id', userId)
-      .single();
+    try {
+      const { data: profile, error } = await queryWithTimeout(
+        supabase
+          .from('profiles')
+          .select('id,name,email,role,avatar_url,application_status,created_at,phone,bio,specialization')
+          .eq('id', userId)
+          .single(),
+        PROFILE_QUERY_TIMEOUT
+      );
 
-    if (error) return { data: null, error: handleError(error).error };
+      if (error) throw error;
 
-    const userData: User & { profile?: UserProfileDetails } = {
-      id: userId,
-      email: profile?.email || email,
-      name: profile?.name || email.split('@')[0],
-      role: (profile?.role as UserRole) || 'visitor',
-      application_status: profile?.application_status || null,
-      created_at: profile?.created_at || new Date().toISOString(),
-      profile: profile ? { ...profile, first_name: profile.name || '', last_name: '' } as any : undefined,
-    };
+      const userData: User & { profile?: UserProfileDetails } = {
+        id: userId,
+        email: profile?.email || email,
+        name: profile?.name || email.split('@')[0],
+        role: (profile?.role as UserRole) || 'visitor',
+        application_status: profile?.application_status || null,
+        created_at: profile?.created_at || new Date().toISOString(),
+        profile: profile ? { ...profile, first_name: profile.name || '', last_name: '' } as any : undefined,
+      };
 
-    return { data: userData, error: null };
+      return { data: userData, error: null };
+    } catch (err) {
+      console.warn('[authService] getFullProfile failed, returning minimal profile:', err);
+      return {
+        data: {
+          id: userId,
+          email,
+          name: email.split('@')[0],
+          role: 'visitor' as UserRole,
+          application_status: null,
+          created_at: new Date().toISOString(),
+        },
+        error: null,
+      };
+    }
   },
 
   async resetPassword(email: string): Promise<ServiceResponse<void>> {
@@ -256,7 +314,7 @@ export const authService = {
                 application_status: profile.application_status || null,
               });
             }
-          }).catch(() => {}).finally(() => {
+          }).catch((err) => console.error('[authService] Profile callback failed:', err)).finally(() => {
             pendingCallbacks.delete(userId);
           });
         }

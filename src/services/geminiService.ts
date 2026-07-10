@@ -10,7 +10,8 @@ export const chatWithAssistant = async (
     };
     const response = await edgeFunctionService.gemini(message, 'chat', context);
     return response || "I'm not sure how to respond to that. Could you rephrase?";
-  } catch {
+  } catch (e) {
+    console.error('[geminiService] Chat failed:', e);
     return "I'm sorry, I'm experiencing some technical difficulties. Please try again.";
   }
 };

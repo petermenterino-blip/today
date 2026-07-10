@@ -5,6 +5,7 @@ import { crmInitializationService } from './crmInitializationService';
 import { Application, ServiceResponse } from '../types';
 import { handleError } from '../lib/serviceHelper';
 import { features } from '../config/features';
+import { notify } from './notificationService';
 
 const AUTH_SIGNUP_DISABLED = !import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY;
 
@@ -48,7 +49,7 @@ function rowToApplication(row: any): Application {
     } else if (row.reason_for_applying && typeof row.reason_for_applying === 'object') {
       extras = row.reason_for_applying;
     }
-  } catch {}
+  } catch (e) { console.error('[applicationService] Failed to parse reason_for_applying:', e); }
 
   let mappedStatus: 'pending' | 'approved' | 'rejected' = 'pending';
   if (row.status === 'approved' || row.status === 'invited') mappedStatus = 'approved';
@@ -145,6 +146,18 @@ export const applicationService = {
         return { data: null, error: 'Please write at least 50 words describing your goals.' };
       }
     }
+
+    // Duplicate application prevention
+    const { data: existing } = await supabase
+      .from('applications')
+      .select('id, status')
+      .eq('email', (app.user_email || '').toLowerCase())
+      .in('status', ['pending_review', 'more_info_needed'])
+      .maybeSingle();
+    if (existing) {
+      return { data: null, error: 'You already have a pending application. Please wait for a response from the mentor.' };
+    }
+
     const nameParts = (app.full_name || '').trim().split(/\s+/);
     const first_name = nameParts[0] || '';
     const last_name = nameParts.slice(1).join(' ') || 'Applicant';
@@ -192,17 +205,62 @@ export const applicationService = {
       app.user_email,
       'Application Received - Mentorino',
       `<h1>Thanks, ${escHtml(app.full_name)}!</h1><p>Your application for <strong>Mentorino Program</strong> has been received. We will review it and get back to you within 48 hours.</p><p>Best,<br/>The Mentorino Team</p>`
-    ).catch(() => {});
+    ).catch((err) => console.error('[applicationService] Failed to send application received email:', err));
+
+    // Notify mentor of new application
+    (async () => {
+      const { data: mentorProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('role', 'mentor')
+        .limit(1)
+        .maybeSingle();
+      if (mentorProfile) {
+        notify.applicationReceived(mentorProfile.id, app.full_name).catch((err) =>
+          console.error('[applicationService] Failed to notify mentor of new application:', err)
+        );
+      }
+    })();
 
     return { data: submitted, error: null };
   },
 
   async updateStatus(id: string, status: 'approved' | 'rejected'): Promise<ServiceResponse<void>> {
+    const { data: current, error: fetchError } = await supabase
+      .from('applications')
+      .select('status')
+      .eq('id', id)
+      .single();
+    if (fetchError) return { data: undefined, error: handleError(fetchError).error };
+    if (!current) return { data: undefined, error: 'Application not found' };
+
+    const validTransitions: Record<string, string[]> = {
+      pending_review: ['approved', 'rejected', 'more_info_needed'],
+      more_info_needed: ['pending_review', 'approved', 'rejected'],
+      approved: ['invited'],
+      invited: [],
+      rejected: [],
+    };
+
+    const allowed = validTransitions[current.status];
+    if (!allowed || !allowed.includes(status)) {
+      return { data: undefined, error: `Cannot transition from ${current.status} to ${status}` };
+    }
+
     const { error } = await supabase
       .from('applications')
       .update({ status, updated_at: new Date().toISOString() })
       .eq('id', id);
     if (error) return { data: undefined, error: handleError(error).error };
+
+    // Audit trail
+    const { error: noteError } = await supabase.from('application_notes').insert({
+      application_id: id,
+      author_id: 'system',
+      content: `Status changed from ${current.status} to ${status}`,
+    });
+    if (noteError) console.error('[applicationService] Failed to create audit note:', noteError);
+
     return { data: undefined, error: null };
   },
 
@@ -321,8 +379,8 @@ export const applicationService = {
         feedback: feedback || reason,
         programTitle: 'Mentorino Program',
       });
-    } catch {
-      // Email send failure does not block the rejection
+    } catch (e) {
+      console.error('[applicationService] Email send failure does not block the rejection:', e);
     }
 
     return { data: undefined, error: null };
@@ -431,8 +489,8 @@ export const applicationService = {
           programId: programId || extras?.program_id || null,
           focusArea: app.focus_area || extras?.focus_area || null,
         });
-      } catch {
-        // CRM initialization failure does not block the approval
+      } catch (e) {
+        console.error('[applicationService] CRM initialization failure does not block the approval:', e);
       }
     }
 
@@ -442,8 +500,8 @@ export const applicationService = {
         email,
         tempPassword,
       });
-    } catch {
-      // Email send failure does not block the invitation
+    } catch (e) {
+      console.error('[applicationService] Welcome email failure does not block the invitation:', e);
     }
 
     window.dispatchEvent(new Event('user-profile-changed'));

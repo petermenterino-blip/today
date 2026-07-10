@@ -55,7 +55,7 @@ const AppContent: React.FC = () => {
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/gallery" element={<GalleryPage />} />
             <Route path="/mentorship" element={<MentorshipPage />} />
-            <Route path="/auth" element={user ? <Navigate to="/dashboard" /> : <AuthPage />} />
+            <Route path="/auth" element={user ? <Navigate to={role === 'mentor' ? '/mentor' : '/student'} /> : <AuthPage />} />
             <Route path="/pending-approval" element={<PendingApproval />} />
             <Route path="/booking" element={<BookingPage />} />
             <Route path="/book-call" element={<BookingPage />} />

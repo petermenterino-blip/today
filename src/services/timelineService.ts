@@ -76,126 +76,126 @@ export const timelineService = {
     await this.create({
       student_id: studentId, type: 'goal_created', title: 'Goal Created',
       description: `New goal created: "${title}"`, mentor_id: mentorId, category: 'goals',
-    }).catch(() => {});
+    }).catch((err) => console.error('[timelineService] Timeline event creation failed:', err));
   },
 
   async autoLogGoalUpdated(studentId: string, title: string, mentorId?: string): Promise<void> {
     await this.create({
       student_id: studentId, type: 'goal_updated', title: 'Goal Updated',
       description: `Goal updated: "${title}"`, mentor_id: mentorId, category: 'goals',
-    }).catch(() => {});
+    }).catch((err) => console.error('[timelineService] Timeline event creation failed:', err));
   },
 
   async autoLogGoalCompleted(studentId: string, title: string, mentorId?: string): Promise<void> {
     await this.create({
       student_id: studentId, type: 'goal_completed', title: 'Goal Completed',
       description: `Goal achieved: "${title}"`, mentor_id: mentorId, category: 'goals',
-    }).catch(() => {});
+    }).catch((err) => console.error('[timelineService] Timeline event creation failed:', err));
   },
 
   async autoLogTaskAssigned(studentId: string, title: string, mentorId?: string): Promise<void> {
     await this.create({
       student_id: studentId, type: 'task_assigned', title: 'Task Assigned',
       description: `New task assigned: "${title}"`, mentor_id: mentorId, category: 'tasks',
-    }).catch(() => {});
+    }).catch((err) => console.error('[timelineService] Timeline event creation failed:', err));
   },
 
   async autoLogTaskCompleted(studentId: string, title: string, mentorId?: string): Promise<void> {
     await this.create({
       student_id: studentId, type: 'task_completed', title: 'Task Completed',
       description: `Task completed: "${title}"`, mentor_id: mentorId, category: 'tasks',
-    }).catch(() => {});
+    }).catch((err) => console.error('[timelineService] Timeline event creation failed:', err));
   },
 
   async autoLogTaskUpdated(studentId: string, title: string, mentorId?: string): Promise<void> {
     await this.create({
       student_id: studentId, type: 'task_updated', title: 'Task Updated',
       description: `Task updated: "${title}"`, mentor_id: mentorId, category: 'tasks',
-    }).catch(() => {});
+    }).catch((err) => console.error('[timelineService] Timeline event creation failed:', err));
   },
 
   async autoLogSessionScheduled(studentId: string, title: string, mentorId?: string): Promise<void> {
     await this.create({
       student_id: studentId, type: 'session_scheduled', title: 'Session Scheduled',
       description: `Session scheduled: "${title}"`, mentor_id: mentorId, category: 'sessions',
-    }).catch(() => {});
+    }).catch((err) => console.error('[timelineService] Timeline event creation failed:', err));
   },
 
   async autoLogSessionCompleted(studentId: string, title: string, mentorId?: string): Promise<void> {
     await this.create({
       student_id: studentId, type: 'session_completed', title: 'Session Completed',
       description: `Session completed: "${title}"`, mentor_id: mentorId, category: 'sessions',
-    }).catch(() => {});
+    }).catch((err) => console.error('[timelineService] Timeline event creation failed:', err));
   },
 
   async autoLogSessionRescheduled(studentId: string, title: string, mentorId?: string): Promise<void> {
     await this.create({
       student_id: studentId, type: 'session_rescheduled', title: 'Session Rescheduled',
       description: `Session rescheduled: "${title}"`, mentor_id: mentorId, category: 'sessions',
-    }).catch(() => {});
+    }).catch((err) => console.error('[timelineService] Timeline event creation failed:', err));
   },
 
   async autoLogSessionCancelled(studentId: string, title: string, mentorId?: string): Promise<void> {
     await this.create({
       student_id: studentId, type: 'session_cancelled', title: 'Session Cancelled',
       description: `Session cancelled: "${title}"`, mentor_id: mentorId, category: 'sessions',
-    }).catch(() => {});
+    }).catch((err) => console.error('[timelineService] Timeline event creation failed:', err));
   },
 
   async autoLogFormSent(studentId: string, formTitle: string, mentorId?: string): Promise<void> {
     await this.create({
       student_id: studentId, type: 'form_sent', title: 'Form Sent',
       description: `Form assigned: "${formTitle}"`, mentor_id: mentorId, category: 'forms',
-    }).catch(() => {});
+    }).catch((err) => console.error('[timelineService] Timeline event creation failed:', err));
   },
 
   async autoLogFormSubmitted(studentId: string, formTitle: string): Promise<void> {
     await this.create({
       student_id: studentId, type: 'form_submitted', title: 'Form Submitted',
       description: `Form submitted: "${formTitle}"`, category: 'forms',
-    }).catch(() => {});
+    }).catch((err) => console.error('[timelineService] Timeline event creation failed:', err));
   },
 
   async autoLogFileShared(studentId: string, fileName: string, mentorId?: string): Promise<void> {
     await this.create({
       student_id: studentId, type: 'file_shared', title: 'File Shared',
       description: `File shared: "${fileName}"`, mentor_id: mentorId, category: 'resources',
-    }).catch(() => {});
+    }).catch((err) => console.error('[timelineService] Timeline event creation failed:', err));
   },
 
   async autoLogCredentialIssued(studentId: string, credentialTitle: string, mentorId?: string): Promise<void> {
     await this.create({
       student_id: studentId, type: 'credential_issued', title: 'Credential Issued',
       description: `Credential issued: "${credentialTitle}"`, mentor_id: mentorId, category: 'credentials',
-    }).catch(() => {});
+    }).catch((err) => console.error('[timelineService] Timeline event creation failed:', err));
   },
 
   async autoLogCredentialRevoked(studentId: string, credentialTitle: string, mentorId?: string): Promise<void> {
     await this.create({
       student_id: studentId, type: 'credential_revoked', title: 'Credential Revoked',
       description: `Credential revoked: "${credentialTitle}"`, mentor_id: mentorId, category: 'credentials',
-    }).catch(() => {});
+    }).catch((err) => console.error('[timelineService] Timeline event creation failed:', err));
   },
 
   async autoLogApplicationSubmitted(studentId: string, mentorId?: string): Promise<void> {
     await this.create({
       student_id: studentId, type: 'application_submitted', title: 'Application Submitted',
       description: 'Application has been submitted for review.', mentor_id: mentorId, category: 'applications',
-    }).catch(() => {});
+    }).catch((err) => console.error('[timelineService] Timeline event creation failed:', err));
   },
 
   async autoLogApplicationApproved(studentId: string, mentorId?: string): Promise<void> {
     await this.create({
       student_id: studentId, type: 'application_approved', title: 'Application Approved',
       description: 'Application has been accepted.', mentor_id: mentorId, category: 'applications',
-    }).catch(() => {});
+    }).catch((err) => console.error('[timelineService] Timeline event creation failed:', err));
   },
 
   async autoLogin(studentId: string): Promise<void> {
     await this.create({
       student_id: studentId, type: 'student_login', title: 'Student Login',
       description: 'Student logged into their account.', category: 'activity',
-    }).catch(() => {});
+    }).catch((err) => console.error('[timelineService] Timeline event creation failed:', err));
   },
 
   async addMentorNote(studentId: string, note: string, mentorId?: string): Promise<TimelineEvent | null> {

@@ -227,7 +227,8 @@ export const crmInitializationService = {
       }
 
       return true;
-    } catch {
+    } catch (e) {
+      console.error('[crmInitializationService] CRM initialization failed:', e);
       return false;
     }
   },

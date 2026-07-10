@@ -60,6 +60,21 @@ export const sessionService = {
 
   async insert(session: Omit<Session, 'id'>): Promise<ServiceResponse<Session>> {
     const row = sessionToRow(session);
+
+    // Conflict detection — prevent overlapping sessions for the same mentor
+    if (session.mentorId && session.startTime && session.endTime) {
+      const { data: conflicting } = await supabase
+        .from('sessions')
+        .select('id')
+        .eq('mentor_id', session.mentorId)
+        .neq('status', 'cancelled')
+        .or(`start_time.lte.${session.endTime},end_time.gte.${session.startTime}`)
+        .limit(1);
+      if (conflicting && conflicting.length > 0) {
+        return { data: null, error: 'This time slot conflicts with an existing session.' };
+      }
+    }
+
     const { data, error } = await supabase
       .from('sessions')
       .insert(row)
@@ -67,8 +82,12 @@ export const sessionService = {
       .single();
     if (error) return { data: null, error: handleError(error).error };
     const created = rowToSession(data);
-    notify.sessionScheduled(created.studentId, created.mentorId, created.title, created.startTime).catch(() => {});
-    timelineService.autoLogSessionScheduled(created.studentId, created.title, created.mentorId).catch(() => {});
+    notify.sessionScheduled(created.studentId, created.mentorId, created.title, created.startTime).catch((err) =>
+      console.error('[sessionService] Failed to send session notification:', err)
+    );
+    timelineService.autoLogSessionScheduled(created.studentId, created.title, created.mentorId).catch((err) =>
+      console.error('[sessionService] Failed to log session timeline:', err)
+    );
     return { data: created, error: null };
   },
 
@@ -85,8 +104,12 @@ export const sessionService = {
 
     const updated = rowToSession(data);
     if (session.startTime) {
-      notify.sessionRescheduled(updated.studentId, updated.mentorId, updated.title, updated.startTime).catch(() => {});
-      timelineService.autoLogSessionRescheduled(updated.studentId, updated.title, updated.mentorId).catch(() => {});
+      notify.sessionRescheduled(updated.studentId, updated.mentorId, updated.title, updated.startTime).catch((err) =>
+        console.error('[sessionService] Failed to send reschedule notification:', err)
+      );
+      timelineService.autoLogSessionRescheduled(updated.studentId, updated.title, updated.mentorId).catch((err) =>
+        console.error('[sessionService] Failed to log reschedule timeline:', err)
+      );
     }
     return { data: updated, error: null };
   },
@@ -106,8 +129,12 @@ export const sessionService = {
     if (error) return { data: undefined, error: handleError(error).error };
 
     if (old) {
-      notify.sessionCancelled(old.student_id, old.mentor_id, old.title).catch(() => {});
-      timelineService.autoLogSessionCancelled(old.student_id, old.title, old.mentor_id).catch(() => {});
+      notify.sessionCancelled(old.student_id, old.mentor_id, old.title).catch((err) =>
+        console.error('[sessionService] Failed to send cancellation notification:', err)
+      );
+      timelineService.autoLogSessionCancelled(old.student_id, old.title, old.mentor_id).catch((err) =>
+        console.error('[sessionService] Failed to log cancellation timeline:', err)
+      );
     }
     return { data: undefined, error: null };
   }

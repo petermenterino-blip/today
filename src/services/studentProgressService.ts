@@ -30,8 +30,8 @@ let progressCache: StudentProgress[] = [];
 let progressCacheMap = new Map<string, StudentProgress>();
 
 export const studentProgressService = {
-  async initCache(): Promise<void> {
-    const records = await this.getProgressBatch();
+  async initCache(userId?: string): Promise<void> {
+    const records = userId ? await this.getProgressBatch([userId]) : await this.getProgressBatch();
     progressCache = records;
     progressCacheMap = new Map();
     records.forEach(r => {

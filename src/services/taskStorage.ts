@@ -83,7 +83,7 @@ export const taskStorage = {
     );
     if (result.error || !result.data) throw new Error(interpretError(result.error));
     const task = rowToActionItem(result.data);
-    notify.taskAssigned(task.studentId, task.mentorId, task.title).catch(() => {});
+    notify.taskAssigned(task.studentId, task.mentorId, task.title).catch((err) => console.error('[taskStorage] Task assigned notification failed:', err));
     return task;
   },
 
@@ -104,7 +104,7 @@ export const taskStorage = {
     if (updates.status === 'completed') {
       const current = await this.getById(id);
       if (current) {
-        notify.taskCompleted(current.studentId, current.mentorId, current.title).catch(() => {});
+        notify.taskCompleted(current.studentId, current.mentorId, current.title).catch((err) => console.error('[taskStorage] Task completed notification failed:', err));
       }
     }
     return this.getById(id);
@@ -122,7 +122,7 @@ export const taskStorage = {
 
   async seed(items: ActionItem[]): Promise<void> {
     for (const item of items) {
-      try { await this.create(item); } catch {}
+      try { await this.create(item); } catch (e) { console.error('[taskStorage] Seed failed:', e); }
     }
   },
 };

@@ -1,6 +1,9 @@
 import { supabase } from '../lib/supabase';
 import { ServiceResponse, TaskActivity } from '../types';
 import { handleError } from '../lib/serviceHelper';
+import { notify } from './notificationService';
+import { timelineService } from './timelineService';
+import { edgeFunctionService } from './edgeFunctionService';
 
 function rowToTaskActivity(row: any): TaskActivity {
   return {
@@ -65,10 +68,42 @@ export const taskService = {
       .select()
       .single();
     if (error) return { data: null, error: handleError(error).error };
-    return { data: rowToTaskActivity(data), error: null };
+    const created = rowToTaskActivity(data);
+
+    // Notify student of new task
+    notify.taskAssigned(created.user_id, created.mentor_id, created.task_title).catch((err) =>
+      console.error('[taskService] Failed to send task assignment notification:', err)
+    );
+    // Timeline entry
+    timelineService.autoLogTaskAssigned(created.user_id, created.task_title, created.mentor_id).catch((err) =>
+      console.error('[taskService] Failed to log task timeline:', err)
+    );
+    // Email notification for task assignment
+    (async () => {
+      const { data: student } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', created.user_id)
+        .single();
+      if (student?.email) {
+        edgeFunctionService.sendCustomEmail(
+          student.email,
+          'New Task Assigned',
+          `<h2>New Task: ${created.task_title}</h2><p>You have been assigned a new task: <strong>${created.task_title}</strong>.</p><p>Due: ${created.due_date || 'No deadline'}</p><p>Log in to Mentorino to view and complete it.</p>`
+        ).catch((err) => console.error('[taskService] Failed to send task assigned email:', err));
+      }
+    })();
+
+    return { data: created, error: null };
   },
 
   async updateStatus(id: string, status: TaskActivity['status'], response?: string): Promise<ServiceResponse<void>> {
+    const { data: current } = await supabase
+      .from('tasks')
+      .select('student_id, mentor_id, title')
+      .eq('id', id)
+      .single();
+
     const updates: Record<string, any> = { status, updated_at: new Date().toISOString() };
     if (response !== undefined) {
       updates.mentor_response = response;
@@ -76,6 +111,16 @@ export const taskService = {
     }
     const { error } = await supabase.from('tasks').update(updates).eq('id', id);
     if (error) return { data: undefined, error: handleError(error).error };
+
+    if (current && (status === 'completed' || status === 'submitted')) {
+      notify.taskCompleted(current.student_id, current.mentor_id, current.title).catch((err) =>
+        console.error('[taskService] Failed to send task completion notification:', err)
+      );
+      timelineService.autoLogTaskCompleted(current.student_id, current.title, current.mentor_id).catch((err) =>
+        console.error('[taskService] Failed to log task completion timeline:', err)
+      );
+    }
+
     return { data: undefined, error: null };
   },
 

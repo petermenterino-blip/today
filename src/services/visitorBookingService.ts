@@ -103,6 +103,8 @@ const SNAKE_TO_CAMEL: Record<string, string> = {
   booking_id: 'bookingId',
   mentor_id: 'mentorId',
   created_by: 'createdBy',
+  payment_status: 'paymentStatus',
+  payment_notes: 'paymentNotes',
 };
 
 function rowToVisitorBooking(row: any): VisitorBooking {
@@ -154,9 +156,24 @@ function rowToTimelineEntry(row: any): BookingTimelineEntry {
 export const visitorBookingService = {
   async submit(booking: Omit<VisitorBooking, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt' | 'status' | 'stats'>): Promise<ServiceResponse<VisitorBooking>> {
     try {
+      // Conflict detection — prevent double-booking same time slot
+      const { data: conflicting } = await supabase
+        .from('visitor_bookings')
+        .select('id')
+        .eq('date', booking.date)
+        .eq('time', booking.time)
+        .in('status', ['new', 'contacted', 'awaiting_confirmation', 'scheduled'])
+        .maybeSingle();
+      if (conflicting) {
+        return { data: null, error: 'This time slot is already booked. Please choose another time.' };
+      }
+
       const row = bookingToRow(booking as any);
       row.status = 'new';
       row.priority = booking.priority || 'medium';
+      if (booking.callType === 'rapid') {
+        row.payment_status = 'pending';
+      }
       const { data, error } = await supabase
         .from('visitor_bookings')
         .insert(row)
@@ -172,7 +189,9 @@ export const visitorBookingService = {
         metadata: { visitorEmail: created.visitorEmail, callType: created.callType },
       });
 
-      notify.bookingConfirmed(created.assignedMentorId || 'system', created.assignedMentorId || 'system', created.date, created.time).catch(() => {});
+      notify.bookingConfirmed(created.assignedMentorId || 'system', created.assignedMentorId || 'system', created.date, created.time).catch((err) =>
+        console.error('[visitorBookingService] Failed to send booking notification:', err)
+      );
 
       return { data: created, error: null };
     } catch (err: any) {
@@ -233,7 +252,7 @@ export const visitorBookingService = {
     try {
       const { data, error } = await supabase
         .from('visitor_bookings')
-        .select('id,name,email,phone,date,time,status,service_type,message,assigned_mentor_id,assigned_mentor_name,created_at,updated_at,deleted_at,metadata')
+        .select('id,visitor_name,visitor_email,visitor_phone,company,student_professional,call_type,preferred_mentor,program_of_interest,meeting_type,date,time,timezone,message,source_page,status,priority,assigned_mentor_id,assigned_mentor_name,internal_notes,notes,payment_status,payment_notes,deleted_at,created_at,updated_at')
         .eq('id', id)
         .single();
       if (error) return { data: null, error: handleError(error).error };
@@ -262,7 +281,9 @@ export const visitorBookingService = {
       if (updates.status && updates.status !== existing.data.status) {
         timelineMeta.oldStatus = existing.data.status;
         timelineMeta.newStatus = updates.status;
-        notify.bookingConfirmed(id, existing.data.assignedMentorId || 'system', existing.data.date, existing.data.time).catch(() => {});
+        notify.bookingConfirmed(id, existing.data.assignedMentorId || 'system', existing.data.date, existing.data.time).catch((err) =>
+          console.error('[visitorBookingService] Failed to send booking update notification:', err)
+        );
       }
       await supabase.from('booking_timeline').insert({
         booking_id: id,
@@ -443,7 +464,7 @@ export const visitorBookingService = {
           student_id: studentId,
           program_id: programOfInterest,
           enrolled_at: new Date().toISOString(),
-        }).maybeSingle();
+        });
       }
 
       const { data, error } = await supabase
@@ -461,6 +482,46 @@ export const visitorBookingService = {
         metadata: { studentId, visitorEmail },
       });
 
+      return { data: rowToVisitorBooking(data), error: null };
+    } catch (err: any) {
+      return { data: null, error: handleError(err).error };
+    }
+  },
+
+  async markPaymentCollected(bookingId: string): Promise<ServiceResponse<VisitorBooking>> {
+    try {
+      const { data, error } = await supabase
+        .from('visitor_bookings')
+        .update({ payment_status: 'collected', updated_at: new Date().toISOString() })
+        .eq('id', bookingId)
+        .select()
+        .single();
+      if (error) return { data: null, error: handleError(error).error };
+      await supabase.from('booking_timeline').insert({
+        booking_id: bookingId,
+        action: 'payment_collected',
+        description: 'Payment marked as collected',
+      });
+      return { data: rowToVisitorBooking(data), error: null };
+    } catch (err: any) {
+      return { data: null, error: handleError(err).error };
+    }
+  },
+
+  async markPaymentWaived(bookingId: string): Promise<ServiceResponse<VisitorBooking>> {
+    try {
+      const { data, error } = await supabase
+        .from('visitor_bookings')
+        .update({ payment_status: 'waived', updated_at: new Date().toISOString() })
+        .eq('id', bookingId)
+        .select()
+        .single();
+      if (error) return { data: null, error: handleError(error).error };
+      await supabase.from('booking_timeline').insert({
+        booking_id: bookingId,
+        action: 'payment_waived',
+        description: 'Payment was waived',
+      });
       return { data: rowToVisitorBooking(data), error: null };
     } catch (err: any) {
       return { data: null, error: handleError(err).error };

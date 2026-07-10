@@ -125,7 +125,7 @@ export const goalStorage = {
           .eq('student_id', current.data.student_id)
           .maybeSingle();
         const mentorId: string = (enrollment as any)?.program?.mentor_id || '';
-        notify.goalCompleted(current.data.student_id, mentorId, current.data.title).catch(() => {});
+        notify.goalCompleted(current.data.student_id, mentorId, current.data.title).catch((err) => console.error('[goalStorage] Goal completed notification failed:', err));
       }
     }
     return this.getById(id);

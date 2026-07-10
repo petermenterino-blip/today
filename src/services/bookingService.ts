@@ -111,7 +111,9 @@ export const bookingService = {
       .single();
     if (error) return { data: null, error: handleError(error).error };
     const created = rowToBooking(data);
-    notify.bookingConfirmed(created.user_id, created.mentor_id || '', created.date, created.time).catch(() => {});
+    notify.bookingConfirmed(created.user_id, created.mentor_id || '', created.date, created.time).catch((err) =>
+      console.error('[bookingService] Failed to send booking notification:', err)
+    );
     return { data: created, error: null };
   },
 };
