@@ -143,4 +143,8 @@ export const notify = {
   async attendanceRecorded(userId: string, eventTitle: string, status: string): Promise<void> {
     await notificationStorage.create({ userId, title: 'Attendance Recorded', message: `Your attendance for "${eventTitle}" has been marked as ${status}.`, type: 'event', read: false });
   },
+
+  async messageReceived(userId: string, senderName: string, preview: string): Promise<void> {
+    await notificationStorage.create({ userId, title: `New message from ${senderName}`, message: preview, type: 'message', read: false });
+  },
 };

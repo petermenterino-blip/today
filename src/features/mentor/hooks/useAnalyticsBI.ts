@@ -174,7 +174,7 @@ export function useAnalyticsBI({ currentUser }: UseAnalyticsBIProps) {
   const { goals, loading: goalsLoading } = useGoals();
   const { taskActivities: tasks, loading: tasksLoading } = useTasks();
   const { journals, loading: journalsLoading } = useJournals();
-  const { notifications, unreadCount } = useNotifications();
+  const { notifications, unreadCount } = useNotifications(userId);
 
   const [enrollments, setEnrollments] = useState<any[]>([]);
   const [studentProgress, setStudentProgress] = useState<any[]>([]);

@@ -63,7 +63,9 @@ class StorageService {
   }
 
   async delete(bucket: BucketName, url: string): Promise<void> {
-    const path = url.split('/').slice(-2).join('/');
+    const cleanUrl = url.split('?')[0];
+    const parts = cleanUrl.split('/');
+    const path = parts.slice(-2).join('/');
     const { error } = await supabase.storage.from(bucket).remove([path]);
     if (error) throw error;
   }

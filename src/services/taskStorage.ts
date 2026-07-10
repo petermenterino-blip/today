@@ -93,12 +93,13 @@ export const taskStorage = {
       row.updated_at = new Date().toISOString();
       const result = await safeMutate(
         'taskStorage.update',
-        () => supabase.from('tasks').update(row).eq('id', id),
+        () => supabase.from('tasks').update(row).eq('id', id).select().single(),
         'tasks',
       );
       if (result.error) {
-        console.warn('taskStorage.update:', interpretError(result.error));
-        return null;
+        const msg = interpretError(result.error);
+        console.error('[taskStorage] Update failed:', msg);
+        throw new Error(msg);
       }
     }
     if (updates.status === 'completed') {
@@ -116,8 +117,12 @@ export const taskStorage = {
       () => supabase.from('tasks').delete().eq('id', id),
       'tasks',
     );
-    if (result.error) console.warn('taskStorage.delete:', interpretError(result.error));
-    return !result.error;
+    if (result.error) {
+      const msg = interpretError(result.error);
+      console.error('[taskStorage] Delete failed:', msg);
+      throw new Error(msg);
+    }
+    return true;
   },
 
   async seed(items: ActionItem[]): Promise<void> {

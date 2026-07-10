@@ -96,12 +96,20 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     }
   }, [userId, studentProfiles, atRiskStudents]);
 
-  const handleApplicationAction = useCallback(async (appId: string, action: 'approved' | 'rejected') => {
-    const { supabase } = await import('../../../lib/supabase');
-    const { error } = await supabase.from('applications').update({ status: action }).eq('id', appId);
-    if (error) { notifyError('Failed to update application'); return; }
+  const handleApplicationAccept = useCallback(async (appId: string) => {
+    const { applicationService } = await import('../../../services/applicationService');
+    const { data, error } = await applicationService.approveApplication(appId);
+    if (error) { notifyError(`Approval failed: ${error}`); return; }
     store.refreshApps();
-    notifySuccess(`Application ${action}`);
+    notifySuccess('Application approved — student account created');
+  }, [store]);
+
+  const handleApplicationReject = useCallback(async (appId: string) => {
+    const { applicationService } = await import('../../../services/applicationService');
+    const { error } = await applicationService.rejectApplication(appId, 'Application declined by mentor');
+    if (error) { notifyError(`Rejection failed: ${error}`); return; }
+    store.refreshApps();
+    notifySuccess('Application rejected');
   }, [store]);
 
   const isHeroLoading = loading.sessions || loading.apps || loading.programs;
@@ -436,8 +444,8 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         open={showReviewApps}
         onClose={() => setShowReviewApps(false)}
         pendingApplications={pendingApplications}
-        onAccept={(id) => handleApplicationAction(id, 'approved')}
-        onReject={(id) => handleApplicationAction(id, 'rejected')}
+        onAccept={(id) => handleApplicationAccept(id)}
+        onReject={(id) => handleApplicationReject(id)}
         onViewProfile={(uid) => { handleOpenStudentProfile(uid); setShowReviewApps(false); }}
       />
 

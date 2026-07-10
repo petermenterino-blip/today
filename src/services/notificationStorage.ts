@@ -81,8 +81,12 @@ export const notificationStorage = {
     );
 
     if (!rpcResult.error && rpcResult.data) {
+      const rpcData = rpcResult.data;
+      if (typeof rpcData === 'object' && rpcData !== null && rpcData.id) {
+        return rowToNotification(rpcData);
+      }
       return {
-        id: '',
+        id: rpcData?.id || crypto.randomUUID(),
         userId: data.userId || '',
         title: data.title || '',
         message: data.message || '',

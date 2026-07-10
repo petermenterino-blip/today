@@ -152,10 +152,13 @@ export const applicationService = {
       .from('applications')
       .select('id, status')
       .eq('email', (app.user_email || '').toLowerCase())
-      .in('status', ['pending_review', 'more_info_needed'])
+      .in('status', ['pending_review', 'more_info_needed', 'invited', 'approved'])
       .maybeSingle();
     if (existing) {
-      return { data: null, error: 'You already have a pending application. Please wait for a response from the mentor.' };
+      const message = existing.status === 'invited' || existing.status === 'approved'
+        ? 'An account already exists for this email. Please log in instead.'
+        : 'You already have a pending application. Please wait for a response from the mentor.';
+      return { data: null, error: message };
     }
 
     const nameParts = (app.full_name || '').trim().split(/\s+/);
@@ -358,15 +361,28 @@ export const applicationService = {
     return { data, error: null };
   },
 
-  async rejectApplication(id: string, reason: string, feedback?: string): Promise<ServiceResponse<void>> {
+  async rejectApplication(id: string, reason?: string, feedback?: string): Promise<ServiceResponse<void>> {
+    const validTransitions: Record<string, string[]> = {
+      pending_review: ['rejected'],
+      more_info_needed: ['rejected'],
+      approved: ['rejected'],
+    };
+
     const { data: app, error: fetchError } = await supabase
       .from('applications')
-      .select('email, first_name, last_name')
+      .select('email, first_name, last_name, status')
       .eq('id', id)
       .single();
     if (fetchError) return { data: undefined, error: fetchError.message };
+    if (!app) return { data: undefined, error: 'Application not found' };
 
-    const updates: Record<string, any> = { status: 'rejected', rejection_reason: reason, updated_at: new Date().toISOString() };
+    const allowed = validTransitions[app.status];
+    if (allowed && !allowed.includes('rejected')) {
+      return { data: undefined, error: `Cannot reject an application with status "${app.status}"` };
+    }
+
+    const rejectionReason = reason || 'Application declined by mentor';
+    const updates: Record<string, any> = { status: 'rejected', rejection_reason: rejectionReason, updated_at: new Date().toISOString() };
     if (feedback !== undefined) updates.feedback = feedback;
     const { error: updateError } = await supabase.from('applications').update(updates).eq('id', id);
     if (updateError) return { data: undefined, error: updateError.message };
@@ -376,7 +392,7 @@ export const applicationService = {
       await edgeFunctionService.sendEmail(app.email, 'application_update', {
         name: fullName,
         status: 'rejected',
-        feedback: feedback || reason,
+        feedback: feedback || rejectionReason,
         programTitle: 'Mentorino Program',
       });
     } catch (e) {
@@ -471,7 +487,7 @@ export const applicationService = {
 
     const { error: updateError } = await supabase
       .from('applications')
-      .update({ status: 'invited', updated_at: new Date().toISOString() })
+      .update({ status: 'invited', user_id: userId, mentor_id: app.mentor_id || null, updated_at: new Date().toISOString() })
       .eq('id', id);
     if (updateError) return { data: null, error: updateError.message };
 

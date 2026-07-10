@@ -99,21 +99,30 @@ export const goalStorage = {
       row.updated_at = new Date().toISOString();
       const result = await safeMutate(
         'goalStorage.update',
-        () => supabase.from('goals').update(row).eq('id', id),
+        () => supabase.from('goals').update(row).eq('id', id).select().single(),
         'goals',
       );
       if (result.error) {
-        console.warn('goalStorage.update:', interpretError(result.error));
-        return null;
+        const msg = interpretError(result.error);
+        console.error('[goalStorage] Update failed:', msg);
+        throw new Error(msg);
       }
     }
     if (updates.milestones) {
-      await supabase.from('goal_milestones').delete().eq('goal_id', id);
+      const { error: delErr } = await supabase.from('goal_milestones').delete().eq('goal_id', id);
+      if (delErr) {
+        console.error('[goalStorage] Milestone delete failed:', interpretError(delErr));
+        throw new Error(interpretError(delErr));
+      }
       if (updates.milestones.length > 0) {
         const milestoneRows = updates.milestones.map((m: any) => ({
           goal_id: id, title: m.title, completed: m.completed || false,
         }));
-        await supabase.from('goal_milestones').insert(milestoneRows);
+        const { error: insErr } = await supabase.from('goal_milestones').insert(milestoneRows);
+        if (insErr) {
+          console.error('[goalStorage] Milestone insert failed:', interpretError(insErr));
+          throw new Error(interpretError(insErr));
+        }
       }
     }
     if (updates.status === 'completed') {
@@ -137,8 +146,12 @@ export const goalStorage = {
       () => supabase.from('goals').delete().eq('id', id),
       'goals',
     );
-    if (result.error) console.warn('goalStorage.delete:', interpretError(result.error));
-    return !result.error;
+    if (result.error) {
+      const msg = interpretError(result.error);
+      console.error('[goalStorage] Delete failed:', msg);
+      throw new Error(msg);
+    }
+    return true;
   },
 
 };

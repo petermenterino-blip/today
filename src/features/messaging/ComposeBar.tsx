@@ -185,7 +185,7 @@ export const ComposeBar: React.FC<ComposeBarProps> = ({ onSendMessage, onSendVoi
     setIsSimulatedRecording(false);
   };
 
-  const sendVoiceRecording = () => {
+  const sendVoiceRecording = async () => {
     if (!recordedBlob) {
       cancelRecording();
       return;
@@ -199,22 +199,23 @@ export const ComposeBar: React.FC<ComposeBarProps> = ({ onSendMessage, onSendVoi
     setIsUploading(true);
     
     try {
-      onSendVoiceMessage(recordedBlob, recordedDuration);
-      
-      if (recordedUrl) {
-        URL.revokeObjectURL(recordedUrl);
-        setRecordedUrl(null);
-      }
-      setRecordedBlob(null);
-      setRecordingDuration(0);
-      setRecordedDuration(0);
-      setRecordingState('idle');
-      setIsSimulatedRecording(false);
-      setIsUploading(false);
+      await onSendVoiceMessage(recordedBlob, recordedDuration);
     } catch (err) {
-      console.error("Send failed:", err);
+      console.error('[ComposeBar] Voice send failed:', err);
       setIsUploading(false);
+      return;
     }
+
+    if (recordedUrl) {
+      URL.revokeObjectURL(recordedUrl);
+      setRecordedUrl(null);
+    }
+    setRecordedBlob(null);
+    setRecordingDuration(0);
+    setRecordedDuration(0);
+    setRecordingState('idle');
+    setIsSimulatedRecording(false);
+    setIsUploading(false);
   };
 
   return (

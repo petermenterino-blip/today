@@ -4,14 +4,18 @@ import { notificationStorage } from '../services/notificationStorage';
 import { useRealtimeData } from './useRealtimeData';
 import { Notification as NotificationType } from '../interfaces';
 
-export const useNotifications = () => {
+export const useNotifications = (userId?: string) => {
   const queryClient = useQueryClient();
 
-  useRealtimeData([{ table: 'notifications', queryKey: ['notifications'] }]);
+  useRealtimeData([{
+    table: 'notifications',
+    queryKey: ['notifications'],
+    ...(userId ? { filter: { column: 'user_id', value: userId } } : {}),
+  }]);
 
   const { data: notifications = [], isLoading: loading } = useQuery({
-    queryKey: ['notifications'],
-    queryFn: () => notificationStorage.getAll(),
+    queryKey: ['notifications', userId].filter(Boolean),
+    queryFn: () => userId ? notificationStorage.getByUserId(userId) : notificationStorage.getAll(),
     staleTime: STALE_TIMES.frequent,
   });
 
@@ -19,19 +23,19 @@ export const useNotifications = () => {
 
   const markAsRead = async (id: string) => {
     await notificationStorage.update(id, { read: true });
-    queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    queryClient.invalidateQueries({ queryKey: ['notifications', userId].filter(Boolean) });
   };
 
   const markAllAsRead = async () => {
     await Promise.all(
       notifications.filter(n => !n.read).map(n => notificationStorage.update(n.id, { read: true }))
     );
-    queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    queryClient.invalidateQueries({ queryKey: ['notifications', userId].filter(Boolean) });
   };
 
   const deleteNotification = async (id: string) => {
     await notificationStorage.delete(id);
-    queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    queryClient.invalidateQueries({ queryKey: ['notifications', userId].filter(Boolean) });
   };
 
   return {

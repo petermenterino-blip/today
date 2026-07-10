@@ -58,7 +58,7 @@ export const taskService = {
       .from('tasks')
       .insert({
         student_id: activity.user_id,
-        mentor_id: activity.mentor_id || null,
+        mentor_id: activity.mentor_id || '',
         title: activity.task_title || 'Untitled Task',
         description: activity.description,
         due_date: activity.due_date,

@@ -152,10 +152,10 @@ serve(async (req) => {
   // Phase 2 mode (no idempotencyKey): simple fallback
   // Phase 3 mode (with idempotencyKey): transactional state machine
   if (!body.idempotencyKey || typeof body.idempotencyKey !== 'string') {
-    return await phase2Flow(admin, body, user!, resendApiKey, startTime)
+    return await phase2Flow(admin, body, user!, resendApiKey, startTime, corsHeaders)
   }
 
-  return await phase3Flow(admin, body, user!, resendApiKey, requestId, startTime)
+  return await phase3Flow(admin, body, user!, resendApiKey, requestId, startTime, corsHeaders)
 })
 
 // ── Phase 2 Fallback (no idempotencyKey) ─────────────────────────────────────────
@@ -167,6 +167,7 @@ async function phase2Flow(
   user: { id: string; email: string; role: string },
   resendApiKey: string | undefined,
   startTime: number,
+  corsHeaders: Record<string, string>,
 ): Promise<Response> {
   const log = (step: string, status: string, extra: Record<string, unknown> = {}) => {
     admin.from('analytics_events').insert({
@@ -189,7 +190,7 @@ async function phase2Flow(
     log('idempotency', 'skipped', { reason: `Already ${app.status}` })
     return new Response(
       JSON.stringify({ success: true, code: 'ALREADY_PROCESSED', message: `Application was already ${app.status}`, studentId: app.user_id, email: app.email }),
-      { headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
+      { headers: { 'Content-Type': 'application/json', ...corsHeaders } },
     )
   }
 
@@ -253,7 +254,7 @@ async function phase2Flow(
     log('initialize_crm', 'completed')
 
     log('send_email', 'started')
-    const emailResult = await phase2SendEmail(resendApiKey, email, fullName)
+    const emailResult = await phase2SendEmail(resendApiKey, email, fullName, tempPassword)
     if (!emailResult.success) {
       log('send_email', 'failed', { error: emailResult.message })
     } else {
@@ -263,12 +264,12 @@ async function phase2Flow(
     log('complete', 'completed', { user_id: userId })
     return new Response(
       JSON.stringify({ success: true, studentId: userId, email }),
-      { headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
+      { headers: { 'Content-Type': 'application/json', ...corsHeaders } },
     )
   } catch {
     log('unexpected_error', 'failed', { error: 'Unexpected error in phase2Flow' })
     if (userId) await rollbackAll(admin, userId, body.applicationId)
-    return respond(500, 'UNEXPECTED_ERROR', 'An unexpected error occurred', 'unknown')
+    return respond(500, 'UNEXPECTED_ERROR', 'An unexpected error occurred', 'unknown', corsHeaders)
   }
 }
 
@@ -358,14 +359,17 @@ async function phase2InitCrm(
   }
 }
 
-async function phase2SendEmail(resendApiKey: string | undefined, to: string, name: string): Promise<{ success: boolean; message?: string }> {
+async function phase2SendEmail(resendApiKey: string | undefined, to: string, name: string, tempPassword?: string): Promise<{ success: boolean; message?: string }> {
   if (!resendApiKey) return { success: false, message: 'Resend API key not configured' }
   const safeName = escapeHtml(name)
+  const loginHtml = tempPassword
+    ? `<p><strong>Temporary Password:</strong> ${escapeHtml(tempPassword)}</p><p>Please sign in and change your password after logging in.</p>`
+    : `<p>To get started, please sign in using the <strong>"Forgot Password"</strong> option on the login page to set your own password.</p>`
   try {
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${resendApiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from: 'Mentorino <notifications@mentorino.com>', to: [to], subject: 'Welcome to Mentorino — Your Account Details', html: `<h1>Welcome, ${safeName}!</h1><p>We're excited to have you on board. Your mentor will be in touch soon.</p><p><strong>Email:</strong> ${to}</p><p>To get started, please sign in using the <strong>"Forgot Password"</strong> option on the login page to set your own password.</p><p><a href="https://mentorino.app/login">https://mentorino.app/login</a></p><p>Best,<br/>The Mentorino Team</p>` }),
+      body: JSON.stringify({ from: 'Mentorino <notifications@mentorino.com>', to: [to], subject: 'Welcome to Mentorino — Your Account Details', html: `<h1>Welcome, ${safeName}!</h1><p>We're excited to have you on board. Your mentor will be in touch soon.</p><p><strong>Email:</strong> ${escapeHtml(to)}</p>${loginHtml}<p><a href="https://mentorino.app/login">https://mentorino.app/login</a></p><p>Best,<br/>The Mentorino Team</p>` }),
     })
     const result = await response.json()
     if (!response.ok) {
@@ -798,6 +802,9 @@ async function stepSendEmail(ctx: ProvisioningContext): Promise<StepResult> {
   }
 
   try {
+    const loginHtml = ctx.tempPassword
+      ? `<p><strong>Temporary Password:</strong> ${escapeHtml(ctx.tempPassword)}</p><p>Please sign in and change your password after logging in.</p>`
+      : `<p>To get started, please sign in using the <strong>"Forgot Password"</strong> option on the login page to set your own password.</p>`
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -811,8 +818,8 @@ async function stepSendEmail(ctx: ProvisioningContext): Promise<StepResult> {
         html: `
           <h1>Welcome, ${escapeHtml(ctx.fullName)}!</h1>
           <p>We're excited to have you on board. Your mentor will be in touch soon.</p>
-          <p><strong>Email:</strong> ${ctx.email}</p>
-          <p>To get started, please sign in using the <strong>"Forgot Password"</strong> option on the login page to set your own password.</p>
+          <p><strong>Email:</strong> ${escapeHtml(ctx.email)}</p>
+          ${loginHtml}
           <p><a href="https://mentorino.app/login">https://mentorino.app/login</a></p>
           <p>Best,<br/>The Mentorino Team</p>
         `,
@@ -1055,16 +1062,16 @@ async function updateJobStep(ctx: ProvisioningContext, step: ProvisioningStep): 
 }
 
 // ── Response Helpers ────────────────────────────────────────────────────────────
-function respond(status: number, code: string, message: string, step: string): Response {
+function respond(status: number, code: string, message: string, step: string, headers?: Record<string, string>): Response {
   return new Response(
     JSON.stringify({ success: false, code, message, step }),
-    { status, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
+    { status, headers: { 'Content-Type': 'application/json', ...(headers || CORS_HEADERS) } },
   )
 }
 
-function respondOk(code: string, message: string, studentId: string, email: string): Response {
+function respondOk(code: string, message: string, studentId: string, email: string, headers?: Record<string, string>): Response {
   return new Response(
     JSON.stringify({ success: true, code, message, studentId, email }),
-    { headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
+    { headers: { 'Content-Type': 'application/json', ...(headers || CORS_HEADERS) } },
   )
 }

@@ -37,6 +37,7 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, role, onLogout }) => {
+  const { user: currentUser } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
   const [isMobile, setIsMobile] = React.useState(false);
   const [isCollapsed, setIsCollapsed] = React.useState(() => {
@@ -308,7 +309,7 @@ const Layout: React.FC<LayoutProps> = ({ children, role, onLogout }) => {
                   <span className="font-black text-sm tracking-widest uppercase shrink-0 transition-opacity duration-150">MENTORINO</span>
                 </Link>
                 <div className="flex items-center gap-1">
-                  <NotificationDropdown />
+                   <NotificationDropdown userId={currentUser?.id} />
                   <button 
                     onClick={() => {
                       const nextState = !isCollapsed;

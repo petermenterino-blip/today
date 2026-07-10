@@ -85,7 +85,7 @@ export function useOverviewStore() {
   const { goals, loading: goalsLoading } = useGoals();
   const { journals, refresh: refreshJournals } = useJournals();
   const reviewDomain = useReviews();
-  const { notifications, unreadCount, loading: notifLoading } = useNotifications();
+  const { notifications, unreadCount, loading: notifLoading } = useNotifications(userId);
 
   const resources = ((useResources() as any).useResourceList?.({})?.data?.data) ?? [];
   const resourcesLoading = false;

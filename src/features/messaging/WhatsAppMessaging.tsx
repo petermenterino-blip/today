@@ -7,6 +7,8 @@ import { messageService } from '../../services/messageService';
 import { storageService } from '../../services/storageService';
 import { studentService } from '../../services/studentService';
 import { useRealtime } from '../../hooks/useRealtime';
+import { logger } from '../../lib/logger';
+import { notify } from '../../services/notificationService';
 import { Message, Conversation } from '../../types/messaging';
 import { StudentProfile, Application } from '../../types';
 import { ConversationList } from './ConversationList';
@@ -204,6 +206,13 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
 
         queryClient.invalidateQueries({ queryKey: ['messages', row.conversation_id] });
 
+        const senderProfile = allStudents.find((s: any) => (s.user_id || s.id) === row.sender_id);
+        const senderName = senderProfile?.name || 'Someone';
+        const preview = row.type === 'voice' ? 'Voice message'
+          : row.type === 'file' ? (row.file_name || 'File attachment')
+          : (row.content || '').slice(0, 100);
+        notify.messageReceived(currentUserId, senderName, preview).catch(() => {});
+
         setConversations(prev => {
           const updated = prev.map(c => {
             if (c.id !== row.conversation_id) return c;
@@ -397,6 +406,7 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
       const publicUrl = await storageService.getPublicUrlFromPath('message-attachments', storagePath);
       uploadedUrl = publicUrl;
     } catch (err) {
+      logger.error('WhatsAppMessaging', 'Voice upload failed', { error: err instanceof Error ? err.message : String(err) });
       setToast({ message: 'Voice upload failed.', type: 'error' });
       return;
     }
@@ -431,7 +441,8 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
           (old || []).map(m => m.id === tempId ? { ...m, id: sent.id, status: 'sent' as const } : m)
         );
       }
-    } catch {
+    } catch (err) {
+      logger.error('WhatsAppMessaging', 'Voice message send failed', { duration, error: err instanceof Error ? err.message : 'Unknown error' });
       queryClient.setQueryData<Message[]>(['messages', selectedConversation.id], (old = []) =>
         (old || []).map(m => m.id === tempId ? { ...m, status: 'failed' as const } : m)
       );
@@ -448,6 +459,7 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
         return fileUrl;
       } catch (err) {
         lastError = err;
+        logger.warn('WhatsAppMessaging', `File upload attempt ${attempt}/${maxRetries} failed`, { fileName: file.name, fileSize: file.size, error: err instanceof Error ? err.message : String(err) });
         if (attempt < maxRetries) {
           await new Promise(r => setTimeout(r, attempt * 1000));
         }
@@ -464,7 +476,7 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
       setToast({ message: 'File too large. Max 25MB.', type: 'error' });
       return;
     }
-    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+    if (file.type && !ALLOWED_FILE_TYPES.includes(file.type)) {
       setToast({ message: 'Unsupported file type.', type: 'error' });
       return;
     }
@@ -512,7 +524,8 @@ const WhatsAppMessaging: React.FC<WhatsAppMessagingProps> = ({ role, currentUser
         );
         setToast({ message: 'File sent!', type: 'success' });
       }
-    } catch {
+    } catch (err) {
+      logger.error('WhatsAppMessaging', 'File upload failed', { fileName: file.name, fileSize: file.size, fileType: file.type, error: err instanceof Error ? err.message : 'Unknown error' });
       queryClient.setQueryData<Message[]>(['messages', selectedConversation.id], (old = []) =>
         (old || []).map(m => m.id === tempId ? { ...m, status: 'failed' as const } : m)
       );

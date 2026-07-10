@@ -47,7 +47,7 @@ export const useTasks = () => {
   });
 
   const fetchUserTasks = useCallback(async (userId: string) => {
-    queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    queryClient.invalidateQueries({ queryKey: ['tasks', userId] });
   }, [queryClient]);
 
   const refresh = useCallback(() => {

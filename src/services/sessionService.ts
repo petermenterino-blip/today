@@ -20,9 +20,11 @@ const CAMEL_TO_SNAKE: Record<string, string> = {
   reminderTime: 'reminder_time',
   attachedFiles: 'attached_files',
   internalNotes: 'internal_notes',
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
 };
 
-const SESSION_FIELDS = 'id,student_id,mentor_id,title,description,start_time,end_time,status,attendance_status,meeting_url,recording_url,program_id,meeting_type,session_type,created_at';
+const SESSION_FIELDS = 'id,student_id,mentor_id,title,description,start_time,end_time,status,attendance_status,meeting_url,recording_url,program_id,meeting_type,session_type,created_at,updated_at';
 
 const SNAKE_TO_CAMEL: Record<string, string> = Object.fromEntries(
   Object.entries(CAMEL_TO_SNAKE).map(([k, v]) => [v, k])
@@ -68,7 +70,8 @@ export const sessionService = {
         .select('id')
         .eq('mentor_id', session.mentorId)
         .neq('status', 'cancelled')
-        .or(`start_time.lte.${session.endTime},end_time.gte.${session.startTime}`)
+        .lte('start_time', session.endTime)
+        .gte('end_time', session.startTime)
         .limit(1);
       if (conflicting && conflicting.length > 0) {
         return { data: null, error: 'This time slot conflicts with an existing session.' };
@@ -92,6 +95,36 @@ export const sessionService = {
   },
 
   async update(id: string, session: Partial<Session>): Promise<ServiceResponse<Session>> {
+    // Fetch current session to detect time changes
+    const { data: current, error: fetchError } = await supabase
+      .from('sessions')
+      .select(SESSION_FIELDS)
+      .eq('id', id)
+      .single();
+    if (fetchError) return { data: null, error: handleError(fetchError).error };
+
+    const before = rowToSession(current);
+    const newStartTime = session.startTime || before.startTime;
+    const newEndTime = session.endTime || before.endTime;
+    const timeChanged = (session.startTime !== undefined && session.startTime !== before.startTime) ||
+                        (session.endTime !== undefined && session.endTime !== before.endTime);
+
+    // Conflict detection if time changed
+    if (timeChanged && before.mentorId) {
+      const { data: conflicting } = await supabase
+        .from('sessions')
+        .select('id')
+        .neq('id', id)
+        .neq('status', 'cancelled')
+        .eq('mentor_id', before.mentorId)
+        .lte('start_time', newEndTime)
+        .gte('end_time', newStartTime)
+        .limit(1);
+      if (conflicting && conflicting.length > 0) {
+        return { data: null, error: 'This time slot conflicts with an existing session.' };
+      }
+    }
+
     const row = sessionToRow(session);
     const { data, error } = await supabase
       .from('sessions')
@@ -103,7 +136,7 @@ export const sessionService = {
     if (!data) return { data: null, error: 'Session not found' };
 
     const updated = rowToSession(data);
-    if (session.startTime) {
+    if (timeChanged) {
       notify.sessionRescheduled(updated.studentId, updated.mentorId, updated.title, updated.startTime).catch((err) =>
         console.error('[sessionService] Failed to send reschedule notification:', err)
       );

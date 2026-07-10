@@ -8,8 +8,12 @@ const DROPDOWN_WIDTH = 320;
 const DROPDOWN_MAX_HEIGHT = 384;
 const VIEWPORT_MARGIN = 12;
 
-const NotificationDropdown: React.FC = () => {
-  const { notifications, loading, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
+interface NotificationDropdownProps {
+  userId?: string;
+}
+
+const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ userId }) => {
+  const { notifications, loading, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotifications(userId);
   const [open, setOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [position, setPosition] = useState<{ top: number; left: number } | null>(null);

@@ -4,7 +4,7 @@ export interface Notification {
   title: string;
   message: string;
   read: boolean;
-  type: 'session' | 'task' | 'goal' | 'system' | 'journal' | 'review' | 'announcement' | 'event' | 'form' | 'file' | 'credential';
+  type: 'session' | 'task' | 'goal' | 'system' | 'journal' | 'review' | 'announcement' | 'event' | 'form' | 'file' | 'credential' | 'message';
   link?: string;
   createdAt: string;
 }

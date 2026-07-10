@@ -99,7 +99,7 @@ export const MentorScheduler: React.FC<MentorSchedulerProps> = ({
 
   const [confirmCancel, setConfirmCancel] = useState<Session | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Session | null>(null);
-  const [confirmForceOverlap, setConfirmForceOverlap] = useState<{ session: Session; warnings: string[] } | null>(null);
+  const [confirmForceOverlap, setConfirmForceOverlap] = useState<{ session: Session; warnings: string[]; newStart: string; newEnd: string } | null>(null);
 
   useEffect(() => {
     if (formStartTime && formEndTime) {
@@ -319,6 +319,18 @@ export const MentorScheduler: React.FC<MentorSchedulerProps> = ({
       finalTitle = `${formSessionType} Session with ${studentName}`;
     }
 
+    const reminderMatch = formReminderTime.match(/^(\d+)\s*(minute|hour|day)s?\s+before$/i);
+    let reminderTimeValue: string | undefined;
+    if (reminderMatch) {
+      const amount = parseInt(reminderMatch[1]);
+      const unit = reminderMatch[2].toLowerCase();
+      const startDate = new Date(startIso);
+      if (unit === 'minute') startDate.setMinutes(startDate.getMinutes() - amount);
+      else if (unit === 'hour') startDate.setHours(startDate.getHours() - amount);
+      else if (unit === 'day') startDate.setDate(startDate.getDate() - amount);
+      reminderTimeValue = startDate.toISOString();
+    }
+
     const sessionPayload: Omit<Session, 'id' | 'createdAt' | 'updatedAt'> = {
       mentorId: currentUser!.id,
       studentId: formStudentId,
@@ -329,14 +341,14 @@ export const MentorScheduler: React.FC<MentorSchedulerProps> = ({
       endTime: new Date(endIso).toISOString(),
       meetingUrl: formMeetingLink || undefined,
       attendanceStatus: 'pending',
-      notes: formNotes,
+      notes: formInternalNotes,
       internalNotes: formInternalNotes,
       duration: `${formDuration} min`,
       timezone: formTimezone,
       meetingType: formMeetingType || 'Google Meet',
       sessionType: formSessionType,
       recurringSession: formRecurring,
-      reminderTime: formReminderTime,
+      reminderTime: reminderTimeValue,
       attachedFiles: formAttachedFiles,
       status: 'scheduled',
     };
@@ -388,7 +400,7 @@ export const MentorScheduler: React.FC<MentorSchedulerProps> = ({
     const endStr = newEnd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
     const warnings = performConflictCheck(sessionToMove.id, dateStr, startStr, endStr, sessionToMove.studentId, sessionToMove.sessionType || '1:1');
     if (warnings.length > 0) {
-      setConfirmForceOverlap({ session: sessionToMove, warnings });
+      setConfirmForceOverlap({ session: sessionToMove, warnings, newStart: newStart.toISOString(), newEnd: newEnd.toISOString() });
       return;
     }
     try {
@@ -422,7 +434,7 @@ export const MentorScheduler: React.FC<MentorSchedulerProps> = ({
 
   const handleCancelSession = async (session: Session) => {
     try {
-      await updateSession(session.id, { status: 'cancelled', attendanceStatus: 'missed' });
+      await updateSession(session.id, { status: 'cancelled' });
       notifySuccess(`Cancelled session "${session.title}".`);
       notify.sessionCancelled(session.studentId, currentUser!.id, session.title).catch(() => {});
       timelineService.autoLogSessionCancelled(session.studentId, session.title, currentUser!.id).catch(() => {});
@@ -972,19 +984,18 @@ export const MentorScheduler: React.FC<MentorSchedulerProps> = ({
         }
         confirmLabel="Force Reschedule"
         variant="default"
-        onConfirm={() => {
+        onConfirm={async () => {
           if (!confirmForceOverlap) return;
-          const sessionToMove = confirmForceOverlap.session;
-          const currentStart = new Date(sessionToMove.startTime);
-          const currentEnd = new Date(sessionToMove.endTime);
-          const durationMs = currentEnd.getTime() - currentStart.getTime();
-          const newStart = new Date(currentStart);
-          const newEnd = new Date(newStart.getTime() + durationMs);
-          updateSession(sessionToMove.id, { startTime: newStart.toISOString(), endTime: newEnd.toISOString() }).catch(() => {});
-          notifySuccess(`Rescheduled "${sessionToMove.title}"`);
-          notify.sessionRescheduled(sessionToMove.studentId, currentUser!.id, sessionToMove.title, newStart.toISOString()).catch(() => {});
-          timelineService.autoLogSessionRescheduled(sessionToMove.studentId, sessionToMove.title, currentUser!.id).catch(() => {});
-          refreshSessions();
+          const { session: sessionToMove, newStart, newEnd } = confirmForceOverlap;
+          try {
+            await updateSession(sessionToMove.id, { startTime: newStart, endTime: newEnd });
+            notifySuccess(`Rescheduled "${sessionToMove.title}"`);
+            notify.sessionRescheduled(sessionToMove.studentId, currentUser!.id, sessionToMove.title, newStart).catch(() => {});
+            timelineService.autoLogSessionRescheduled(sessionToMove.studentId, sessionToMove.title, currentUser!.id).catch(() => {});
+            refreshSessions();
+          } catch (e: any) {
+            notifyError(`Force reschedule failed: ${e.message}`);
+          }
           setConfirmForceOverlap(null);
         }}
         onCancel={() => setConfirmForceOverlap(null)}

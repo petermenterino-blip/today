@@ -9,6 +9,7 @@ import { applicationService } from '../../../services/applicationService';
 import { crmInitializationService } from '../../../services/crmInitializationService';
 import { useRealtime } from '../../../hooks/useRealtime';
 import { notifySuccess, notifyError } from '../../../utils/toast';
+import { logger } from '../../../lib/logger';
 import type { User, StudentProfile, StudentTag } from '../../../types';
 import type { Goal } from '../../../interfaces';
 
@@ -172,7 +173,8 @@ export function useMentees(currentUser: User | null) {
         milestones: [],
       });
       notifySuccess('Goal added');
-    } catch {
+    } catch (err) {
+      logger.error('useMentees', 'Failed to add goal', { studentId: selectedMenteeId, title, error: err instanceof Error ? err.message : String(err) });
       notifyError('Failed to add goal');
     }
   };
