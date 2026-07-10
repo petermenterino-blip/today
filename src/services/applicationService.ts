@@ -6,6 +6,7 @@ import { Application, ServiceResponse } from '../types';
 import { handleError } from '../lib/serviceHelper';
 import { features } from '../config/features';
 import { notify } from './notificationService';
+import { FunctionsHttpError } from '@supabase/supabase-js';
 
 const AUTH_SIGNUP_DISABLED = !import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY;
 
@@ -411,7 +412,17 @@ export const applicationService = {
       const { data, error } = await supabase.functions.invoke('approve-application', {
         body,
       })
-      if (error) return { data: null, error: error.message }
+      if (error) {
+        if (error instanceof FunctionsHttpError) {
+          try {
+            const errorBody = await error.context.json()
+            return { data: null, error: errorBody?.message || errorBody?.error || error.message }
+          } catch {
+            return { data: null, error: error.message }
+          }
+        }
+        return { data: null, error: error.message }
+      }
       if (!data?.success) return { data: null, error: data?.message || 'Approval failed' }
       window.dispatchEvent(new Event('user-profile-changed'))
       return { data: { id, email: data.email }, error: null }
@@ -422,9 +433,17 @@ export const applicationService = {
 
   async approveApplication(id: string): Promise<ServiceResponse<any>> {
     if (features.edgeApproval) {
-      return this.approveApplicationViaEdge(id)
+      const edgeResult = await this.approveApplicationViaEdge(id)
+      if (edgeResult.data || !edgeResult.error) {
+        return edgeResult
+      }
+      console.warn('[applicationService] Edge function approval failed, falling back to client-side:', edgeResult.error)
     }
 
+    return this.approveApplicationLocal(id)
+  },
+
+  async approveApplicationLocal(id: string): Promise<ServiceResponse<any>> {
     const { data: app, error: fetchError } = await supabase
       .from('applications')
       .select('*')

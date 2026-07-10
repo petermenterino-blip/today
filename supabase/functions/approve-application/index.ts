@@ -129,7 +129,7 @@ serve(async (req) => {
   const resendApiKey = Deno.env.get('RESEND_API_KEY')
 
   if (!supabaseUrl || !supabaseServiceKey) {
-    return respond(500, 'CONFIG_ERROR', 'Server not configured', 'validating')
+    return respond(500, 'CONFIG_ERROR', 'Server not configured', 'validating', corsHeaders)
   }
 
   const admin = createClient(supabaseUrl, supabaseServiceKey, {
@@ -141,11 +141,11 @@ serve(async (req) => {
   try {
     body = await req.json()
   } catch {
-    return respond(400, 'INVALID_INPUT', 'Invalid JSON body', 'validating')
+    return respond(400, 'INVALID_INPUT', 'Invalid JSON body', 'validating', corsHeaders)
   }
 
   if (!body.applicationId || typeof body.applicationId !== 'string') {
-    return respond(400, 'MISSING_FIELD', 'applicationId is required', 'validating')
+    return respond(400, 'MISSING_FIELD', 'applicationId is required', 'validating', corsHeaders)
   }
 
   // ── Dual-Mode Routing ──
@@ -183,7 +183,7 @@ async function phase2Flow(
 
   if (appError || !app) {
     log('fetch_application', 'failed', { error: 'Application not found' })
-    return respond(404, 'NOT_FOUND', 'Application not found', 'validating')
+    return respond(404, 'NOT_FOUND', 'Application not found', 'validating', corsHeaders)
   }
 
   if (app.status === 'invited' || app.status === 'approved') {
@@ -200,7 +200,7 @@ async function phase2Flow(
 
   if (app.mentor_id && app.mentor_id !== mentorId) {
     log('authorization', 'failed', { reason: 'Mentor not authorized' })
-    return respond(403, 'FORBIDDEN', 'You are not authorized to approve this application', 'validating')
+    return respond(403, 'FORBIDDEN', 'You are not authorized to approve this application', 'validating', corsHeaders)
   }
 
   const tempPassword = generateSecurePassword()
@@ -214,7 +214,7 @@ async function phase2Flow(
     })
     if (authCreateError || !authData?.user) {
       log('create_auth_user', 'failed', { error: authCreateError?.message })
-      return respond(500, 'AUTH_CREATE_FAILED', 'Failed to create user account', 'create_auth_user')
+      return respond(500, 'AUTH_CREATE_FAILED', 'Failed to create user account', 'create_auth_user', corsHeaders)
     }
     userId = authData.user.id
     log('create_auth_user', 'completed', { user_id: userId })
@@ -229,7 +229,7 @@ async function phase2Flow(
     if (profileError) {
       log('create_profile', 'failed', { error: profileError.message })
       await rollbackAuthUser(admin, userId)
-      return respond(500, 'PROFILE_CREATE_FAILED', 'Failed to create student profile', 'create_profile')
+      return respond(500, 'PROFILE_CREATE_FAILED', 'Failed to create student profile', 'create_profile', corsHeaders)
     }
     log('create_profile', 'completed')
 
@@ -240,7 +240,7 @@ async function phase2Flow(
     if (updateError) {
       log('update_application', 'failed', { error: updateError.message })
       await rollbackAll(admin, userId, body.applicationId)
-      return respond(500, 'APPLICATION_UPDATE_FAILED', 'Failed to update application status', 'update_application')
+      return respond(500, 'APPLICATION_UPDATE_FAILED', 'Failed to update application status', 'update_application', corsHeaders)
     }
     log('update_application', 'completed')
 
@@ -249,7 +249,7 @@ async function phase2Flow(
     if (!crmResult.success) {
       log('initialize_crm', 'failed', { error: crmResult.message })
       await rollbackAll(admin, userId, body.applicationId)
-      return respond(500, 'CRM_INIT_FAILED', crmResult.message || 'CRM initialization failed', 'initialize_crm')
+      return respond(500, 'CRM_INIT_FAILED', crmResult.message || 'CRM initialization failed', 'initialize_crm', corsHeaders)
     }
     log('initialize_crm', 'completed')
 
@@ -391,29 +391,30 @@ async function phase3Flow(
   resendApiKey: string | undefined,
   requestId: string,
   startTime: number,
+  corsHeaders: Record<string, string>,
 ): Promise<Response> {
   // ── Create or retrieve provisioning job ──
   const jobResult = await getOrCreateJob(admin, body.applicationId, body.idempotencyKey, user.id, requestId)
   if (!jobResult.success) {
-    return respond(409, 'CONFLICT', jobResult.message || 'Job conflict', 'validating')
+    return respond(409, 'CONFLICT', jobResult.message || 'Job conflict', 'validating', corsHeaders)
   }
 
   const job = jobResult.job
 
   // ── Idempotency: if already completed, return cached result ──
   if (job.status === 'completed') {
-    return respondOk('ALREADY_PROCESSED', `Application was already processed (completed at ${job.end_time})`, job.result_data?.student_id || '', job.result_data?.email || '')
+    return respondOk('ALREADY_PROCESSED', `Application was already processed (completed at ${job.end_time})`, job.result_data?.student_id || '', job.result_data?.email || '', corsHeaders)
   }
 
   // ── If running, reject with conflict ──
   if (job.status === 'running') {
-    return respond(409, 'IN_PROGRESS', 'Provisioning is already in progress', 'validating')
+    return respond(409, 'IN_PROGRESS', 'Provisioning is already in progress', 'validating', corsHeaders)
   }
 
   // ── If failed, check retry eligibility ──
   if (job.status === 'failed' || job.status === 'rolled_back') {
     if (job.retry_count >= (job.max_retries || MAX_RETRIES)) {
-      return respond(429, 'MAX_RETRIES_EXCEEDED', 'Maximum retry count exceeded. Manual intervention required.', 'validating')
+      return respond(429, 'MAX_RETRIES_EXCEEDED', 'Maximum retry count exceeded. Manual intervention required.', 'validating', corsHeaders)
     }
   }
 
@@ -469,7 +470,7 @@ async function phase3Flow(
 
   if (appError || !app) {
     await failJob(ctx, 'validating', 'Application not found', { error: appError?.message })
-    return respond(404, 'NOT_FOUND', 'Application not found', 'validating')
+    return respond(404, 'NOT_FOUND', 'Application not found', 'validating', corsHeaders)
   }
 
   ctx.email = app.email
@@ -480,7 +481,7 @@ async function phase3Flow(
   // ── Mentor authorization ──
   if (app.mentor_id && app.mentor_id !== ctx.mentorId) {
     await failJob(ctx, 'validating', 'Mentor not authorized', { applicationMentorId: app.mentor_id })
-    return respond(403, 'FORBIDDEN', 'You are not authorized to approve this application', 'validating')
+    return respond(403, 'FORBIDDEN', 'You are not authorized to approve this application', 'validating', corsHeaders)
   }
 
   await ctx.audit.log('authorization_checked', 'validating', 'completed')
@@ -492,7 +493,7 @@ async function phase3Flow(
     const step = STEP_ORDER[i]
     if (step === 'completed') {
       await completeJob(ctx, startTime)
-      return respondOk('SUCCESS', 'Provisioning completed successfully', ctx.userId, ctx.email)
+      return respondOk('SUCCESS', 'Provisioning completed successfully', ctx.userId, ctx.email, corsHeaders)
     }
 
     const result = await executeStep(ctx, step, startTime)
@@ -505,16 +506,16 @@ async function phase3Flow(
           last_error: result.message,
           last_error_detail: { code: result.code, ...result.data },
         }).eq('id', job.id)
-        return respond(500, 'RETRYABLE_ERROR', result.message || 'Retryable error', step)
+        return respond(500, 'RETRYABLE_ERROR', result.message || 'Retryable error', step, corsHeaders)
       }
 
       await executeRollback(ctx, startTime)
-      return respond(500, result.code || 'PROVISIONING_FAILED', result.message || 'Provisioning failed', step)
+      return respond(500, result.code || 'PROVISIONING_FAILED', result.message || 'Provisioning failed', step, corsHeaders)
     }
   }
 
   await completeJob(ctx, startTime)
-  return respondOk('SUCCESS', 'Provisioning completed successfully', ctx.userId, ctx.email)
+  return respondOk('SUCCESS', 'Provisioning completed successfully', ctx.userId, ctx.email, corsHeaders)
 }
 
 // ── State Machine Steps ─────────────────────────────────────────────────────────
